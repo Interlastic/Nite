@@ -15,11 +15,11 @@
             const cardCenterX = rect.left + rect.width / 2;
             const cardCenterY = rect.top + rect.height / 2;
             
-            // Calculate relative position (-1 to 1)
+            // Calculate relative position
             const deltaX = (mouse.x - cardCenterX) / (rect.width / 2);
             const deltaY = (mouse.y - cardCenterY) / (rect.height / 2);
             
-            // Calculate rotation angles (max 15 degrees)
+            // Calculate rotation angles
             const rotateY = deltaX * 3;
             const rotateX = -deltaY * 3;
 
