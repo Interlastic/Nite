@@ -59,6 +59,7 @@
     border-top-right-radius: 0px;
     border-bottom-right-radius: 0px;
     animation: borderOut 3.2s 0.25s forwards ease;
+    transition: background-position-x 0.4s;
 }
 @keyframes borderOut {
     to {

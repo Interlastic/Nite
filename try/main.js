@@ -39,7 +39,7 @@
     tryBtn.addEventListener("click", {
         handleEvent() {
             pageWrapper.classList.add("slide-left");
-            setTimeout(() => { window.location.pathname = '/try'; }, 1000);
+            setTimeout(() => { window.location.pathname = '/'; }, 1000);
         }        
     });
 })();
