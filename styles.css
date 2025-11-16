@@ -49,6 +49,20 @@
     font-weight: 800;
     margin: 0px 0px 40px 0px;
     background-image: linear-gradient(90deg, cyan, rgb(45, 150, 182), cyan);
+    border-top-right-radius: 30px;
+    border-bottom-right-radius: 30px;
+    animation: borderOut 3.2s 0.25s forwards ease;
+}
+
+@keyframes borderOut {
+    to {
+        border-top-right-radius: 0px;
+        border-bottom-right-radius: 0px;
+    }
+    80% {
+        border-top-right-radius: 28px;
+        border-bottom-right-radius: 28px;
+    }
 }
 
 .niteTitleSub::after {
@@ -59,13 +73,25 @@
     width: 100%;
     height: 100%;
     background: white; /*if light mode, else needs to be switched */
-    border-radius: 5px;
-    animation: slideOut 3.2s forwards;
+    border-radius: 15px;
+    opacity: 1;
+    animation: slideOut 3.2s forwards ease;
 }
 
 @keyframes slideOut {
     to {
         transform: translateX(100%);
+        opacity: 0.55;
+        border-radius: 0px;
+    }
+    50% {
+        opacity: 0.9;
+    }
+    99.999% {
+        width: 100%
+    }
+    100% {
+        width: 0%
     }
 }
 
