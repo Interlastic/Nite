@@ -18,10 +18,10 @@
             // Calculate relative position
             const deltaX = (mouse.x - cardCenterX) / (rect.width / 2);
             const deltaY = (mouse.y - cardCenterY) / (rect.height / 2);
-            
+            const maxOffset = 15
             // Calculate rotation angles
-            const rotateY = deltaX * 3;
-            const rotateX = -deltaY * 3;
+            const rotateY = Math.max(Math.min(deltaX * 3, maxOffset), -maxOffset);
+            const rotateX = Math.min(Math.max(-deltaY * 3, -maxOffset), maxOffset);
 
             card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${1 + (1 - Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY) / 2.5, 1)) * 0.1})`;        
         }
