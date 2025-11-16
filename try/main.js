@@ -6,7 +6,13 @@
         updateCards();
         updateTitleBackground();
     }, { passive: true });
-    
+    window.addEventListener('load', e => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+        updateCards();
+        updateTitleBackground();
+    }, { passive: true });
+
     const cards = document.querySelectorAll('.card');
     
     function updateCards() {
