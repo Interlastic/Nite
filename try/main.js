@@ -1,4 +1,125 @@
 (function(){
+    const idToString = {
+        1: 'Hey, how are you?', // "/ask Hey!"
+        2: 'nite hewooo\nnite wiggly flippers\nnite happy see you\nwhats up?‌', // "/nite hey nite"
+        3: 'What can I do for you today?', // "/ask Can you help me?"
+        4: "One of the rarest spider species is the Mysmena bleakleyi, also known as the Bleakley's spider. Discovered in a small region in the UK, its limited habitat and low population make it extremely rare. Another contender is the Hogna 'goliath', a large wolf spider found in specific parts of South America. These spiders often face threats from habitat loss and environmental changes.", // "/ask What is one of the rarest spider species?"
+        
+        // Commands branching from option 1
+        5: "I'm doing great, thanks for asking! I'm here to help you with any questions or tasks you might have.", // "/ask I'm doing good, how about you?"
+        6: "I'm sorry you feel that way, but still ready to assist you with whatever you need!", // "/ask Not so good"
+        
+        // Commands branching from option 2
+        7: 'nite sleepy now\nnite want blanket\nnite snuggle tight‌ ‌', // "/nite sleep well"
+        8: 'nite fishy?\nnite super happy\nnite love fishy‌ ‌', // "/nite me give fishy to you"
+        9: 'nite want fishy!\nnite big yum!\nnite dream of fishy‌ ‌', // "/nite want fishy?"
+        
+        // Commands branching from option 3
+        10: "I can help you with information, answer questions, provide recommendations, or just have a conversation. What would you like assistance with?", // "/ask What can you help me with?"
+        11: "I can help with a wide range of topics including science, history, technology, and much more. Just let me know what you're curious about!", // "/ask What topics can you help with?"
+        12: "I'm here to provide information, answer questions, give suggestions, or simply chat. How can I assist you today?", // "/ask What services do you offer?"
+    };
+    const idToCommand = {
+        1: '/ask Hey!',
+        2: '/nite hey nite',
+        3: '/ask Can you help me?',
+        4: '/ask What is one of the rarest spider species?',
+        5: '/ask I\'m doing good, how about you?',
+        6: '/ask Not so good',
+        7: '/nite sleep well',
+        8: '/nite me give fishy to you',
+        9: '/nite want fishy?',
+        10: '/ask What can you help me with?',
+        11: '/ask What topics can you help with?',
+        12: '/ask What services do you offer?'
+    };
+
+    let currentOptions = [1, 2, 3]; 
+    let isAnimating = false; 
+    function updateCommandButtons() {
+        if (isAnimating) return;
+        isAnimating = true;
+        
+        const commandItems = document.querySelectorAll('.command-item');
+        
+        
+        commandItems.forEach(item => {
+            item.classList.add('fade-out');
+        });
+        
+        setTimeout(() => {
+            commandItems.forEach((item, index) => {
+                if (currentOptions[index]) {
+                    const commandId = currentOptions[index];
+                    item.querySelector('.command-label').textContent = idToCommand[commandId];
+                    item.dataset.commandId = commandId;
+                    item.style.display = 'block';
+                    
+                    
+                    item.style.animation = 'none';
+                    item.offsetHeight; 
+                    item.style.animation = null;
+                    
+                    
+                    item.classList.remove('fade-out');
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            isAnimating = false;
+        }, 300); 
+    }
+
+    function handleCommandClick(event) {
+        const commandId = parseInt(event.currentTarget.dataset.commandId);
+        
+        
+        const output = document.getElementById('output');
+        
+        
+        output.style.animation = 'none';
+        output.offsetHeight; 
+        
+        output.style.animation = 'outputBoxAnimation 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+        
+        
+        setTimeout(() => {
+            output.textContent = idToString[commandId];
+            
+            
+            output.style.animation = 'none';
+            output.offsetHeight;
+            
+            n
+            output.style.animation = 'outputTextAnimation 0.4s ease-out forwards';
+        }, 200);
+        
+        
+        if (commandId >= 1 && commandId <= 3) {
+            if (commandId === 1) {
+                currentOptions = [4, 5, 6];
+            } else if (commandId === 2) {
+                currentOptions = [7, 8, 9];
+            } else if (commandId === 3) {
+                currentOptions = [10, 11, 12];
+            }
+        } else {
+            currentOptions = [1, 2, 3];
+        }
+        
+        
+        updateCommandButtons();
+    }
+
+    
+    document.querySelectorAll('.command-item').forEach(item => {
+        item.addEventListener('click', handleCommandClick);
+    });
+
+    
+    updateCommandButtons();
+
     const mouse = { x: 0, y: 0 };
     window.addEventListener('mousemove', e => {
         mouse.x = e.clientX;
@@ -20,12 +141,9 @@
             const rect = card.getBoundingClientRect();
             const cardCenterX = rect.left + rect.width / 2;
             const cardCenterY = rect.top + rect.height / 2;
-            
-            // Calculate relative position
             const deltaX = (mouse.x - cardCenterX) / (rect.width / 2);
             const deltaY = (mouse.y - cardCenterY) / (rect.height / 2);
             const maxOffset = 15
-            // Calculate rotation angles
             const rotateY = Math.max(Math.min(deltaX * 3, maxOffset), -maxOffset);
             const rotateX = Math.min(Math.max(-deltaY * 3, -maxOffset), maxOffset);
 

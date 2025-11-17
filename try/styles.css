@@ -154,3 +154,126 @@
     font-family: 'Inter', sans-serif;
     text-align: center;
 }
+
+
+.command-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 30px 20px;
+    z-index: 1000;
+}
+
+.command-item {
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(50px);
+    animation: popupCommand 0.4s ease forwards;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.command-item:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.command-item:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.command-item:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.command-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.command-label {
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    user-select: none;
+}
+
+.command-item.fade-out {
+    animation: fadeOutCommand 0.3s ease forwards;
+}
+
+@keyframes popupCommand {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOutCommand {
+    to {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+}
+
+.niteoutput {
+    width: fit-content;
+    font-family: 'Inter', sans-serif;
+    background-color: #667eea;
+    border-radius: 10px;
+    margin-left: 10px;
+    padding: 5px;
+    max-width: 80%;
+    transform-origin: left center;
+    animation: outputBoxIdle 2s forwards infinite linear;
+}
+
+@keyframes outputBoxIdle {
+    0% {
+        transform: translateY(0px)
+    }
+    25% {
+        transform: translateY(-5px);
+    }
+    50% {
+        transform: translateY(0px);
+    }
+    75% {
+        transform: translateY(5px);
+    }
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+@keyframes outputBoxAnimation {
+    0% {
+        transform: scale(1, 1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1, 1);
+        opacity: 0;
+    }
+}
+
+
+@keyframes outputTextAnimation {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
