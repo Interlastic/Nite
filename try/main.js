@@ -18,6 +18,7 @@
         10: "I can help you with information, answer questions, provide recommendations, or just have a conversation. What would you like assistance with?", // "/ask What can you help me with?"
         11: "I can help with a wide range of topics including science, history, technology, and much more. Just let me know what you're curious about!", // "/ask What topics can you help with?"
         12: "I'm here to provide information, answer questions, give suggestions, or simply chat. How can I assist you today?", // "/ask What services do you offer?"
+        13: 10,
     };
     const idToCommand = {
         1: '/ask Hey!',
@@ -31,7 +32,8 @@
         9: '/nite want fishy?',
         10: '/ask What can you help me with?',
         11: '/ask What topics can you help with?',
-        12: '/ask What services do you offer?'
+        12: '/ask What services do you offer?',
+        13: '/ask What else can you do?'
     };
 
     let currentOptions = [1, 2, 3]; 
@@ -85,24 +87,32 @@
         
         
         setTimeout(() => {
-            output.textContent = idToString[commandId];
+            let text = idToString[commandId];
+
+            if (!isNaN(text)) {
+            text = idToString[Number(text)];
+            }
+
+            output.textContent = text;
+
             
             
             output.style.animation = 'none';
             output.offsetHeight;
             
-            n
             output.style.animation = 'outputTextAnimation 0.4s ease-out forwards';
         }, 200);
         
         
-        if (commandId >= 1 && commandId <= 3) {
+        if (commandId >= 1 && commandId <= 4) {
             if (commandId === 1) {
                 currentOptions = [4, 5, 6];
             } else if (commandId === 2) {
                 currentOptions = [7, 8, 9];
             } else if (commandId === 3) {
                 currentOptions = [10, 11, 12];
+            } else if (commandId === 4) {
+                currentOptions = [13, 11, 2];
             }
         } else {
             currentOptions = [1, 2, 3];
