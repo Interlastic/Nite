@@ -13,7 +13,6 @@
     .header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 15px 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .main-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
     
-    /* Desktop Split (Tablet+) */
     @media (min-width: 768px) {
       .main-grid { grid-template-columns: 1fr 1fr; align-items: start; }
     }
@@ -23,10 +22,10 @@
     .card h3 { margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 10px; display: flex; justify-content: space-between; }
     
     /* Components */
-    button { background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: opacity 0.2s; }
+    button { background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: opacity 0.2s, background-color 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;}
     button:hover { opacity: 0.9; }
     button.secondary { background: #eee; color: #333; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; background: #8892b0; }
     
     input[type="file"] { width: 100%; margin: 10px 0; padding: 10px; background: var(--bg); border-radius: 6px; }
     
@@ -40,6 +39,17 @@
     #debug { background: #1e1e1e; color: #0f0; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; height: 100px; overflow: auto; margin-top: 20px; }
     .status-badge { font-size: 12px; padding: 4px 8px; border-radius: 12px; background: #eee; }
     .status-badge.online { background: #d1fae5; color: #065f46; }
+
+    /* Spinner Animation */
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -123,6 +133,8 @@ const log = (msg) => {
   ui.debug.textContent = `> ${text}\n${ui.debug.textContent}`;
 };
 
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
 // --- Authentication ---
 function updateAuthState() {
   const token = store.get();
@@ -161,39 +173,32 @@ ui.logoutBtn.onclick = () => {
   updateAuthState();
 };
 
-// --- File Operations ---
+// --- Upload Operations ---
 ui.uploadBtn.onclick = async () => {
   const file = ui.fileInput.files[0];
   const token = store.get();
   if (!file || !token) return;
 
-  // 1. Configuration
-  // 8MB is safe for Discord (10MB limit) + overhead
   const CHUNK_SIZE = 8 * 1024 * 1024; 
   const totalParts = Math.ceil(file.size / CHUNK_SIZE);
-  const fileId = crypto.randomUUID(); // Client generates ID now
+  const fileId = crypto.randomUUID();
   
   ui.uploadBtn.disabled = true;
-  ui.uploadBtn.textContent = `0/${totalParts}`;
   ui.uploadStatus.textContent = "Starting upload stream...";
 
-  let successCount = 0;
-
   try {
-    // 2. Loop through chunks
+    // 1. Chunk Upload Loop
     for (let i = 0; i < totalParts; i++) {
       const start = i * CHUNK_SIZE;
       const end = Math.min(start + CHUNK_SIZE, file.size);
-      const chunk = file.slice(start, end); // Magic happens here: Slicing the file blob
+      const chunk = file.slice(start, end);
       
       const partIndex = i + 1;
-      
       ui.uploadBtn.textContent = `Uploading ${partIndex}/${totalParts}`;
       
       const form = new FormData();
-      form.append("file", chunk, file.name); // Important: pass original name
+      form.append("file", chunk, file.name);
 
-      // 3. Send chunk with metadata headers
       const res = await fetch(ENDPOINTS.upload, {
         method: "POST",
         headers: { 
@@ -210,48 +215,87 @@ ui.uploadBtn.onclick = async () => {
         const err = await res.json();
         throw new Error(`Part ${partIndex} failed: ${err.error || res.status}`);
       }
-      
-      successCount++;
     }
 
-    // 4. Done
-    log(`Uploaded: ${file.name}`);
-    ui.uploadStatus.innerHTML = `<span style="color:green">✔ Success (${totalParts} parts)</span>`;
-    ui.fileInput.value = "";
-    fetchFiles(); 
+    // 2. Waiting for Confirmation (Spinner)
+    ui.uploadBtn.innerHTML = '<span class="spinner"></span> Finalizing...';
+    ui.uploadStatus.textContent = "Waiting for file to appear in storage...";
+    
+    // Start waiting loop
+    await waitForFileId(fileId);
 
+    // 3. Success
+    log(`Uploaded and Confirmed: ${file.name}`);
+    ui.uploadStatus.innerHTML = `<span style="color:green">✔ Upload Complete</span>`;
+    ui.fileInput.value = "";
+    
   } catch (e) {
     ui.uploadStatus.innerHTML = `<span style="color:red">✘ ${e.message}</span>`;
     log(e.message);
   } finally {
     ui.uploadBtn.disabled = false;
-    ui.uploadBtn.textContent = "Upload to Cloud";
+    ui.uploadBtn.innerHTML = "Upload to Cloud";
   }
 };
 
-async function fetchFiles() {
+// --- Helper: Wait for fileID to appear in list ---
+async function waitForFileId(targetId) {
+  let attempts = 0;
+  const maxAttempts = 30; // 30 * 2s = 60 seconds max wait
+
+  while (attempts < maxAttempts) {
+    // Fetch file list silently (don't force render yet)
+    const files = await apiGetFiles(); 
+    
+    // Check if our fileId is in the list
+    // Note: ensure your worker returns 'fileID' or 'fileId' in get_files response
+    const found = files.find(f => f.fileID === targetId || f.fileId === targetId);
+
+    if (found) {
+      renderFiles(files); // Update UI now that it's there
+      return true;
+    }
+
+    attempts++;
+    await wait(2000); // Wait 2 seconds before retry
+  }
+  
+  throw new Error("Upload finished, but timed out waiting for file to appear in list.");
+}
+
+// --- Fetching & Rendering ---
+
+// 1. Pure Fetch (Returns Data)
+async function apiGetFiles() {
   const token = store.get();
-  if (!token) return;
+  if (!token) return [];
 
   try {
     const res = await fetch(ENDPOINTS.list, { headers: { "x-session-token": token } });
-    if (!res.ok) return; // Silent fail on polling errors
-    
-    const files = await res.json();
-    renderFiles(files);
+    if (!res.ok) return [];
+    return await res.json();
   } catch (e) {
-    console.error("Poll error", e);
+    console.error("API Fetch error", e);
+    return [];
   }
+}
+
+// 2. UI Refresh (Calls Fetch + Renders)
+async function refreshFileList() {
+  const files = await apiGetFiles();
+  renderFiles(files);
 }
 
 function renderFiles(list) {
   if (!list || list.length === 0) {
-    ui.fileList.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa">No files yet</div>';
+    if (ui.fileList.childElementCount === 0 || ui.fileList.innerHTML.includes("No files")) {
+      ui.fileList.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa">No files yet</div>';
+    }
     return;
   }
 
-  // Simple diff: Only redraw if count changes (for demo smoothness)
-  // In production, check IDs.
+  // Simple diff: Only redraw if count matches to prevent flickering during polling
+  // (Ideally, you'd do a smarter diff by ID, but this works for simple lists)
   if (ui.fileList.childElementCount === list.length) return;
 
   ui.fileList.innerHTML = "";
@@ -266,6 +310,7 @@ function renderFiles(list) {
   });
 }
 
+// --- Download ---
 window.downloadFile = async (id, name) => {
   const token = store.get();
   if (!token) return alert("Login required");
@@ -290,24 +335,19 @@ window.downloadFile = async (id, name) => {
 // --- Polling Logic ---
 function startPolling() {
   stopPolling();
-  
-  // PC vs Mobile detection
   const isMobile = window.innerWidth < 768;
   const interval = isMobile ? 10000 : 2000;
   
-  log(`Polling started: ${isMobile ? "Mobile (10s)" : "PC (2s)"}`);
-  
-  // Initial fetch
-  fetchFiles();
-  
-  pollTimer = setInterval(fetchFiles, interval);
+  log(`Polling: ${isMobile ? "10s" : "2s"}`);
+  refreshFileList();
+  pollTimer = setInterval(refreshFileList, interval);
 }
 
 function stopPolling() {
   if (pollTimer) clearInterval(pollTimer);
 }
 
-// Handle resize to switch polling modes dynamicallly
+// Handle resize
 let resizeTimeout;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimeout);
@@ -318,7 +358,7 @@ window.addEventListener("resize", () => {
 
 ui.refreshBtn.onclick = () => {
   log("Manual refresh");
-  fetchFiles();
+  refreshFileList();
 };
 
 // Init
