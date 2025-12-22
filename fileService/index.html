@@ -167,29 +167,59 @@ ui.uploadBtn.onclick = async () => {
   const token = store.get();
   if (!file || !token) return;
 
+  // 1. Configuration
+  // 8MB is safe for Discord (10MB limit) + overhead
+  const CHUNK_SIZE = 8 * 1024 * 1024; 
+  const totalParts = Math.ceil(file.size / CHUNK_SIZE);
+  const fileId = crypto.randomUUID(); // Client generates ID now
+  
   ui.uploadBtn.disabled = true;
-  ui.uploadBtn.textContent = "Uploading...";
+  ui.uploadBtn.textContent = `0/${totalParts}`;
   ui.uploadStatus.textContent = "Starting upload stream...";
 
-  const form = new FormData();
-  form.append("file", file);
+  let successCount = 0;
 
   try {
-    const res = await fetch(ENDPOINTS.upload, {
-      method: "POST",
-      headers: { "x-session-token": token },
-      body: form
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      log(`Uploaded: ${file.name}`);
-      ui.uploadStatus.innerHTML = `<span style="color:green">✔ Success</span>`;
-      ui.fileInput.value = ""; // clear input
-      fetchFiles(); // instant refresh
-    } else {
-      throw new Error(data.error || "Upload failed");
+    // 2. Loop through chunks
+    for (let i = 0; i < totalParts; i++) {
+      const start = i * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunk = file.slice(start, end); // Magic happens here: Slicing the file blob
+      
+      const partIndex = i + 1;
+      
+      ui.uploadBtn.textContent = `Uploading ${partIndex}/${totalParts}`;
+      
+      const form = new FormData();
+      form.append("file", chunk, file.name); // Important: pass original name
+
+      // 3. Send chunk with metadata headers
+      const res = await fetch(ENDPOINTS.upload, {
+        method: "POST",
+        headers: { 
+          "x-session-token": token,
+          "x-chunked-upload": "true",
+          "x-file-id": fileId,
+          "x-part-index": partIndex.toString(),
+          "x-total-parts": totalParts.toString()
+        },
+        body: form
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(`Part ${partIndex} failed: ${err.error || res.status}`);
+      }
+      
+      successCount++;
     }
+
+    // 4. Done
+    log(`Uploaded: ${file.name}`);
+    ui.uploadStatus.innerHTML = `<span style="color:green">✔ Success (${totalParts} parts)</span>`;
+    ui.fileInput.value = "";
+    fetchFiles(); 
+
   } catch (e) {
     ui.uploadStatus.innerHTML = `<span style="color:red">✘ ${e.message}</span>`;
     log(e.message);
