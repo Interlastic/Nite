@@ -217,12 +217,12 @@ ui.uploadBtn.onclick = async () => {
       }
     }
 
-    // 2. Waiting for Confirmation (Spinner)
+    // 2. Waiting for Confirmation
     ui.uploadBtn.innerHTML = '<span class="spinner"></span> Finalizing...';
     ui.uploadStatus.textContent = "Waiting for file to appear in storage...";
     
-    // Start waiting loop
-    await waitForFileId(fileId);
+    // STRICT WAIT: Only stops if exact ID appears
+    await waitForFile(fileId);
 
     // 3. Success
     log(`Uploaded and Confirmed: ${file.name}`);
@@ -238,49 +238,56 @@ ui.uploadBtn.onclick = async () => {
   }
 };
 
-// --- Helper: Wait for fileID to appear in list ---
-async function waitForFileId(targetId) {
+// --- Robust Wait Function ---
+async function waitForFile(targetId) {
   let attempts = 0;
-  const maxAttempts = 30; // 30 * 2s = 60 seconds max wait
+  const maxAttempts = 30; // 60 seconds max
 
   while (attempts < maxAttempts) {
-    // Fetch file list silently (don't force render yet)
+    // This now forces a fresh network call every time
     const files = await apiGetFiles(); 
     
-    // Check if our fileId is in the list
-    // Note: ensure your worker returns 'fileID' or 'fileId' in get_files response
-    const found = files.find(f => f.fileID === targetId || f.fileId === targetId);
+    // Check: ID Match Only
+    const idMatch = files.find(f => 
+      f.fileId === targetId || 
+      f.fileID === targetId || 
+      f.id === targetId
+    );
 
-    if (found) {
-      renderFiles(files); // Update UI now that it's there
+    if (idMatch) {
+      renderFiles(files); 
       return true;
     }
 
     attempts++;
-    await wait(2000); // Wait 2 seconds before retry
+    await wait(2000); 
   }
   
-  throw new Error("Upload finished, but timed out waiting for file to appear in list.");
+  throw new Error("Timed out waiting for file to appear.");
 }
 
 // --- Fetching & Rendering ---
 
-// 1. Pure Fetch (Returns Data)
 async function apiGetFiles() {
   const token = store.get();
   if (!token) return [];
-
   try {
-    const res = await fetch(ENDPOINTS.list, { headers: { "x-session-token": token } });
+    // FIX: Add cache busting query param AND no-store header
+    const freshUrl = `${ENDPOINTS.list}?ts=${Date.now()}`;
+    
+    const res = await fetch(freshUrl, { 
+      method: "GET",
+      cache: "no-store", 
+      headers: { "x-session-token": token } 
+    });
+    
     if (!res.ok) return [];
     return await res.json();
   } catch (e) {
-    console.error("API Fetch error", e);
     return [];
   }
 }
 
-// 2. UI Refresh (Calls Fetch + Renders)
 async function refreshFileList() {
   const files = await apiGetFiles();
   renderFiles(files);
@@ -294,17 +301,19 @@ function renderFiles(list) {
     return;
   }
 
-  // Simple diff: Only redraw if count matches to prevent flickering during polling
-  // (Ideally, you'd do a smarter diff by ID, but this works for simple lists)
+  // Prevent flicker if count is same
   if (ui.fileList.childElementCount === list.length) return;
 
   ui.fileList.innerHTML = "";
   list.forEach(file => {
+    // Prefer fileID, fallback to index
+    const downloadId = file.fileID || file.fileId || file.index; 
+    
     const el = document.createElement("div");
     el.className = "file-item";
     el.innerHTML = `
       <div class="file-name" title="${file.name}">${file.name}</div>
-      <button class="secondary" onclick="downloadFile('${file.index || file.fileId}', '${file.name}')">Download</button>
+      <button class="secondary" onclick="downloadFile('${downloadId}', '${file.name}')">Download</button>
     `;
     ui.fileList.appendChild(el);
   });
@@ -347,7 +356,6 @@ function stopPolling() {
   if (pollTimer) clearInterval(pollTimer);
 }
 
-// Handle resize
 let resizeTimeout;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimeout);
@@ -361,7 +369,6 @@ ui.refreshBtn.onclick = () => {
   refreshFileList();
 };
 
-// Init
 updateAuthState();
 </script>
 </body>
