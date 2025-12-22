@@ -1,0 +1,197 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Nite File Space — Demo</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;max-width:760px;margin:48px auto;padding:12px}
+    button,input{margin:8px 0;padding:8px 12px;font-size:15px}
+    #user{margin:8px 0;padding:10px;background:#f6f7fb;border-radius:8px}
+    pre{background:#111;color:#0f0;padding:12px;border-radius:6px;overflow:auto}
+  </style>
+</head>
+<body>
+  <h1>Nite File Space — Demo</h1>
+  <div id="auth">
+    <button id="loginBtn">Login with Discord</button>
+    <div id="user" style="display:none">
+      <strong id="who"></strong>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <hr/>
+
+  <div id="uploader" style="display:none">
+    <input type="file" id="fileInput"/>
+    <br/>
+    <button id="uploadBtn">Upload</button>
+    <div id="result"></div>
+  </div>
+  
+  <div id="getfiles" style="">
+    <button id="filesbtn">Get Files</button>
+   </div>
+
+  <hr/>
+  <h3>Debug</h3>
+  <pre id="debug">Not logged in.</pre>
+	
+  <div id="files"></div>
+<script>
+const WORKER_BASE = "https://nites-file-space.nite-87d.workers.dev";
+const OAUTH_START = WORKER_BASE + "/oauth/start";
+const UPLOAD_ENDPOINT = WORKER_BASE + "/upload";
+const GET_ENDPOINT = WORKER_BASE + "/get_files";
+const DOWNLOAD_ENDPOINT = WORKER_BASE + "/download";
+
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const fileInput = document.getElementById("fileInput");
+const uploadBtn = document.getElementById("uploadBtn");
+const debug = document.getElementById("debug");
+const userBox = document.getElementById("user");
+const who = document.getElementById("who");
+const uploader = document.getElementById("uploader");
+const resultDiv = document.getElementById("result");
+const filesBtn = document.getElementById("filesbtn");
+const filesDiv = document.getElementById("files");
+
+function log(s){ debug.textContent = typeof s === "string" ? s : JSON.stringify(s, null, 2); }
+
+function currentToken(){ return localStorage.getItem("nite_token"); }
+function setToken(t){ localStorage.setItem("nite_token", t); }
+function clearToken(){ localStorage.removeItem("nite_token"); }
+
+function updateUI() {
+  const t = currentToken();
+  if (t) {
+    userBox.style.display = "block";
+    uploader.style.display = "block";
+    loginBtn.style.display = "none";
+    who.textContent = "Logged in (session token present)";
+    log("Ready to upload. Session token present.");
+  } else {
+    userBox.style.display = "none";
+    uploader.style.display = "none";
+    loginBtn.style.display = "inline-block";
+    log("Not logged in.");
+  }
+}
+
+loginBtn.addEventListener("click", () => {
+  const popup = window.open(OAUTH_START, "discord_oauth", "width=500,height=800");
+  if (!popup) { alert("Popup blocked — allow popups for this site."); return; }
+
+  function onMessage(e) {
+    try {
+      const data = e.data;
+      if (!data || data.type !== "discord_oauth") return;
+      if (data.token) {
+        setToken(data.token);
+        log({ event: "oauth_success", user: data.user });
+        updateUI();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      window.removeEventListener("message", onMessage);
+    }
+  }
+  window.addEventListener("message", onMessage);
+});
+
+logoutBtn.addEventListener("click", () => {
+  clearToken();
+  updateUI();
+  log("Logged out.");
+});
+
+uploadBtn.addEventListener("click", async () => {
+  const f = fileInput.files[0];
+  if (!f) { alert("Pick a file first"); return; }
+  const token = currentToken();
+  if (!token) { alert("Not logged in"); return; }
+
+  log("Uploading " + f.name + " (" + f.size + " bytes)...");
+  resultDiv.textContent = "";
+
+  const form = new FormData();
+  form.append("file", f);
+
+  try {
+    const resp = await fetch(UPLOAD_ENDPOINT, {
+      method: "POST",
+      headers: { "x-session-token": token },
+      body: form
+    });
+    const j = await resp.json();
+    if (!resp.ok) {
+      log({ error: j });
+      resultDiv.textContent = "Upload failed: " + JSON.stringify(j);
+    } else {
+      log({ success: j });
+      resultDiv.textContent = "Uploaded: " + JSON.stringify(j);
+    }
+  } catch (e) {
+    log("Upload error: " + e);
+    resultDiv.textContent = "Upload error: " + e;
+  }
+});
+
+filesBtn.addEventListener("click", async () => {
+  const token = currentToken();
+  if (!token) { alert("Not logged in"); return; }
+
+  const resp = await fetch(GET_ENDPOINT, {
+    method: "GET",
+    headers: { "x-session-token": token }
+  });
+
+  const j = await resp.json();
+  if (resp.ok) {
+    debug.textContent = "Got: " + JSON.stringify(j, null, 2);
+    filesDiv.innerHTML = ""; // clear previous
+
+    for (const file of j) {
+      const newDiv = document.createElement("div");
+      newDiv.textContent = file.name + " ";
+
+      const downloadBtn = document.createElement("button");
+      downloadBtn.textContent = "Download";
+      downloadBtn.addEventListener("click", () => {
+        const token = currentToken();
+        if (!token) { alert("Not logged in"); return; }
+
+        const url = `${DOWNLOAD_ENDPOINT}?id=${encodeURIComponent(file.index || file.fileId)}`;
+
+        // Trigger download via fetch -> blob -> link
+        fetch(url, { method: "GET", headers: { "x-session-token": token } })
+          .then(resp => {
+            if (!resp.ok) return resp.json().then(j => Promise.reject(j));
+            return resp.blob();
+          })
+          .then(blob => {
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = file.name;
+            a.click();
+            debug.textContent = "Downloaded " + file.name;
+          })
+          .catch(err => {
+            console.error(err);
+            debug.textContent = "Download error: " + JSON.stringify(err);
+          });
+      });
+
+      newDiv.appendChild(downloadBtn);
+      filesDiv.appendChild(newDiv);
+    }
+  }
+});
+
+updateUI();
+</script>
+</body>
+</html>
+
