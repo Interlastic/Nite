@@ -72,7 +72,6 @@ async function startFlow() {
         });
 
         if (res.status === 401) {
-            alert("Session expired. Please login again.");
             return location.reload();
         }
 
