@@ -72,7 +72,6 @@ async function startFlow() {
         });
 
         if (res.status === 401) {
-            return location.reload();
         }
 
         btn.innerText = "Please have patience.";
