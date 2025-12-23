@@ -577,7 +577,8 @@ input:checked + .slider:before { transform: translateX(22px); }
 
     /* Turn nav links into "Pills" */
     .nav-item {
-        padding: 4px 8px;
+        padding: 8px 16px;
+        width: fit-content;
         font-size: 0.9rem;
         background: #2f3136;
         border-radius: 20px;
