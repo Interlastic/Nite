@@ -535,3 +535,117 @@ input:checked + .slider:before { transform: translateX(22px); }
     justify-content: space-between;
     align-items: center;
 }
+/* --- MOBILE FIXES (Add to bottom of style.css) --- */
+@media (max-width: 900px) {
+
+    /* 1. RESET CONTAINER to full screen */
+    .settings-container {
+        flex-direction: column; /* Stack Sidebar on top of Content */
+        width: 100vw;
+        height: 100vh; /* Use full height on mobile */
+        max-width: 100%;
+        min-height: 0;
+        border-radius: 0;
+        font-size: 1rem; /* Reset font scaling */
+    }
+
+    /* 2. SIDEBAR TRANSFORMATION (Top Bar) */
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 15px;
+        border-right: none;
+        border-bottom: 1px solid #2f3136;
+        box-sizing: border-box;
+        flex-shrink: 0;
+        display: block; /* Remove flex column constraint */
+    }
+
+    .sidebar-header {
+        margin-bottom: 15px;
+    }
+
+    /* 3. NAVIGATION (Horizontal Scroll) */
+    .nav-menu {
+        flex-direction: row;
+        overflow-x: auto; /* Allow horizontal scrolling */
+        white-space: nowrap;
+        padding-bottom: 10px;
+        gap: 10px;
+        -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+    }
+
+    /* Turn nav links into "Pills" */
+    .nav-item {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        background: #2f3136;
+        border-radius: 20px;
+        margin: 0;
+        flex-shrink: 0; /* Prevent squishing */
+        border: 1px solid #202225;
+    }
+
+    .nav-item.active {
+        background: #5865F2;
+        color: white;
+        border-color: #5865F2;
+    }
+
+    /* Hide the desktop "Glider" animation as it doesn't work horizontally easily */
+    .glider { display: none !important; }
+
+    /* 4. SAVE BUTTON (Move to normal flow) */
+    .sidebar > div[style*="margin-top:auto"] {
+        margin-top: 10px !important;
+        padding: 0;
+    }
+
+    /* 5. ACCOUNT BUTTON (Fix overlapping) */
+    .accountbtn {
+        top: 10px;
+        right: 10px;
+        transform: scale(0.8); /* Shrink it slightly */
+        transform-origin: top right;
+        width: 40px !important; /* Collapse to icon only initially if desired, or keep text */
+        height: 40px !important;
+        border-radius: 50%;
+        padding: 0;
+    }
+
+    /* Hide text on mobile account button to save space */
+    .accountbtn #lbl-btn-username, 
+    .accountbtn img { margin: 0 !important; }
+    .accountbtn #lbl-btn-username { display: none; }
+    
+    /* Re-expand on click */
+    .accountbtn.expanded {
+        width: 250px !important;
+        height: 140px !important;
+        border-radius: 8px;
+        right: 50%;
+        transform: translateX(50%) !important; /* Center it */
+    }
+
+    /* 6. CONTENT AREA */
+    .content-viewport {
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .tab-pane {
+        padding: 20px 15px; /* Reduce padding */
+        padding-bottom: 80px; /* Space for scrolling */
+    }
+    
+    /* Adjust grid for mobile */
+    .settings-grid, .commands-grid {
+        grid-template-columns: 1fr; /* Single column */
+    }
+    
+    .toggle-wrapper {
+        flex-direction: row; /* Keep toggles side-by-side */
+        align-items: center;
+    }
+}
