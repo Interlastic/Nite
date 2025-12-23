@@ -1,51 +1,47 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Nite</title>
-<link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Manager</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="body">
-<div id="pageWrapper">
-<header class="site-header"></header>
-<h1 class="niteTitle">Nite</h1>
-<h1 class="niteTitleSub">the fun Discord Bot</h1>
-<div class="tryBtn" id="tryBtn">Try it in your browser</div>
-</header>
-<div class="cards-container">
-    <div class="card">
-        <h2 class="card-title">Fast</h2>
-        <p class="card-description">yes</p>
+<body>
+
+    <div id="loginbtn" class="accountbtn">
+        
+        <div id="user-view" class="btn-content-normal" onclick="handleAuthClick()">
+            <img src="Discord_Logo.png" alt="Discord Logo" width="20" height="20" style="vertical-align:middle; margin-right:8px;">
+            <span id="lbl-btn-username">Login with Discord</span>
+        </div>
+
+        <div id="logout-view" class="btn-content-logout">
+            <p class="logouttext">Are you sure you want to log out?</p>
+            <div class="logout-actions">
+                <button class="btn-logout" onclick="logout()">Log Out</button>
+                <button class="btn-cancel" onclick="closeLogout()">Cancel</button>
+            </div>
+        </div>
+
     </div>
-    
-    <div class="card">
-        <h2 class="card-title">Simple</h2>
-        <p class="card-description">ók</p>
+
+    <div id="logOutContainer" class="logOutContainer" onclick="closeLogout()"></div>
+
+    <div id="view-login" class="box">
+        <h2>Welcome</h2>
+        <button class="btn-login" onclick="openLogin()">Login with Discord</button>
     </div>
-    
-    <div class="card">
-        <h2 class="card-title">Powerful</h2>
-        <p class="card-description">test.</p>
+
+    <div id="view-dash" class="box hide" style="max-width: 600px; width: 90%;">
+        <h2>Dashboard</h2>
+        <p>User: <span id="lbl-user" style="color:var(--btn)"></span></p>
+        <button id="btn-get" class="btn-fetch" onclick="startFlow()">Load Servers</button>
+        
+        <div id="server-list" class="server-grid"></div>
+        
+        <p id="status" style="color:#aaa; font-size:0.9rem; margin-top:10px;"></p>
     </div>
-    
-    <div class="card">
-        <h2 class="card-title">Modern</h2>
-        <p class="card-description">discord.</p>
-    </div>
-    
-    <div class="card">
-        <h2 class="card-title">Flexible</h2>
-        <p class="card-description">bot.</p>
-    </div>
-    
-    <div class="card">
-        <h2 class="card-title">Secure</h2>
-        <p class="card-description">ye.</p>
-    </div>
-</div>
-</div>
+
+    <script src="script.js"></script>
 </body>
-<script src="main.js"></script>
 </html>
