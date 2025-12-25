@@ -207,6 +207,88 @@ button:disabled {
     pointer-events: auto;
 }
 
+/* --- SERVER SWITCHER --- */
+.switcher-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    /* Single column stack or grid? "Open in a grid". Let's do 2 columns if width allows */
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    /* Match dashboard grid logic */
+    gap: 10px;
+    background: #202225;
+    padding: 10px;
+    border-radius: 8px;
+    /* OVERLAY: Grid sits exactly on top of the container */
+    position: absolute;
+    top: 0;
+    left: 0;
+    /* Removed width limit to allow grid to grow naturally, or set max-width? */
+    /* Let's set a reasonable max-width so it expands rightwards a bit */
+    width: 380px;
+    /* Fits approx 3 cols */
+    margin: 0;
+    /* Remove margin so it overlaps */
+    z-index: 1000;
+
+    visibility: hidden;
+    opacity: 0;
+    /* Scale origin matches the first card position (Top Left) */
+    transform: scale(0.9);
+    transform-origin: top left;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+
+    /* Ensure click interaction works */
+    pointer-events: none;
+}
+
+.switcher-container:hover .switcher-grid,
+.switcher-container.active .switcher-grid {
+    visibility: visible;
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+.server-card.server-card-pop {
+    animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+    opacity: 0;
+    transform: scale(0.8);
+    filter: none !important;
+    -webkit-filter: none !important;
+}
+
+.server-card.server-card-pop .server-avatar {
+    filter: none !important;
+    -webkit-filter: none !important;
+    animation: none !important;
+}
+
+@keyframes pop-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Mobile Adjustments for Switcher */
+@media (max-width: 768px) {
+    .switcher-grid {
+        top: auto;
+        bottom: 0;
+        /* Align Bottom */
+        left: 0;
+        transform-origin: bottom left;
+        /* Grow from bottom left corner */
+        /* width: 90vw; ? */
+    }
+}
+
 
 /* --- DASHBOARD: SERVER GRID --- */
 .server-grid {
@@ -910,7 +992,7 @@ input:checked+.slider:before {
     /* Fix: Match settings.js static card origin */
     position: fixed !important;
     z-index: 1000 !important;
-    animation: flyToCorner 1.4s forwards !important;
+    animation: flyToCorner 0.7s forwards !important;
     pointer-events: none;
     /* Reset transition as we are using animation now */
     transition: none !important;
@@ -946,7 +1028,7 @@ input:checked+.slider:before {
     z-index: 999;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 1.5s ease;
+    transition: opacity 0.6s ease;
 }
 
 .page-transition-overlay.active {

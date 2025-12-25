@@ -139,11 +139,6 @@ function renderServers(list) {
         </div>`
 }
 
-function doTransition(server_index) { // Insanely coolanim where everything else turns dark except the server and the server moves to the corner where it also is on manage.html!
-
-}
-
-
 document.addEventListener('DOMContentLoaded',
     startFlow()
 )
@@ -228,5 +223,5 @@ function handleServerClick(element) {
         // Encode parameters
         const dest = `manage.html?id=${id}&name=${encodeURIComponent(name)}&icon=${encodeURIComponent(iconUrl)}&width=${rect.width}&height=${rect.height}`;
         window.location.href = dest;
-    }, 1500);
+    }, 600);
 }
