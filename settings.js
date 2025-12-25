@@ -34,56 +34,96 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render Static Card Header if data exists
     if (serverName && serverIcon) {
-        // Create a floating card to match the animation end state
+        // --- CONTAINER ---
+        const switcherContainer = document.createElement('div');
+        switcherContainer.className = 'switcher-container';
+        switcherContainer.style.position = 'fixed';
+        switcherContainer.style.zIndex = '2000'; // Above everything
+
+        // --- MAIN CARD ---
         const floatCard = document.createElement('div');
         floatCard.className = 'server-card';
-        // Match the end state: top:20px, left:20px, scale(0.6)
-        // We handle styling inline to ensure it overrides defaults or matches exactly
-        floatCard.style.position = 'fixed';
+        // Reset styles for use inside container
+        floatCard.style.margin = '0';
+        floatCard.style.cursor = 'pointer'; // Now clickable
+        floatCard.style.pointerEvents = 'auto'; // Enable clicks
+        floatCard.style.animation = 'none';
+        floatCard.style.filter = 'none';
+        floatCard.style.webkitFilter = 'none';
 
-        // Dynamic Position Logic
-        if (window.innerWidth <= 768) {
-            // Mobile: Bottom Left
-            // We need the original height to calculate the scaled height offset from bottom
-            // Formula: window.innerHeight - 20 - (height * 0.6)
-            const h = serverHeight ? parseFloat(serverHeight) : 80; // Fallback 80 if missing
-            const topPos = window.innerHeight - 20 - (h * 0.6);
-            floatCard.style.top = topPos + 'px';
-        } else {
-            // Desktop: Top Left
-            floatCard.style.top = '20px';
-        }
-
-        floatCard.style.left = '20px';
-        // Fix: Use the passed width, or fallback to 120px if missing. This ensures exact match with previous page.
+        // Apply width/scale to the CARD, but position applies to CONTAINER
         floatCard.style.width = serverWidth ? (serverWidth + 'px') : '120px';
         floatCard.style.transform = 'scale(0.6)';
         floatCard.style.transformOrigin = 'top left'; // Important for scale to position correctly
-        floatCard.style.zIndex = '2000'; // Above everything
-        floatCard.style.margin = '0';
-        floatCard.style.cursor = 'default'; // No pointer
-        floatCard.style.pointerEvents = 'none'; // Let clicks pass through if needed, or 'auto'
-
-        // Remove hover effects if possible or override them
-        // We can't easily remove hover from class, but we can prevent animation
-        floatCard.style.animation = 'none';
-        floatCard.style.filter = 'none'; // Fix: Remove default blur from .server-card class
-        floatCard.style.webkitFilter = 'none';
+        if (window.innerWidth <= 768) floatCard.style.transformOrigin = 'bottom left'; // Mobile
 
         floatCard.innerHTML = `
             <img src="${decodeURIComponent(serverIcon)}" class="server-avatar" style="filter:blur(0); animation:none;">
             <span>${decodeURIComponent(serverName)}</span>
         `;
 
-        document.body.appendChild(floatCard);
+        // --- SWITCHER GRID (Hidden by default) ---
+        const grid = document.createElement('div');
+        grid.className = 'switcher-grid';
+        grid.innerHTML = '<p style="color:#aaa; font-size:0.8rem; text-align:center;">Loading servers...</p>';
 
-        // Hide the "Settings" text in sidebar to avoid clutter? 
-        // Or keep it. User didn't ask to remove it, but it might look overlapping.
-        // Let's hide the sidebar header text for cleaner look since the card is there (visually)
+        switcherContainer.appendChild(floatCard);
+        switcherContainer.appendChild(grid);
+
+        // --- POSITIONING ---
+        switcherContainer.style.left = '20px';
+
+        if (window.innerWidth <= 768) {
+            // Mobile: Bottom Left
+            const h = serverHeight ? parseFloat(serverHeight) : 80;
+            const topPos = window.innerHeight - 20 - (h * 0.6);
+            switcherContainer.style.top = topPos + 'px';
+            // Adjust container size to wrap tight?
+        } else {
+            // Desktop: Top Left
+            switcherContainer.style.top = '20px';
+        }
+
+        // --- INTERACTIONS ---
+
+        // Mobile Toggle Logic
+        let isMobile = window.innerWidth <= 768;
+
+        floatCard.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isMobile) {
+                // Mobile: Tap 1 -> Open, Tap 2 -> Home
+                if (switcherContainer.classList.contains('active')) {
+                    window.location.href = "index.html";
+                } else {
+                    switcherContainer.classList.add('active');
+                    fetchServersForGrid(grid); // Load servers on open
+                }
+            } else {
+                // Desktop: Click -> Home (Hover handles open)
+                window.location.href = "index.html";
+            }
+        });
+
+        // Desktop Hover Logic
+        if (!isMobile) {
+            switcherContainer.addEventListener('mouseenter', () => {
+                fetchServersForGrid(grid);
+            });
+        }
+
+        // Close on outside click (Mobile)
+        document.addEventListener('click', (e) => {
+            if (!switcherContainer.contains(e.target)) {
+                switcherContainer.classList.remove('active');
+            }
+        });
+
+        document.body.appendChild(switcherContainer);
+
+        // Hide Sidebar Header Text
         const headerDiv = document.querySelector('.sidebar-header');
         if (headerDiv) headerDiv.style.visibility = 'hidden';
-        // Note: hiding the whole header might hide the Back button. 
-        // Let's just hide the H3 and span.
         const headerTextDiv = document.querySelector('.sidebar-header > div');
         if (headerTextDiv) headerTextDiv.style.visibility = 'hidden';
     }
@@ -540,3 +580,143 @@ function logout() { document.cookie = "auth_token=;path=/;max-age=0"; window.loc
 function openLogout() { document.getElementById('loginbtn').classList.add('expanded'); document.getElementById('logOutContainer').classList.add('active'); }
 function closeLogout() { document.getElementById('loginbtn').classList.remove('expanded'); document.getElementById('logOutContainer').classList.remove('active'); }
 function goBack() { window.location.href = "index.html"; }
+
+// --- SWITCHER HELPER ---
+let cachedServers = null;
+async function fetchServersForGrid(gridEl) {
+    if (cachedServers) {
+        renderSwitcherGrid(gridEl, cachedServers);
+        return;
+    }
+
+    const token = getCookie("auth_token");
+    try {
+        // Reuse the worker check endpoint to get server list
+        let res = await fetch(`${WORKER}/check?t=${Date.now()}`, { headers: { "Authorization": token }, cache: "no-store" });
+        if (res.status === 200) {
+            const data = await res.json();
+            cachedServers = data.servers || [];
+            renderSwitcherGrid(gridEl, cachedServers);
+        } else {
+            gridEl.innerHTML = '<p style="color:#ed4245; padding:5px;">Failed to load.</p>';
+        }
+    } catch (e) {
+        gridEl.innerHTML = '<p style="color:#ed4245; padding:5px;">Error loading.</p>';
+    }
+}
+
+function renderSwitcherGrid(el, list) {
+    if (!list) list = [];
+
+    // 1. Get Current Server Data from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const currId = urlParams.get('id');
+    const currName = urlParams.get('name');
+    const currIcon = urlParams.get('icon');
+
+    // 2. Filter out current from list (dedupe)
+    const others = list.filter(s => s.id !== currId);
+
+    // 3. Create Combined List
+    // [Current, ...Others, Homepage, AddServer]
+    const currentServer = {
+        id: currId,
+        name: currName,
+        picture_url: currIcon,
+        isCurrent: true,
+        type: 'current'
+    };
+
+    const homeCard = {
+        name: "Homepage",
+        picture_url: "https://cdn-icons-png.flaticon.com/512/25/25694.png", // Generic Home Icon? Or just text/symbol?
+        // Better: Use a reliable CDN or SVG. Let's use a generic house emoji or similar style if no asset.
+        // Or standard discord home icon: https://assets-global.website-files.com/6257adef93867e56f84d3092/636e0a69f118df70ad7828d4_icon_clyde_blurple_RGB.png
+        // Let's use a placeholder or style it. 
+        type: 'special',
+        action: "window.location.href='index.html'"
+    };
+
+    const addCard = {
+        name: "Add to server",
+        picture_url: "https://cdn.discordapp.com/avatars/1371513819104415804/9e038eeb716c24ece29276422b52cc80.webp?size=320",
+        type: 'special',
+        action: "window.location.href='https://discord.com/oauth2/authorize?client_id=1371513819104415804&permissions=2815042428980240&integration_type=0&scope=bot+applications.commands'"
+    };
+
+    const fullList = [currentServer, ...others, homeCard, addCard];
+
+    // Note for Home Icon: Using a generic one or the user's Nite bot icon but different color? 
+    // Let's use a white house icon or similar. 
+    // Since I can't browse for icons, I'll use a direct reliable SVG data URI or just the Nite logo again but different title.
+    // Actually, "Homepage" usually implies the Dashboard list.
+    // Let's use the provided logic.
+
+    const defaultIcon = "https://cdn.discordapp.com/embed/avatars/0.png";
+
+    el.innerHTML = fullList.map((s, i) => {
+        const isCurrent = s.type === 'current';
+        const isSpecial = s.type === 'special';
+
+        const safeName = s.name ? decodeURIComponent(s.name).replace(/"/g, '&quot;') : "Unknown";
+        let safeIcon = s.picture_url || defaultIcon;
+        safeIcon = decodeURIComponent(safeIcon).replace(/"/g, '&quot;');
+
+        // Navigation Logic
+        let clickAction = "";
+        let cardStyle = "cursor:pointer; width:100%; box-sizing:border-box;";
+
+        if (isCurrent) {
+            // "Home" action (Refresh or Dashboard?)
+            // User requested "Homepage" separate card.
+            // So Main Card just stays as anchor. Maybe refresh?
+            // "Clicking the main card goes back to the dashboard" was previous request.
+            // Now "two extra cards 'Homepage'". So Main Card behavior might be redundant or just "Close Switcher".
+            // Let's make Main Card toggle/close switcher (desktop click -> index.html was old behavior).
+            // Let's keep Main Card -> index.html for consistency unless specified.
+            clickAction = "window.location.href='index.html'";
+            cardStyle += "border: 1px solid #5865F2;";
+            // FIX: Remove blur/animation from MAIN card
+            cardStyle += "filter: none !important; animation: none !important;";
+        } else if (isSpecial) {
+            clickAction = s.action;
+        } else {
+            // Switch Server action
+            const params = new URLSearchParams(window.location.search);
+            params.set('id', s.id);
+            params.set('name', s.name);
+            params.set('icon', s.picture_url || defaultIcon);
+            const dest = `manage.html?${params.toString()}`;
+            clickAction = `window.location.href='${dest}'`;
+        }
+
+        // Animation Delay
+        // Item 0 (Current) has NO delay and NO animation (it's the anchor).
+        // Items > 0 have delay.
+        const delay = i * 0.05;
+
+        const popClass = i > 0 ? 'server-card-pop' : '';
+        // Special styling for avatars
+        let imgStyle = "";
+
+        if (s.name === 'Add to server') {
+            imgStyle = 'background-color: #5865F2; padding: 2px;';
+        } else if (s.name === 'Homepage') {
+            // White bg for contrast
+            imgStyle = 'background-color: #ffffff; padding: 4px; border-radius: 50%;';
+        }
+
+        // FIX: Ensure Current Server Image has NO blur/animation
+        if (isCurrent) {
+            imgStyle += ' filter: none !important; -webkit-filter: none !important; animation: none !important;';
+        }
+
+        return `
+        <div class="server-card ${popClass}" 
+             onclick="${clickAction}"
+             style="${cardStyle} ${i > 0 ? `animation-delay: ${delay}s;` : ''}">
+            <img src="${safeIcon}" class="server-avatar" style="${imgStyle}">
+            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:100%;">${safeName}</span>
+        </div>`;
+    }).join('');
+}
