@@ -58,7 +58,7 @@ function logout() {
 function toggleLogoutMenu() {
     const btn = document.getElementById('loginbtn');
     const container = document.getElementById('logOutContainer');
-    
+
     // Simple toggle logic
     if (container.classList.contains('active')) {
         btn.classList.remove('expanded');
@@ -68,6 +68,14 @@ function toggleLogoutMenu() {
         container.classList.add('active');
     }
 }
+
+// Fix: Alias closeLogout for HTML onclick compatibility
+window.closeLogout = function () {
+    const btn = document.getElementById('loginbtn');
+    const container = document.getElementById('logOutContainer');
+    if (btn) btn.classList.remove('expanded');
+    if (container) container.classList.remove('active');
+};
 
 // SECURITY CRITICAL: Handle the postMessage from the popup
 window.addEventListener("message", (e) => {
@@ -81,7 +89,7 @@ window.addEventListener("message", (e) => {
 
         // Update UI immediately without reloading page
         updateDashUI(e.data.username);
-        fetchServers(); 
+        fetchServers();
     }
 });
 
@@ -122,13 +130,13 @@ async function fetchServers() {
         });
 
         btn.innerText = "Please wait...";
-        
+
         // Polling loop (max 30 seconds)
         let attempts = 0;
         while (attempts < 30) {
             attempts++;
             status.innerText = `Syncing... (${attempts}/30)`;
-            
+
             // Cache busting with timestamp
             const checkRes = await fetch(`${CONFIG.API_URL}/check?t=${Date.now()}`, {
                 headers: { "Authorization": token },
@@ -138,13 +146,13 @@ async function fetchServers() {
             if (checkRes.status === 200) {
                 const data = await checkRes.json();
                 renderServers(data.servers);
-                
+
                 btn.innerText = "Refresh List";
                 btn.disabled = false;
                 status.innerText = "Select a server";
                 return; // Success
             }
-            
+
             // Wait 1 second before next try
             await new Promise(r => setTimeout(r, 1000));
         }
@@ -182,7 +190,7 @@ function renderServers(list) {
         const safeIcon = escapeHtml(iconUrl);
 
         // Staggered animation delay
-        const delay = i * 0.05; 
+        const delay = i * 0.05;
 
         return `
         <div class="server-card" 
@@ -213,13 +221,17 @@ function handleServerTransition(element) {
     const overlay = document.createElement('div');
     overlay.className = 'page-transition-overlay';
     document.body.appendChild(overlay);
-    
+
     // Force Reflow
-    requestAnimationFrame(() => overlay.classList.add('active'));
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            overlay.classList.add('active');
+        });
+    });
 
     // 2. Create Flying Element
     const flyer = element.cloneNode(true);
-    
+
     // Set CSS Variables for animation
     flyer.style.setProperty('--start-top', `${rect.top}px`);
     flyer.style.setProperty('--start-left', `${rect.left}px`);
@@ -243,15 +255,18 @@ function handleServerTransition(element) {
         width: `${rect.width}px`,
         height: `${rect.height}px`,
         margin: '0',
-        zIndex: '1000',
+        zIndex: '3001',
         pointerEvents: 'none' // Prevent double clicks
     });
+    // Explicitly set z-index style to override any potential specificity issues
+    flyer.style.zIndex = '6000';
 
     // Reset internal filters
     const innerImg = flyer.querySelector('img');
     if (innerImg) innerImg.style.filter = 'none';
 
-    document.body.appendChild(flyer);
+    card = document.body.appendChild(flyer);
+    card.style.setProperty('z-index', '6000', 'important');
     element.style.visibility = 'hidden';
 
     // 3. Trigger Animation
@@ -282,9 +297,9 @@ function init() {
     if (savedToken && savedUser) {
         // 1. Update the UI to show the dashboard immediately
         updateDashUI(savedUser);
-        
+
         // 2. Automatically start fetching servers
-        fetchServers(); 
+        fetchServers();
     }
 }
 

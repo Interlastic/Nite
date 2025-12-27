@@ -353,7 +353,7 @@ button:disabled {
 /* Go to top left of screen */
 @keyframes goToCorner {
     0% {
-        position: absolute;
+        position: relative;
     }
 
     to {
@@ -373,7 +373,7 @@ button:disabled {
     transform: translateY(-4px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     border-color: var(--btn);
-    animation: unblurEntry 0.8s ease-out forwards;
+    animation: unblurEntry 0.8s ease-out forwards, goToCorner 0.8s ease-out forwards;
 }
 
 .server-card img {
@@ -991,11 +991,14 @@ input:checked+.slider:before {
     transform-origin: top left !important;
     /* Fix: Match settings.js static card origin */
     position: fixed !important;
-    z-index: 1000 !important;
+    z-index: 6000 !important;
+    /* Above everything */
     animation: flyToCorner 0.7s forwards !important;
     pointer-events: none;
     /* Reset transition as we are using animation now */
     transition: none !important;
+    filter: none !important;
+    -webkit-filter: none !important;
 }
 
 @keyframes flyToCorner {
@@ -1025,7 +1028,8 @@ input:checked+.slider:before {
     width: 100vw;
     height: 100vh;
     background: #000;
-    z-index: 999;
+    z-index: 2500 !important;
+    /* Below card, above most things */
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.6s ease;
