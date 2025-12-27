@@ -28,6 +28,7 @@ window.addEventListener("message", e => {
     if (e.data.type === "LOGIN_SUCCESS") {
         setCookie("auth_token", e.data.token);
         setCookie("auth_user", e.data.username);
+        location.reload()
         showDash(e.data.username);
     }
 });
