@@ -1,45 +1,52 @@
-const WORKER = "https://api.niteapiworker.workers.dev";
-let GLOBAL_COMMANDS = [];
+/**
+ * CONFIGURATION
+ */
+const CONFIG = {
+    API_URL: "https://api.niteapiworker.workers.dev",
+    DISCORD_CLIENT_ID: "1371513819104415804",
+    // Used for the "Add to Server" card
+    INVITE_URL: "https://discord.com/oauth2/authorize?client_id=1371513819104415804&permissions=2815042428980240&integration_type=0&scope=bot+applications.commands"
+};
 
-function setCookie(n, v) {
-    document.cookie = n + "=" + v + ";path=/;max-age=604800";
+/**
+ * UTILITIES & COOKIES
+ */
+function setCookie(name, value, days = 7) {
+    const d = new Date();
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    // Security Fix: Added Secure and SameSite=Lax
+    document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()};Secure;SameSite=Lax`;
 }
 
-function getCookie(n) {
-    return (document.cookie.match(new RegExp('(^| )' + n + '=([^;]+)')) || [])[2];
+function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : null;
 }
 
-const savedUser = getCookie("auth_user");
-if (getCookie("auth_token")) showDash(savedUser);
+function escapeHtml(text) {
+    if (!text) return "";
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
+/**
+ * AUTHENTICATION LOGIC
+ */
 function handleAuthClick() {
     if (!getCookie("auth_token")) {
         openLogin();
     } else {
-        openLogout();
+        toggleLogoutMenu();
     }
 }
 
 function openLogin() {
-    window.open(WORKER + "/auth", "Login", "width=500,height=800");
-}
-
-window.addEventListener("message", e => {
-    if (e.data.type === "LOGIN_SUCCESS") {
-        setCookie("auth_token", e.data.token);
-        setCookie("auth_user", e.data.username);
-        location.reload()
-        showDash(e.data.username);
-    }
-});
-
-function showDash(u) {
-    const lbl = document.getElementById('lbl-btn-username');
-    if (lbl) lbl.innerText = u || "User";
-
-    document.getElementById('view-login').classList.add('hide');
-    document.getElementById('view-dash').classList.remove('hide');
-    document.getElementById('lbl-user').innerText = u || "User";
+    // Opens the worker auth endpoint
+    window.open(CONFIG.API_URL + "/auth", "Login", "width=500,height=800");
 }
 
 function logout() {
@@ -48,41 +55,82 @@ function logout() {
     location.reload();
 }
 
-function openLogout() {
-    document.getElementById('loginbtn').classList.add('expanded');
-    document.getElementById('logOutContainer').classList.add('active');
+function toggleLogoutMenu() {
+    const btn = document.getElementById('loginbtn');
+    const container = document.getElementById('logOutContainer');
+    
+    // Simple toggle logic
+    if (container.classList.contains('active')) {
+        btn.classList.remove('expanded');
+        container.classList.remove('active');
+    } else {
+        btn.classList.add('expanded');
+        container.classList.add('active');
+    }
 }
 
-function closeLogout() {
-    document.getElementById('loginbtn').classList.remove('expanded');
-    document.getElementById('logOutContainer').classList.remove('active');
+// SECURITY CRITICAL: Handle the postMessage from the popup
+window.addEventListener("message", (e) => {
+    // 1. Verify Origin
+    if (e.origin !== CONFIG.API_URL) return;
+
+    // 2. Handle Login
+    if (e.data.type === "LOGIN_SUCCESS") {
+        setCookie("auth_token", e.data.token);
+        setCookie("auth_user", e.data.username);
+
+        // Update UI immediately without reloading page
+        updateDashUI(e.data.username);
+        fetchServers(); 
+    }
+});
+
+/**
+ * UI STATE MANAGEMENT
+ */
+function updateDashUI(username) {
+    const userLabel = document.getElementById('lbl-btn-username');
+    const dashLabel = document.getElementById('lbl-user');
+    const loginView = document.getElementById('view-login');
+    const dashView = document.getElementById('view-dash');
+
+    if (userLabel) userLabel.innerText = username || "User";
+    if (dashLabel) dashLabel.innerText = username || "User";
+
+    if (loginView) loginView.classList.add('hide');
+    if (dashView) dashView.classList.remove('hide');
 }
 
-async function startFlow() {
+/**
+ * DATA FETCHING
+ */
+async function fetchServers() {
     const btn = document.getElementById('btn-get');
     const status = document.getElementById('status');
     const token = getCookie("auth_token");
+
+    if (!token) return; // Safety check
 
     btn.disabled = true;
     btn.innerText = "Collecting Servers...";
     document.getElementById('server-list').innerHTML = "";
 
     try {
-        let res = await fetch(WORKER + "/trigger", {
+        // Trigger the backend process
+        await fetch(CONFIG.API_URL + "/trigger", {
             headers: { "Authorization": token }
         });
 
-        if (res.status === 401) {
-        }
-
-        btn.innerText = "Please have patience.";
+        btn.innerText = "Please wait...";
+        
+        // Polling loop (max 30 seconds)
         let attempts = 0;
-
         while (attempts < 30) {
             attempts++;
-            status.innerText = `Checking... (${attempts}/30)`;
-            let checkUrl = `${WORKER}/check?t=${Date.now()}`;
-            let checkRes = await fetch(checkUrl, {
+            status.innerText = `Syncing... (${attempts}/30)`;
+            
+            // Cache busting with timestamp
+            const checkRes = await fetch(`${CONFIG.API_URL}/check?t=${Date.now()}`, {
                 headers: { "Authorization": token },
                 cache: "no-store"
             });
@@ -90,139 +138,153 @@ async function startFlow() {
             if (checkRes.status === 200) {
                 const data = await checkRes.json();
                 renderServers(data.servers);
-                btn.innerText = "Refresh";
+                
+                btn.innerText = "Refresh List";
                 btn.disabled = false;
-                status.innerText = "Have fun! - Nite";
-                return;
+                status.innerText = "Select a server";
+                return; // Success
             }
+            
+            // Wait 1 second before next try
             await new Promise(r => setTimeout(r, 1000));
         }
+
         throw new Error("Timed Out");
+
     } catch (e) {
-        status.innerText = "Error";
+        console.error(e);
+        status.innerText = "Failed to sync servers.";
         btn.disabled = false;
         btn.innerText = "Try Again";
     }
 }
 
 function renderServers(list) {
-    const el = document.getElementById('server-list');
+    const container = document.getElementById('server-list');
+    const defaultIcon = "https://cdn.discordapp.com/embed/avatars/0.png";
 
-    if (!list || list.length === 0) {
-        el.innerHTML = `<div class="server-card" onclick="window.location.href='https://discord.com/oauth2/authorize?client_id=1371513819104415804&permissions=2815042428980240&integration_type=0&scope=bot+applications.commands'">
-            <img src="plus.svg" alt="Nite" class="server-avatar" title="Nite" style="background-color: #202225;">
+    // Helper HTML for the "Add Bot" card
+    const addCardHtml = `
+        <div class="server-card" onclick="window.location.href='${CONFIG.INVITE_URL}'">
+            <img src="plus.svg" class="server-avatar" alt="Add" style="background-color: #202225;">
             <span>Add to server</span>
         </div>`;
+
+    if (!list || list.length === 0) {
+        container.innerHTML = addCardHtml;
         return;
     }
 
-    // Fallback image if picture_url is empty
-    const defaultIcon = "https://cdn.discordapp.com/embed/avatars/0.png";
-    el.innerHTML = list.map((s, i) => {
-        // Safe attribute handling
-        const safeName = s.name.replace(/"/g, '&quot;');
-        const safeIcon = (s.picture_url || defaultIcon).replace(/"/g, '&quot;');
+    // Build Server Cards
+    const cardsHtml = list.map((s, i) => {
+        const safeName = escapeHtml(s.name);
+        const iconUrl = s.picture_url || defaultIcon;
+        const safeIcon = escapeHtml(iconUrl);
+
+        // Staggered animation delay
+        const delay = i * 0.05; 
 
         return `
         <div class="server-card" 
              data-id="${s.id}" 
              data-name="${safeName}" 
              data-icon="${safeIcon}"
-             onclick="handleServerClick(this)" 
-             style="animation-delay: ${i * 0.1}s;animation-duration: ${i * 0.1 + 0.4}s;">
-            <img src="${s.picture_url || defaultIcon}" class="server-avatar" alt="${safeName}" title="${safeName}" style="animation-delay: ${i * 0.1}s;animation-duration: ${i * 0.1}s;">
-            <span>${s.name}</span>
+             onclick="handleServerTransition(this)" 
+             style="animation-delay: ${delay}s;">
+            <img src="${iconUrl}" 
+                 class="server-avatar" 
+                 alt="${safeName}" 
+                 loading="lazy">
+            <span>${safeName}</span>
         </div>`;
     }).join('');
-    el.innerHTML += `<div class="server-card" onclick="window.location.href='https://discord.com/oauth2/authorize?client_id=1371513819104415804&permissions=2815042428980240&integration_type=0&scope=bot+applications.commands'">
-            <img src="https://cdn.discordapp.com/avatars/1371513819104415804/9e038eeb716c24ece29276422b52cc80.webp?size=320" class="server-avatar" alt="Nite" title="Nite" style="background-color: #5865F2;stroke: #000000ff;stroke-width: 5px;">
-            <span>Add to server</span>
-        </div>`
+
+    container.innerHTML = cardsHtml + addCardHtml;
 }
 
-document.addEventListener('DOMContentLoaded',
-    startFlow()
-)
+/**
+ * ANIMATION & NAVIGATION
+ */
+function handleServerTransition(element) {
+    const { id, name, icon } = element.dataset;
+    const rect = element.getBoundingClientRect();
 
-function handleServerClick(element) {
-    const id = element.dataset.id;
-    const name = element.dataset.name;
-    const iconUrl = element.dataset.icon;
-
-    // 1. Create the overlay for dimming (Complete darkness)
+    // 1. Create Dimming Overlay
     const overlay = document.createElement('div');
     overlay.className = 'page-transition-overlay';
     document.body.appendChild(overlay);
+    
+    // Force Reflow
+    requestAnimationFrame(() => overlay.classList.add('active'));
 
-    // Force reflow
-    void overlay.offsetWidth;
-    overlay.classList.add('active');
-
-    // 2. Calculate current position for Animation
-    const rect = element.getBoundingClientRect();
-
-    // 3. Clone the element to fly
+    // 2. Create Flying Element
     const flyer = element.cloneNode(true);
+    
+    // Set CSS Variables for animation
+    flyer.style.setProperty('--start-top', `${rect.top}px`);
+    flyer.style.setProperty('--start-left', `${rect.left}px`);
+    flyer.style.setProperty('--start-width', `${rect.width}px`);
+    flyer.style.setProperty('--start-height', `${rect.height}px`);
 
-    // Set CSS Variables for the animation start position
-    flyer.style.setProperty('--start-top', rect.top + 'px');
-    flyer.style.setProperty('--start-left', rect.left + 'px');
-
-    // Set initial fixed position on clone (start state)
-    flyer.style.position = 'fixed';
-    flyer.style.left = rect.left + 'px';
-    flyer.style.top = rect.top + 'px';
-    flyer.style.width = rect.width + 'px';
-    flyer.style.height = rect.height + 'px';
-    flyer.style.margin = '0';
-    flyer.style.zIndex = '1000'; // Higher than overlay
-
-    // Determine Destination (Desktop: Top-Left, Mobile: Bottom-Left)
-    // Mobile breakpoint: 768px (standard)
-    let endTop = '20px'; // Default Desktop
+    // Determine End Position (Responsive)
+    // Desktop: Top-Left (20px) | Mobile: Bottom-Left
+    let endTop = '20px';
     if (window.innerWidth <= 768) {
-        // Mobile: Bottom Left
-        // Position: Viewport Height - Margin - Scaled Height
-        // Scaled Height = rect.height * 0.6
-        // We use window.innerHeight to be safe
         const scaledHeight = rect.height * 0.6;
-        endTop = (window.innerHeight - 20 - scaledHeight) + 'px';
+        endTop = `${window.innerHeight - 20 - scaledHeight}px`;
     }
     flyer.style.setProperty('--end-top', endTop);
 
-    // Reset styles that might interfere
-    flyer.style.animation = 'none';
-    flyer.style.transition = 'none';
-    flyer.style.filter = 'blur(0px)';
-    flyer.style.webkitFilter = 'blur(0px)';
+    // Initial Styles
+    Object.assign(flyer.style, {
+        position: 'fixed',
+        left: `${rect.left}px`,
+        top: `${rect.top}px`,
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+        margin: '0',
+        zIndex: '1000',
+        pointerEvents: 'none' // Prevent double clicks
+    });
 
-    // Fix inner image blur
+    // Reset internal filters
     const innerImg = flyer.querySelector('img');
-    if (innerImg) {
-        innerImg.style.filter = 'blur(0px)';
-        innerImg.style.webkitFilter = 'blur(0px)';
-        innerImg.style.animation = 'none';
-        innerImg.style.transition = 'none';
-    }
+    if (innerImg) innerImg.style.filter = 'none';
 
     document.body.appendChild(flyer);
-
-    // Hide original
     element.style.visibility = 'hidden';
 
-    // Force reflow
-    void flyer.offsetWidth;
+    // 3. Trigger Animation
+    requestAnimationFrame(() => {
+        flyer.classList.add('flying-card');
+    });
 
-    // 4. Add the animation class which triggers the Keyframe Animation
-    flyer.classList.add('flying-card');
-
-    // Note: No need for requestAnimationFrame to set left/top to 20px, 
-    // the @keyframes 'flyToCorner' handles it using the CSS variables.
-
-    // 5. Navigate after animation
+    // 4. Navigate
     setTimeout(() => {
-        // Encode parameters
-        const dest = `manage.html?id=${id}&name=${encodeURIComponent(name)}&icon=${encodeURIComponent(iconUrl)}&width=${rect.width}&height=${rect.height}`;
-        window.location.href = dest;
+        const params = new URLSearchParams({
+            id: id,
+            name: name,
+            icon: icon,
+            width: rect.width,
+            height: rect.height
+        });
+        window.location.href = `manage.html?${params.toString()}`;
     }, 600);
 }
+
+/**
+ * INITIALIZATION
+ */
+function init() {
+    const savedUser = getCookie("auth_user");
+    const savedToken = getCookie("auth_token");
+
+    if (savedToken && savedUser) {
+        updateDashUI(savedUser);
+        // Optional: Auto-fetch on load if you want
+        // fetchServers(); 
+    }
+}
+
+// Correct event listener syntax
+document.addEventListener('DOMContentLoaded', init);
