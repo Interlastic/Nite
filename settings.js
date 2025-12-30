@@ -424,7 +424,7 @@ function animateContent(oldTab, newTab, oldIdx, newIdx) {
 async function saveChanges() {
     const btn = document.getElementById('btn-save-changes');
     const status = document.getElementById('save-status');
-    const serverId = document.getElementById('lbl-server-id').innerText;
+    const serverId = document.getElementById('lbl-server-id').textContent.trim(); // Use textContent as innerText relies on visibility
     const token = getCookie("auth_token");
 
     if (!serverId || serverId === "Loading...") return;
@@ -500,6 +500,32 @@ async function saveChanges() {
                 }
             });
         });
+
+        // --- HARDCODED FIXES FOR WELCOME/GOODBYE ---
+        // Backend expects 'welcome_messages' to be an Array (if enabled) or False (if disabled).
+        // It does not use 'welcome_enabled_bool'.
+        if (payload.welcome_enabled_bool === false) {
+            payload.welcome_messages = false;
+        }
+        delete payload.welcome_enabled_bool;
+
+        if (payload.goodbye_enabled_bool === false) {
+            payload.goodbye_messages = false;
+        }
+        delete payload.goodbye_enabled_bool;
+
+        // Ensure they are arrays if not false
+        if (payload.welcome_messages && !Array.isArray(payload.welcome_messages)) {
+            // Fallback if generic splitter failed (though it shouldn't)
+            if (typeof payload.welcome_messages === 'string') {
+                payload.welcome_messages = payload.welcome_messages.split('|').map(s => s.trim()).filter(s => s.length > 0);
+            }
+        }
+        if (payload.goodbye_messages && !Array.isArray(payload.goodbye_messages)) {
+            if (typeof payload.goodbye_messages === 'string') {
+                payload.goodbye_messages = payload.goodbye_messages.split('|').map(s => s.trim()).filter(s => s.length > 0);
+            }
+        }
 
         // --- SEND TO WORKER ---
         status.innerText = "Sending to Bot...";
