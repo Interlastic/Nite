@@ -1,0 +1,213 @@
+[
+  {
+    "id": "tab-general",
+    "name": "General",
+    "icon": "settings",
+    "settings": [
+      {
+        "type": "header",
+        "text": "General Settings"
+      },
+      {
+        "type": "switch",
+        "key": "bot_enabled",
+        "label": "Enable Bot",
+        "sublabel": "Toggle the main bot functionality."
+      },
+      {
+        "type": "title",
+        "text": "Modes"
+      },
+      {
+        "type": "select",
+        "key": "regenerate_mode",
+        "label": "Regeneration Mode",
+        "options": [
+          {
+            "val": "0",
+            "txt": "Button Only (No Command)"
+          },
+          {
+            "val": "1",
+            "txt": "Command Only (Default)"
+          },
+          {
+            "val": "2",
+            "txt": "Reaction (Broken)"
+          },
+          {
+            "val": "3",
+            "txt": "All (Button + Cmd + React)"
+          },
+          {
+            "val": "4",
+            "txt": "Disabled"
+          }
+        ],
+        "default": "1"
+      },
+      {
+        "type": "select",
+        "key": "ping_state",
+        "label": "Mention Behavior",
+        "options": [
+          {
+            "val": "1",
+            "txt": "Nite (Default)"
+          },
+          {
+            "val": "4",
+            "txt": "Ask (Useful)"
+          },
+          {
+            "val": "3",
+            "txt": "Think"
+          },
+          {
+            "val": "2",
+            "txt": "Dream"
+          }
+        ],
+        "default": "1"
+      }
+    ]
+  },
+  {
+    "id": "tab-commands",
+    "name": "Commands",
+    "icon": "terminal",
+    "settings": [
+      {
+        "type": "header",
+        "text": "Command Permissions"
+      },
+      {
+        "type": "text",
+        "text": "Enable or disable specific slash commands for this server.",
+        "style": "color:#aaa; font-size:0.9rem; margin-bottom:20px;"
+      },
+      {
+        "type": "commandList"
+      }
+    ]
+  },
+  {
+    "id": "tab-welcome",
+    "name": "Welcome & Bye",
+    "icon": "door-open",
+    "settings": [
+      {
+        "type": "header",
+        "text": "Welcome & Goodbye"
+      },
+      {
+        "type": "title",
+        "text": "Welcome Messages"
+      },
+      {
+        "type": "switch",
+        "key": "welcome_enabled_bool",
+        "label": "Enable Welcome Messages",
+        "sublabel": ""
+      },
+      {
+        "type": "textarea",
+        "key": "welcome_messages",
+        "label": "Messages",
+        "placeholder": "Separate with | . Use {mention} for user.",
+        "join": " | "
+      },
+      {
+        "type": "channelPick",
+        "key": "welcome_channel",
+        "label": "Welcome Channel"
+      },
+      {
+        "type": "switch",
+        "key": "welcome_show_join_number",
+        "label": "Show Join Number",
+        "sublabel": "e.g. 'Member #42'"
+      },
+      {
+        "type": "switch",
+        "key": "welcome_show_roles",
+        "label": "Show Roles",
+        "sublabel": "Display assigned roles"
+      },
+      {
+        "type": "title",
+        "text": "Goodbye Messages"
+      },
+      {
+        "type": "switch",
+        "key": "goodbye_enabled_bool",
+        "label": "Enable Goodbye Messages",
+        "sublabel": ""
+      },
+      {
+        "type": "textarea",
+        "key": "goodbye_messages",
+        "label": "Messages",
+        "placeholder": "Separate with |",
+        "join": " | "
+      },
+      {
+        "type": "channelPick",
+        "key": "goodbye_channel",
+        "label": "Goodbye Channel"
+      }
+    ]
+  },
+  {
+    "id": "tab-ai",
+    "name": "AI & Threads",
+    "icon": "sparkles",
+    "settings": [
+      {
+        "type": "header",
+        "text": "AI & Thread Support"
+      },
+      {
+        "type": "title",
+        "text": "Auto Flair"
+      },
+      {
+        "type": "switch",
+        "key": "auto_flair_enabled",
+        "label": "Enable Auto Flair",
+        "sublabel": "AI adds tags to new posts."
+      },
+      {
+        "type": "textarea",
+        "key": "auto_flair_options",
+        "label": "Flair Options",
+        "placeholder": "Separate with |",
+        "default": "Bug | Suggestion",
+        "join": " | "
+      },
+      {
+        "type": "title",
+        "text": "Auto Help"
+      },
+      {
+        "type": "switch",
+        "key": "auto_help_enabled",
+        "label": "Enable Auto Help",
+        "sublabel": "AI suggests answers from past threads."
+      },
+      {
+        "type": "title",
+        "text": "Support Channels"
+      },
+      {
+        "type": "text",
+        "text": "Select Forum Channels (IDs)",
+        "style": "font-size:0.8rem; color:#aaa;"
+      },
+      {
+        "type": "supportChannelList",
+        "key": "support_channels"
+      }
+    ]
+  }
+]
