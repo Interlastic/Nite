@@ -209,5 +209,29 @@
         "key": "support_channels"
       }
     ]
+  },
+  {
+    "id": "tab-additional",
+    "name": "Additional",
+    "icon": "cog",
+    "settings": [
+      {
+        "type": "header",
+        "text": "Additional Stuff"
+      },
+      {
+        "type": "title",
+        "text": "Auto Reactions"
+      },
+      {
+        "type": "dict",
+        "key": "auto_reacts",
+        "label": "Auto Reactions",
+        "sublabel": "Auto react to messages with specific content.",
+        "keyPlaceholder": "Content",
+        "valuePlaceholder": "Emoji",
+        "help": "(?i)text = case-insensitive match\n\\p{Emoji} = match any emoji\n\bword\b = match whole word only\n(a|b) = match \"a\" OR \"b\"\nFull guide: https://nite.mingalabs.com/pattern-matching"
+      }
+    ]
   }
 ]

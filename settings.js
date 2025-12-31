@@ -231,19 +231,19 @@ function renderSettingsList(settingsList) {
     settingsList.forEach(item => {
         switch (item.type) {
             case 'header':
-                html += `<h2>${item.text}</h2>`;
+                html += `<h2>${item.text}${createHelpIcon(item.help)}</h2>`;
                 break;
             case 'text':
                 html += `<p style="${item.style || ''}">${item.text}</p>`;
                 break;
             case 'title':
-                html += `<div class="section-title">${item.text}</div>`;
+                html += `<div class="section-title">${item.text}${createHelpIcon(item.help)}</div>`;
                 break;
             case 'switch':
-                html += createToggle(item.key, item.label, item.sublabel, GLOBAL_SETTINGS[item.key] !== false);
+                html += createToggle(item.key, item.label, item.sublabel, GLOBAL_SETTINGS[item.key] !== false, item.help);
                 break;
             case 'select':
-                html += createSelect(item.key, item.label, item.options, GLOBAL_SETTINGS[item.key] || item.default);
+                html += createSelect(item.key, item.label, item.options, GLOBAL_SETTINGS[item.key] || item.default, item.help);
                 break;
             case 'textarea':
                 let val = GLOBAL_SETTINGS[item.key];
@@ -252,10 +252,13 @@ function renderSettingsList(settingsList) {
                 } else if (typeof val !== 'string') {
                     val = item.default || "";
                 }
-                html += createTextarea(item.key, item.label, item.placeholder, val);
+                html += createTextarea(item.key, item.label, item.placeholder, val, item.help);
                 break;
             case 'channelPick':
-                html += createChannelSelect(item.key, item.label, GLOBAL_SETTINGS[item.key]);
+                html += createChannelSelect(item.key, item.label, GLOBAL_SETTINGS[item.key], item.help);
+                break;
+            case 'dict':
+                html += createDict(item.key, item.label, GLOBAL_SETTINGS[item.key] || {}, item.keyPlaceholder, item.valuePlaceholder, item.help);
                 break;
             case 'commandList':
                 html += renderCommandList();
@@ -320,11 +323,17 @@ function renderSupportChannelList(key) {
 
 // --- HELPER COMPONENT GENERATORS ---
 
-function createToggle(id, label, sublabel, checked) {
+// Help Icon Generator
+function createHelpIcon(helpText) {
+    if (!helpText) return '';
+    return `<span class="help-icon" data-tooltip="${helpText.replace(/"/g, '&quot;')}">?</span>`;
+}
+
+function createToggle(id, label, sublabel, checked, help) {
     return `
     <div class="toggle-wrapper">
         <div class="toggle-label-group">
-            <span class="form-label" style="margin:0;">${label}</span>
+            <span class="form-label" style="margin:0;">${label}${createHelpIcon(help)}</span>
             ${sublabel ? `<span class="form-sublabel" style="margin:0;">${sublabel}</span>` : ''}
         </div>
         <label class="switch">
@@ -334,24 +343,24 @@ function createToggle(id, label, sublabel, checked) {
     </div>`;
 }
 
-function createSelect(id, label, options, selectedVal) {
+function createSelect(id, label, options, selectedVal, help) {
     let opts = options.map(o => `<option value="${o.val}" ${String(o.val) === String(selectedVal) ? 'selected' : ''}>${o.txt}</option>`).join('');
     return `
     <div class="form-group">
-        <label class="form-label">${label}</label>
+        <label class="form-label">${label}${createHelpIcon(help)}</label>
         <select id="${id}" class="styled-select">${opts}</select>
     </div>`;
 }
 
-function createTextarea(id, label, placeholder, value) {
+function createTextarea(id, label, placeholder, value, help) {
     return `
     <div class="form-group">
-        <label class="form-label">${label}</label>
+        <label class="form-label">${label}${createHelpIcon(help)}</label>
         <textarea id="${id}" class="styled-textarea" placeholder="${placeholder}">${value}</textarea>
     </div>`;
 }
 
-function createChannelSelect(id, label, selectedId) {
+function createChannelSelect(id, label, selectedId, help) {
     const targetId = selectedId ? String(selectedId) : "";
     const channels = GLOBAL_CHANNELS.filter(c =>
         String(c.type) === '0' ||
@@ -373,11 +382,55 @@ function createChannelSelect(id, label, selectedId) {
 
     return `
     <div class="form-group">
-        <label class="form-label">${label}</label>
+        <label class="form-label">${label}${createHelpIcon(help)}</label>
         <select id="${id}" class="styled-select">
             ${opts}
         </select>
     </div>`;
+}
+
+// --- DICT TYPE ---
+function createDict(id, label, dictData, keyPlaceholder, valuePlaceholder, help) {
+    const keyPh = keyPlaceholder || 'Key';
+    const valPh = valuePlaceholder || 'Value';
+
+    let rowsHtml = '';
+    const entries = Object.entries(dictData || {});
+    entries.forEach(([key, value], idx) => {
+        rowsHtml += createDictRow(id, idx, key, value, keyPh, valPh);
+    });
+
+    return `
+    <div class="form-group dict-container" data-dict-id="${id}">
+        <label class="form-label">${label}${createHelpIcon(help)}</label>
+        <div class="dict-rows" id="dict-rows-${id}">
+            ${rowsHtml}
+        </div>
+        <button type="button" class="dict-add-btn" onclick="addDictRow('${id}', '${keyPh}', '${valPh}')">
+            + Add
+        </button>
+    </div>`;
+}
+
+function createDictRow(dictId, idx, keyVal, valueVal, keyPh, valPh) {
+    return `
+    <div class="dict-row" data-row-idx="${idx}">
+        <button type="button" class="dict-remove-btn" onclick="removeDictRow(this)">−</button>
+        <input type="text" class="styled-input dict-key" placeholder="${keyPh}" value="${(keyVal || '').replace(/"/g, '&quot;')}">
+        <input type="text" class="styled-input dict-value" placeholder="${valPh}" value="${(valueVal || '').replace(/"/g, '&quot;')}">
+    </div>`;
+}
+
+function addDictRow(dictId, keyPh, valPh) {
+    const container = document.getElementById(`dict-rows-${dictId}`);
+    const idx = container.querySelectorAll('.dict-row').length;
+    const rowHtml = createDictRow(dictId, idx, '', '', keyPh, valPh);
+    container.insertAdjacentHTML('beforeend', rowHtml);
+}
+
+function removeDictRow(btn) {
+    const row = btn.closest('.dict-row');
+    if (row) row.remove();
 }
 
 // --- NAVIGATION ---
@@ -497,6 +550,21 @@ async function saveChanges() {
                 else if (item.type === 'supportChannelList') {
                     const chks = document.querySelectorAll(`.support-channel-chk[data-setting-key="${item.key}"]:checked`);
                     payload[item.key] = Array.from(chks).map(cb => cb.value);
+                }
+                else if (item.type === 'dict') {
+                    const container = document.querySelector(`.dict-container[data-dict-id="${item.key}"]`);
+                    if (container) {
+                        const rows = container.querySelectorAll('.dict-row');
+                        const dictObj = {};
+                        rows.forEach(row => {
+                            const keyInput = row.querySelector('.dict-key');
+                            const valInput = row.querySelector('.dict-value');
+                            if (keyInput && valInput && keyInput.value.trim()) {
+                                dictObj[keyInput.value.trim()] = valInput.value;
+                            }
+                        });
+                        payload[item.key] = dictObj;
+                    }
                 }
             });
         });
