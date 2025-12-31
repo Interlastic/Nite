@@ -178,6 +178,7 @@ async function initSettingsFlow(serverId, token) {
 
 function renderInterface() {
     renderTabs();
+    initInputRestrictions(); // Apply restrictions to all inputs with data-only
     const firstTab = SETTINGS_CONFIG[0];
     if (firstTab) {
         // Set first tab as active
@@ -188,6 +189,13 @@ function renderInterface() {
         }
         document.getElementById(firstTab.id).classList.add('active');
     }
+}
+
+// Initialize input restrictions on all elements with data-only attribute
+function initInputRestrictions() {
+    document.querySelectorAll('[data-only]').forEach(el => {
+        applyInputRestriction(el, el.dataset.only);
+    });
 }
 
 function renderTabs() {
@@ -252,13 +260,13 @@ function renderSettingsList(settingsList) {
                 } else if (typeof val !== 'string') {
                     val = item.default || "";
                 }
-                html += createTextarea(item.key, item.label, item.placeholder, val, item.help);
+                html += createTextarea(item.key, item.label, item.placeholder, val, item.help, item.only);
                 break;
             case 'channelPick':
                 html += createChannelSelect(item.key, item.label, GLOBAL_SETTINGS[item.key], item.help);
                 break;
             case 'dict':
-                html += createDict(item.key, item.label, GLOBAL_SETTINGS[item.key] || {}, item.keyPlaceholder, item.valuePlaceholder, item.help);
+                html += createDict(item.key, item.label, GLOBAL_SETTINGS[item.key] || {}, item.keyPlaceholder, item.valuePlaceholder, item.help, item.keyOnly, item.valueOnly);
                 break;
             case 'commandList':
                 html += renderCommandList();
@@ -323,10 +331,49 @@ function renderSupportChannelList(key) {
 
 // --- HELPER COMPONENT GENERATORS ---
 
+// Escape special characters for HTML attributes and JSON
+function escapeForHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+// Input restriction patterns
+const INPUT_RESTRICTIONS = {
+    emoji: {
+        pattern: /^[\p{Emoji}\p{Emoji_Component}\s]*$/u,
+        filter: (val) => val.replace(/[^\p{Emoji}\p{Emoji_Component}\s]/gu, '')
+    },
+    numbers: {
+        pattern: /^[0-9]*$/,
+        filter: (val) => val.replace(/[^0-9]/g, '')
+    },
+    letters: {
+        pattern: /^[a-zA-Z]*$/,
+        filter: (val) => val.replace(/[^a-zA-Z]/g, '')
+    }
+};
+
+// Apply input restriction on an element
+function applyInputRestriction(inputEl, restrictionType) {
+    if (!restrictionType || !INPUT_RESTRICTIONS[restrictionType]) return;
+
+    const restriction = INPUT_RESTRICTIONS[restrictionType];
+    inputEl.addEventListener('input', function (e) {
+        const filtered = restriction.filter(this.value);
+        if (filtered !== this.value) {
+            this.value = filtered;
+        }
+    });
+}
+
 // Help Icon Generator
 function createHelpIcon(helpText) {
     if (!helpText) return '';
-    return `<span class="help-icon" data-tooltip="${helpText.replace(/"/g, '&quot;')}">?</span>`;
+    return `<span class="help-icon" data-tooltip="${escapeForHtml(helpText)}">?</span>`;
 }
 
 function createToggle(id, label, sublabel, checked, help) {
@@ -352,11 +399,12 @@ function createSelect(id, label, options, selectedVal, help) {
     </div>`;
 }
 
-function createTextarea(id, label, placeholder, value, help) {
+function createTextarea(id, label, placeholder, value, help, only) {
+    const onlyAttr = only ? `data-only="${only}"` : '';
     return `
     <div class="form-group">
         <label class="form-label">${label}${createHelpIcon(help)}</label>
-        <textarea id="${id}" class="styled-textarea" placeholder="${placeholder}">${value}</textarea>
+        <textarea id="${id}" class="styled-textarea" placeholder="${escapeForHtml(placeholder)}" ${onlyAttr}>${escapeForHtml(value)}</textarea>
     </div>`;
 }
 
@@ -390,42 +438,50 @@ function createChannelSelect(id, label, selectedId, help) {
 }
 
 // --- DICT TYPE ---
-function createDict(id, label, dictData, keyPlaceholder, valuePlaceholder, help) {
+function createDict(id, label, dictData, keyPlaceholder, valuePlaceholder, help, keyOnly, valueOnly) {
     const keyPh = keyPlaceholder || 'Key';
     const valPh = valuePlaceholder || 'Value';
+    const keyOnlyAttr = keyOnly || '';
+    const valOnlyAttr = valueOnly || '';
 
     let rowsHtml = '';
     const entries = Object.entries(dictData || {});
     entries.forEach(([key, value], idx) => {
-        rowsHtml += createDictRow(id, idx, key, value, keyPh, valPh);
+        rowsHtml += createDictRow(id, idx, key, value, keyPh, valPh, keyOnlyAttr, valOnlyAttr);
     });
 
     return `
-    <div class="form-group dict-container" data-dict-id="${id}">
+    <div class="form-group dict-container" data-dict-id="${id}" data-key-only="${keyOnlyAttr}" data-value-only="${valOnlyAttr}">
         <label class="form-label">${label}${createHelpIcon(help)}</label>
         <div class="dict-rows" id="dict-rows-${id}">
             ${rowsHtml}
         </div>
-        <button type="button" class="dict-add-btn" onclick="addDictRow('${id}', '${keyPh}', '${valPh}')">
+        <button type="button" class="dict-add-btn" onclick="addDictRow('${id}', '${escapeForHtml(keyPh)}', '${escapeForHtml(valPh)}', '${keyOnlyAttr}', '${valOnlyAttr}')">
             + Add
         </button>
     </div>`;
 }
 
-function createDictRow(dictId, idx, keyVal, valueVal, keyPh, valPh) {
+function createDictRow(dictId, idx, keyVal, valueVal, keyPh, valPh, keyOnly, valueOnly) {
+    const keyOnlyAttr = keyOnly ? `data-only="${keyOnly}"` : '';
+    const valOnlyAttr = valueOnly ? `data-only="${valueOnly}"` : '';
     return `
     <div class="dict-row" data-row-idx="${idx}">
         <button type="button" class="dict-remove-btn" onclick="removeDictRow(this)">−</button>
-        <input type="text" class="styled-input dict-key" placeholder="${keyPh}" value="${(keyVal || '').replace(/"/g, '&quot;')}">
-        <input type="text" class="styled-input dict-value" placeholder="${valPh}" value="${(valueVal || '').replace(/"/g, '&quot;')}">
+        <input type="text" class="styled-input dict-key" placeholder="${escapeForHtml(keyPh)}" value="${escapeForHtml(keyVal)}" ${keyOnlyAttr}>
+        <input type="text" class="styled-input dict-value" placeholder="${escapeForHtml(valPh)}" value="${escapeForHtml(valueVal)}" ${valOnlyAttr}>
     </div>`;
 }
 
-function addDictRow(dictId, keyPh, valPh) {
+function addDictRow(dictId, keyPh, valPh, keyOnly, valueOnly) {
     const container = document.getElementById(`dict-rows-${dictId}`);
     const idx = container.querySelectorAll('.dict-row').length;
-    const rowHtml = createDictRow(dictId, idx, '', '', keyPh, valPh);
+    const rowHtml = createDictRow(dictId, idx, '', '', keyPh, valPh, keyOnly, valueOnly);
     container.insertAdjacentHTML('beforeend', rowHtml);
+    // Apply restrictions to new inputs
+    const newRow = container.lastElementChild;
+    if (keyOnly) applyInputRestriction(newRow.querySelector('.dict-key'), keyOnly);
+    if (valueOnly) applyInputRestriction(newRow.querySelector('.dict-value'), valueOnly);
 }
 
 function removeDictRow(btn) {
