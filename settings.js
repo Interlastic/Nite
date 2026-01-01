@@ -370,10 +370,17 @@ function applyInputRestriction(inputEl, restrictionType) {
     });
 }
 
-// Help Icon Generator
+// Help Icon Generator - creates actual HTML tooltip for clickable links
 function createHelpIcon(helpText) {
     if (!helpText) return '';
-    return `<span class="help-icon" data-tooltip="${escapeForHtml(helpText)}">?</span>`;
+    // Convert URLs to clickable links
+    const linkifiedText = escapeForHtml(helpText).replace(
+        /(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
+    // Convert \n to actual line breaks
+    const formattedText = linkifiedText.replace(/\\n/g, '<br>');
+    return `<span class="help-icon-wrapper"><span class="help-icon">?</span><span class="help-tooltip">${formattedText}</span></span>`;
 }
 
 function createToggle(id, label, sublabel, checked, help) {

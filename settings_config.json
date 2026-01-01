@@ -231,7 +231,7 @@
         "keyPlaceholder": "Content",
         "valuePlaceholder": "Emoji",
         "valueOnly": "emoji",
-        "help": "(?i)text = case-insensitive match\n\\p{Emoji} = match any emoji\n\bword\b = match whole word only\n(a|b) = match \"a\" OR \"b\"\nFull guide: https://nite.mingalabs.com/pattern-matching"
+        "help": "(?i)text = case-insensitive match\n\\p{Extended_Pictographic} = match any emoji\n\bword\b = match whole word only\n(a|b) = match \"a\" OR \"b\"\nFull guide: https://nite.mingalabs.com/pattern-matching"
       }
     ]
   }
