@@ -331,11 +331,11 @@ function renderSupportChannelList(key) {
 
 // --- HELPER COMPONENT GENERATORS ---
 
-// Escape special characters for HTML attributes and JSON
+// Escape special characters for HTML attributes
 function escapeForHtml(str) {
     if (!str) return '';
     return String(str)
-        .replace(/\\/g, '\\\\')
+        .replace(/&/g, '&amp;')
         .replace(/"/g, '&quot;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
