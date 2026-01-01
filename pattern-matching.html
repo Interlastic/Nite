@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pattern Matching Guide - Nite</title>
+        <meta name="description"
+                content="Comprehensive regex pattern matching guide for Nite bot auto-reactions and auto-replies.">
+        <style>
+                :root {
+                        --bg: #1a1b1e;
+                        --card: #23272a;
+                        --card-hover: #2f3136;
+                        --txt: #dcddde;
+                        --txt-muted: #72767d;
+                        --accent: #5865F2;
+                        --accent-hover: #7289da;
+                        --code-bg: #2f3136;
+                        --border: #202225;
+                        --example: #3ba55c;
+                }
+
+                * {
+                        box-sizing: border-box;
+                        margin: 0;
+                        padding: 0;
+                }
+
+                html {
+                        scroll-behavior: smooth;
+                }
+
+                body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        background: var(--bg);
+                        color: var(--txt);
+                        line-height: 1.6;
+                        min-height: 100vh;
+                }
+
+                .container {
+                        max-width: 1200px;
+                        margin: 0 auto;
+                        padding: 40px 20px 100px;
+                }
+
+                header {
+                        text-align: center;
+                        margin-bottom: 50px;
+                }
+
+                h1 {
+                        font-size: 2.5rem;
+                        margin-bottom: 10px;
+                        background: linear-gradient(135deg, var(--accent), #7289da);
+                        -webkit-background-clip: text;
+                        -webkit-text-fill-color: transparent;
+                        background-clip: text;
+                }
+
+                .subtitle {
+                        color: var(--txt-muted);
+                        font-size: 1.1rem;
+                }
+
+                .nav-links {
+                        margin-top: 20px;
+                        display: flex;
+                        justify-content: center;
+                        gap: 15px;
+                        flex-wrap: wrap;
+                }
+
+                .nav-links a {
+                        color: var(--accent);
+                        text-decoration: none;
+                        padding: 8px 16px;
+                        border: 1px solid var(--accent);
+                        border-radius: 20px;
+                        transition: all 0.2s;
+                        font-size: 0.9rem;
+                }
+
+                .nav-links a:hover {
+                        background: var(--accent);
+                        color: white;
+                }
+
+                .toc {
+                        background: var(--card);
+                        padding: 20px 30px;
+                        border-radius: 12px;
+                        margin-bottom: 40px;
+                        border: 1px solid var(--border);
+                }
+
+                .toc h2 {
+                        font-size: 1.2rem;
+                        margin-bottom: 15px;
+                        color: var(--accent);
+                }
+
+                .toc-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                        gap: 10px;
+                }
+
+                .toc a {
+                        color: var(--txt);
+                        text-decoration: none;
+                        padding: 5px 0;
+                        transition: color 0.2s;
+                }
+
+                .toc a:hover {
+                        color: var(--accent);
+                }
+
+                .section {
+                        background: var(--card);
+                        border-radius: 12px;
+                        padding: 30px;
+                        margin-bottom: 30px;
+                        border: 1px solid var(--border);
+                }
+
+                .section h2 {
+                        font-size: 1.5rem;
+                        margin-bottom: 20px;
+                        padding-bottom: 10px;
+                        border-bottom: 2px solid var(--accent);
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                }
+
+                .section h2::before {
+                        content: '#';
+                        color: var(--accent);
+                }
+
+                .pattern-grid {
+                        display: grid;
+                        gap: 12px;
+                }
+
+                .pattern-row {
+                        display: grid;
+                        grid-template-columns: 1fr;
+                        gap: 8px;
+                        padding: 15px;
+                        background: var(--code-bg);
+                        border-radius: 8px;
+                        border-left: 3px solid var(--accent);
+                }
+
+                .pattern-header {
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                        flex-wrap: wrap;
+                }
+
+                .pattern-code {
+                        font-family: 'Consolas', 'Monaco', monospace;
+                        color: #7dd3fc;
+                        font-size: 1rem;
+                        background: rgba(0, 0, 0, 0.3);
+                        padding: 4px 10px;
+                        border-radius: 4px;
+                }
+
+                .pattern-desc {
+                        color: var(--txt);
+                        font-size: 0.95rem;
+                }
+
+                .pattern-example {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        margin-top: 8px;
+                        padding: 10px 12px;
+                        background: rgba(59, 165, 92, 0.15);
+                        border-radius: 6px;
+                        border: 1px solid rgba(59, 165, 92, 0.3);
+                }
+
+                .example-label {
+                        color: var(--example);
+                        font-weight: 600;
+                        font-size: 0.8rem;
+                        text-transform: uppercase;
+                }
+
+                .example-text {
+                        font-family: 'Consolas', 'Monaco', monospace;
+                        color: #a8e6cf;
+                        font-size: 0.9rem;
+                }
+
+                .example-match {
+                        color: var(--txt-muted);
+                        font-size: 0.85rem;
+                }
+
+                .back-to-top {
+                        position: fixed;
+                        bottom: 30px;
+                        right: 30px;
+                        background: var(--accent);
+                        color: white;
+                        border: none;
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 50%;
+                        cursor: pointer;
+                        font-size: 1.5rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
+                        transition: all 0.2s;
+                        text-decoration: none;
+                }
+
+                .back-to-top:hover {
+                        background: var(--accent-hover);
+                        transform: translateY(-3px);
+                        box-shadow: 0 6px 20px rgba(88, 101, 242, 0.5);
+                }
+
+                .intro-box {
+                        background: linear-gradient(135deg, rgba(88, 101, 242, 0.2), rgba(114, 137, 218, 0.1));
+                        border: 1px solid var(--accent);
+                        padding: 20px;
+                        border-radius: 10px;
+                        margin-bottom: 30px;
+                }
+
+                .intro-box h3 {
+                        color: var(--accent);
+                        margin-bottom: 10px;
+                }
+
+                .intro-box p {
+                        color: var(--txt-muted);
+                }
+
+                .intro-box code {
+                        background: rgba(0, 0, 0, 0.3);
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        color: #7dd3fc;
+                        font-family: 'Consolas', 'Monaco', monospace;
+                }
+
+                @media (max-width: 768px) {
+                        h1 {
+                                font-size: 1.8rem;
+                        }
+
+                        .section {
+                                padding: 20px 15px;
+                        }
+
+                        .pattern-header {
+                                flex-direction: column;
+                                align-items: flex-start;
+                        }
+
+                        .back-to-top {
+                                bottom: 20px;
+                                right: 20px;
+                                width: 45px;
+                                height: 45px;
+                        }
+                }
+        </style>
+</head>
+
+<body>
+        <div class="container" id="top">
+                <header>
+                        <h1>🔍 Pattern Matching Guide</h1>
+                        <p class="subtitle">Easy regex reference for Nite bot auto-reactions and auto-replies</p>
+                        <div class="nav-links">
+                                <a href="#quick-start">🚀 Quick Start</a>
+                                <a href="#flags">🎌 Flags</a>
+                                <a href="#quantifiers">🔢 Quantifiers</a>
+                                <a href="#unicode-props">😀 Emoji</a>
+                                <a href="#fuzzy">🎯 Fuzzy</a>
+                        </div>
+                </header>
+
+                <div class="intro-box">
+                        <h3>💡 How to use this guide</h3>
+                        <p>Each pattern shows the <code>regex syntax</code> followed by what it does and a real example.
+                                Copy patterns directly into your auto-reactions!</p>
+                </div>
+
+                <nav class="toc">
+                        <h2>📑 Jump to Section</h2>
+                        <div class="toc-grid">
+                                <a href="#flags">Case & Mode Flags</a>
+                                <a href="#quantifiers">Quantifiers</a>
+                                <a href="#anchors">Anchors</a>
+                                <a href="#groups">Groups</a>
+                                <a href="#lookaround">Lookahead & Lookbehind</a>
+                                <a href="#alternation">Alternation</a>
+                                <a href="#char-classes">Character Classes</a>
+                                <a href="#shorthand">Shorthand Classes</a>
+                                <a href="#unicode-cat">Unicode Categories</a>
+                                <a href="#unicode-props">Unicode Properties</a>
+                                <a href="#unicode-scripts">Unicode Scripts</a>
+                                <a href="#conditional">Conditional Patterns</a>
+                                <a href="#fuzzy">Fuzzy Matching</a>
+                                <a href="#recursion">Recursion</a>
+                                <a href="#escapes">Special Escapes</a>
+                        </div>
+                </nav>
+
+                <section class="section" id="quick-start">
+                        <h2>Quick Start - Most Common Patterns</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?i)hello</span>
+                                                <span class="pattern-desc">Match "hello" ignoring
+                                                        uppercase/lowercase</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?i)hello</span>
+                                                <span class="example-match">→ matches "hello", "HELLO", "HeLLo"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{Extended_Pictographic}</span>
+                                                <span class="pattern-desc">Match any emoji</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{Extended_Pictographic}</span>
+                                                <span class="example-match">→ matches 😀, 🎉, 🔥, 💀, etc.</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\bword\b</span>
+                                                <span class="pattern-desc">Match whole word only (not inside other
+                                                        words)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\bcat\b</span>
+                                                <span class="example-match">→ matches "cat" but NOT "category" or
+                                                        "scat"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(a|b|c)</span>
+                                                <span class="pattern-desc">Match any one of multiple options</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(cat|dog|bird)</span>
+                                                <span class="example-match">→ matches "cat" or "dog" or "bird"</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="flags">
+                        <h2>Case & Mode Flags</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?i)</span>
+                                                <span class="pattern-desc">Case-insensitive matching (ignore
+                                                        CAPS)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?i)lol</span>
+                                                <span class="example-match">→ matches "lol", "LOL", "LoL", "lOl"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?m)</span>
+                                                <span class="pattern-desc">Multiline mode (^ and $ work per line)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?m)^hello</span>
+                                                <span class="example-match">→ matches "hello" at start of ANY line in
+                                                        message</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?s)</span>
+                                                <span class="pattern-desc">Dotall mode (. matches newlines too)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?s)start.*end</span>
+                                                <span class="example-match">→ matches text from "start" to "end" even
+                                                        across lines</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?x)</span>
+                                                <span class="pattern-desc">Verbose mode (ignore spaces, allow
+                                                        comments)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?x) hello # this is a comment</span>
+                                                <span class="example-match">→ matches "hello" (spaces/comments
+                                                        ignored)</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?-i) (?-m) (?-s)</span>
+                                                <span class="pattern-desc">Turn OFF a flag</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?i)hello(?-i)WORLD</span>
+                                                <span class="example-match">→ "hello" case-insensitive, but "WORLD" must
+                                                        be exact</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="quantifiers">
+                        <h2>Quantifiers (How Many Times)</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">*</span>
+                                                <span class="pattern-desc">Zero or more times</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">lo*l</span>
+                                                <span class="example-match">→ matches "ll", "lol", "loool",
+                                                        "looooool"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">+</span>
+                                                <span class="pattern-desc">One or more times</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">lo+l</span>
+                                                <span class="example-match">→ matches "lol", "loool" but NOT "ll"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">?</span>
+                                                <span class="pattern-desc">Zero or one time (optional)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">colou?r</span>
+                                                <span class="example-match">→ matches both "color" and "colour"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">{n}</span>
+                                                <span class="pattern-desc">Exactly n times</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">ha{3}</span>
+                                                <span class="example-match">→ matches "haaa" only</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">{n,}</span>
+                                                <span class="pattern-desc">n or more times</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">ha{2,}</span>
+                                                <span class="example-match">→ matches "haa", "haaa", "haaaa",
+                                                        etc.</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">{n,m}</span>
+                                                <span class="pattern-desc">Between n and m times</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">ha{2,4}</span>
+                                                <span class="example-match">→ matches "haa", "haaa", "haaaa" (2-4
+                                                        a's)</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">*? +? ??</span>
+                                                <span class="pattern-desc">Lazy (match as few as possible)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">&lt;.+?&gt;</span>
+                                                <span class="example-match">→ in "&lt;b&gt;hi&lt;/b&gt;" matches
+                                                        "&lt;b&gt;" then "&lt;/b&gt;" separately</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="anchors">
+                        <h2>Anchors (Position in Text)</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">^</span>
+                                                <span class="pattern-desc">Start of message</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">^hello</span>
+                                                <span class="example-match">→ matches only if message STARTS with
+                                                        "hello"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">$</span>
+                                                <span class="pattern-desc">End of message</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">bye$</span>
+                                                <span class="example-match">→ matches only if message ENDS with
+                                                        "bye"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\b</span>
+                                                <span class="pattern-desc">Word boundary (edge of a word)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\bhello\b</span>
+                                                <span class="example-match">→ matches "hello" but NOT "helloworld" or
+                                                        "sayhello"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\B</span>
+                                                <span class="pattern-desc">NOT a word boundary</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\Bcat</span>
+                                                <span class="example-match">→ matches "cat" in "scat" but NOT in "cat
+                                                        food"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\A</span>
+                                                <span class="pattern-desc">Absolute start (ignores multiline)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\Ahello</span>
+                                                <span class="example-match">→ matches "hello" only at very
+                                                        beginning</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\Z</span>
+                                                <span class="pattern-desc">Absolute end (ignores multiline)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">bye\Z</span>
+                                                <span class="example-match">→ matches "bye" only at very end</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="groups">
+                        <h2>Groups (Capture & Organize)</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(pattern)</span>
+                                                <span class="pattern-desc">Capturing group - saves what it
+                                                        matches</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(hello) world</span>
+                                                <span class="example-match">→ matches "hello world", captures
+                                                        "hello"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?:pattern)</span>
+                                                <span class="pattern-desc">Non-capturing group (just for
+                                                        grouping)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?:ha)+</span>
+                                                <span class="example-match">→ matches "ha", "haha", "hahaha" (groups
+                                                        "ha" but doesn't capture)</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?P&lt;name&gt;pattern)</span>
+                                                <span class="pattern-desc">Named group - give it a name</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?P&lt;word&gt;\w+)</span>
+                                                <span class="example-match">→ captures any word and names it
+                                                        "word"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\1 \2 \3</span>
+                                                <span class="pattern-desc">Backreference - match same thing again</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(\w+) \1</span>
+                                                <span class="example-match">→ matches repeated words like "the the" or
+                                                        "hello hello"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?&gt;pattern)</span>
+                                                <span class="pattern-desc">Atomic group (no backtracking)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?&gt;a+)b</span>
+                                                <span class="example-match">→ matches "aaab" but faster (won't
+                                                        retry)</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="lookaround">
+                        <h2>Lookahead & Lookbehind (Check Without Matching)</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?=pattern)</span>
+                                                <span class="pattern-desc">Positive lookahead - must be followed
+                                                        by</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">hello(?= world)</span>
+                                                <span class="example-match">→ matches "hello" only if followed by "
+                                                        world"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?!pattern)</span>
+                                                <span class="pattern-desc">Negative lookahead - must NOT be followed
+                                                        by</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">hello(?! world)</span>
+                                                <span class="example-match">→ matches "hello" only if NOT followed by "
+                                                        world"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?&lt;=pattern)</span>
+                                                <span class="pattern-desc">Positive lookbehind - must come after</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?&lt;=@)\w+</span>
+                                                <span class="example-match">→ matches username in "@username" (without
+                                                        the @)</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?&lt;!pattern)</span>
+                                                <span class="pattern-desc">Negative lookbehind - must NOT come
+                                                        after</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?&lt;!un)happy</span>
+                                                <span class="example-match">→ matches "happy" but NOT "unhappy"</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="alternation">
+                        <h2>Alternation (OR)</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">a|b</span>
+                                                <span class="pattern-desc">Match a OR b</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">yes|no</span>
+                                                <span class="example-match">→ matches "yes" or "no"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(a|b|c)</span>
+                                                <span class="pattern-desc">Match any of multiple options</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?i)(lol|lmao|rofl)</span>
+                                                <span class="example-match">→ matches any laugh
+                                                        (case-insensitive)</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="char-classes">
+                        <h2>Character Classes (Match Specific Characters)</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">[abc]</span>
+                                                <span class="pattern-desc">Match a, b, or c</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">gr[ae]y</span>
+                                                <span class="example-match">→ matches "gray" or "grey"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">[a-z]</span>
+                                                <span class="pattern-desc">Match any letter from a to z</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">[a-z]+</span>
+                                                <span class="example-match">→ matches any lowercase word like
+                                                        "hello"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">[0-9]</span>
+                                                <span class="pattern-desc">Match any digit</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">[0-9]{3}</span>
+                                                <span class="example-match">→ matches any 3 digits like "123",
+                                                        "456"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">[^abc]</span>
+                                                <span class="pattern-desc">Match anything EXCEPT a, b, c</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">[^0-9]+</span>
+                                                <span class="example-match">→ matches anything that's NOT a
+                                                        number</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">[a-zA-Z0-9]</span>
+                                                <span class="pattern-desc">Match letters and numbers</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">[a-zA-Z0-9]+</span>
+                                                <span class="example-match">→ matches "Hello123", "test", "ABC"</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="shorthand">
+                        <h2>Shorthand Classes (Quick Shortcuts)</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\d</span>
+                                                <span class="pattern-desc">Any digit (same as [0-9])</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\d{4}</span>
+                                                <span class="example-match">→ matches "2024", "1234"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\D</span>
+                                                <span class="pattern-desc">NOT a digit</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\D+</span>
+                                                <span class="example-match">→ matches "hello", "!!!", " " (no
+                                                        numbers)</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\w</span>
+                                                <span class="pattern-desc">Word character (letters, numbers,
+                                                        underscore)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\w+</span>
+                                                <span class="example-match">→ matches "hello_world", "user123"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\W</span>
+                                                <span class="pattern-desc">NOT a word character</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\W+</span>
+                                                <span class="example-match">→ matches "!!!", "@#$", " - "</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\s</span>
+                                                <span class="pattern-desc">Whitespace (space, tab, newline)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">hello\s+world</span>
+                                                <span class="example-match">→ matches "hello world", "hello
+                                                        world"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\S</span>
+                                                <span class="pattern-desc">NOT whitespace</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\S+</span>
+                                                <span class="example-match">→ matches any word without spaces</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">.</span>
+                                                <span class="pattern-desc">Any character (except newline)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">h.t</span>
+                                                <span class="example-match">→ matches "hat", "hit", "hot", "h@t"</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="unicode-cat">
+                        <h2>Unicode Categories</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{L}</span>
+                                                <span class="pattern-desc">Any letter (any language)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{L}+</span>
+                                                <span class="example-match">→ matches "hello", "привет", "你好"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{Lu}</span>
+                                                <span class="pattern-desc">Uppercase letters only</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{Lu}+</span>
+                                                <span class="example-match">→ matches "HELLO", "ABC" (uppercase
+                                                        only)</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{Ll}</span>
+                                                <span class="pattern-desc">Lowercase letters only</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{Ll}+</span>
+                                                <span class="example-match">→ matches "hello", "abc" (lowercase
+                                                        only)</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{N}</span>
+                                                <span class="pattern-desc">Any number</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{N}+</span>
+                                                <span class="example-match">→ matches "123", "①②③", "٤٥٦"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{P}</span>
+                                                <span class="pattern-desc">Any punctuation</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{P}+</span>
+                                                <span class="example-match">→ matches "!!!", "...", "?!?"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{S}</span>
+                                                <span class="pattern-desc">Any symbol</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{S}+</span>
+                                                <span class="example-match">→ matches "$", "©", "→", "♠"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{Sc}</span>
+                                                <span class="pattern-desc">Currency symbols</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{Sc}\d+</span>
+                                                <span class="example-match">→ matches "$100", "€50", "£25"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\P{...}</span>
+                                                <span class="pattern-desc">NOT in category (uppercase P)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\P{N}+</span>
+                                                <span class="example-match">→ matches anything that's NOT a
+                                                        number</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="unicode-props">
+                        <h2>Unicode Properties (Emoji & More)</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{Extended_Pictographic}</span>
+                                                <span class="pattern-desc">Any emoji! 😀🎉🔥</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{Extended_Pictographic}+</span>
+                                                <span class="example-match">→ matches 😀, 🎉, 🔥, 💀, 😂</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{Emoji_Modifier}</span>
+                                                <span class="pattern-desc">Skin tone modifiers</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{Emoji_Modifier}</span>
+                                                <span class="example-match">→ matches 🏻, 🏼, 🏽, 🏾, 🏿</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{ASCII}</span>
+                                                <span class="pattern-desc">ASCII characters only (English)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{ASCII}+</span>
+                                                <span class="example-match">→ matches "hello123!@#" (basic chars
+                                                        only)</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="unicode-scripts">
+                        <h2>Unicode Scripts (Languages)</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{Latin}</span>
+                                                <span class="pattern-desc">Latin alphabet (English, Spanish,
+                                                        etc.)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{Latin}+</span>
+                                                <span class="example-match">→ matches "hello", "café", "München"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{Cyrillic}</span>
+                                                <span class="pattern-desc">Russian/Cyrillic text</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{Cyrillic}+</span>
+                                                <span class="example-match">→ matches "привет", "Москва"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{Arabic}</span>
+                                                <span class="pattern-desc">Arabic text</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{Arabic}+</span>
+                                                <span class="example-match">→ matches "مرحبا"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{Han}</span>
+                                                <span class="pattern-desc">Chinese characters</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{Han}+</span>
+                                                <span class="example-match">→ matches "你好", "中文"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{Hiragana}</span>
+                                                <span class="pattern-desc">Japanese Hiragana</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{Hiragana}+</span>
+                                                <span class="example-match">→ matches "こんにちは"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\p{Hangul}</span>
+                                                <span class="pattern-desc">Korean Hangul</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\p{Hangul}+</span>
+                                                <span class="example-match">→ matches "안녕하세요"</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="conditional">
+                        <h2>Conditional Patterns (If/Then)</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?(1)yes|no)</span>
+                                                <span class="pattern-desc">If group 1 matched, use "yes", else
+                                                        "no"</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(&lt;)?hello(?(1)&gt;)</span>
+                                                <span class="example-match">→ matches "hello" or "&lt;hello&gt;"
+                                                        (balanced)</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="fuzzy">
+                        <h2>Fuzzy Matching (Allow Typos!)</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?:pattern){e&lt;=n}</span>
+                                                <span class="pattern-desc">Allow up to n total errors</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?:hello){e&lt;=2}</span>
+                                                <span class="example-match">→ matches "hello", "helo", "helllo", "hallo"
+                                                        (2 errors max)</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?:pattern){i&lt;=n}</span>
+                                                <span class="pattern-desc">Allow up to n insertions</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?:hello){i&lt;=1}</span>
+                                                <span class="example-match">→ matches "hello", "helllo" (1 extra
+                                                        letter)</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?:pattern){d&lt;=n}</span>
+                                                <span class="pattern-desc">Allow up to n deletions</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?:hello){d&lt;=1}</span>
+                                                <span class="example-match">→ matches "hello", "helo" (1 missing
+                                                        letter)</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?:pattern){s&lt;=n}</span>
+                                                <span class="pattern-desc">Allow up to n substitutions</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?:hello){s&lt;=1}</span>
+                                                <span class="example-match">→ matches "hello", "hallo" (1 wrong
+                                                        letter)</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?b)</span>
+                                                <span class="pattern-desc">Best match mode</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(?b)(?:hello){e&lt;=3}</span>
+                                                <span class="example-match">→ finds the closest match to "hello"
+                                                        possible</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="recursion">
+                        <h2>Recursion (Advanced)</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?R)</span>
+                                                <span class="pattern-desc">Repeat the whole pattern</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\((?:[^()]+|(?R))*\)</span>
+                                                <span class="example-match">→ matches nested parentheses
+                                                        "(a(b(c)d)e)"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">(?1)</span>
+                                                <span class="pattern-desc">Repeat group 1</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">(\w)(?1)?</span>
+                                                <span class="example-match">→ matches "a", "ab", "abc"</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+
+                <section class="section" id="escapes">
+                        <h2>Special Escapes</h2>
+                        <div class="pattern-grid">
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\n</span>
+                                                <span class="pattern-desc">Newline (line break)</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">line1\nline2</span>
+                                                <span class="example-match">→ matches text with newline between</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\t</span>
+                                                <span class="pattern-desc">Tab character</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">a\tb</span>
+                                                <span class="example-match">→ matches "a[TAB]b"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\\</span>
+                                                <span class="pattern-desc">Literal backslash</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">C:\\Users</span>
+                                                <span class="example-match">→ matches "C:\Users"</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\. \* \+ \? \[ \]</span>
+                                                <span class="pattern-desc">Escape special characters</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">what\?</span>
+                                                <span class="example-match">→ matches "what?" (literal question
+                                                        mark)</span>
+                                        </div>
+                                </div>
+                                <div class="pattern-row">
+                                        <div class="pattern-header">
+                                                <span class="pattern-code">\( \) \{ \} \| \^ \$</span>
+                                                <span class="pattern-desc">More escaped characters</span>
+                                        </div>
+                                        <div class="pattern-example">
+                                                <span class="example-label">Example:</span>
+                                                <span class="example-text">\(hello\)</span>
+                                                <span class="example-match">→ matches "(hello)" with actual
+                                                        parentheses</span>
+                                        </div>
+                                </div>
+                        </div>
+                </section>
+        </div>
+
+        <a href="#top" class="back-to-top">↑</a>
+
+        <!-- Ask AI Button -->
+        <button class="ask-ai-btn" onclick="openAiModal()">Ask AI</button>
+
+        <!-- AI Modal -->
+        <div class="ai-modal-overlay" id="aiModal" onclick="closeAiModal(event)">
+                <div class="ai-modal" onclick="event.stopPropagation()">
+                        <div class="ai-modal-header">
+                                <h3>Ask AI to Generate Regex</h3>
+                                <button class="ai-modal-close" onclick="closeAiModal()">&times;</button>
+                        </div>
+                        <div class="ai-modal-body">
+                                <p>Describe what you want to match in plain English, and ChatGPT will generate the regex
+                                        for you!</p>
+                                <textarea id="aiInput"
+                                        placeholder="Example: Match messages that contain any emoji followed by the word 'nice' (case insensitive)"></textarea>
+                        </div>
+                        <div class="ai-modal-footer">
+                                <button class="ai-modal-btn" onclick="askChatGPT()">Open in ChatGPT →</button>
+                        </div>
+                </div>
+        </div>
+
+        <style>
+                /* Ask AI Button */
+                .ask-ai-btn {
+                        position: fixed;
+                        bottom: 30px;
+                        left: 30px;
+                        background: linear-gradient(135deg, #10a37f, #1a7f5a);
+                        color: white;
+                        border: none;
+                        padding: 12px 20px;
+                        border-radius: 30px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        box-shadow: 0 4px 15px rgba(16, 163, 127, 0.4);
+                        transition: all 0.2s;
+                        z-index: 100;
+                }
+
+                .ask-ai-btn:hover {
+                        transform: translateY(-3px);
+                        box-shadow: 0 6px 20px rgba(16, 163, 127, 0.5);
+                }
+
+                /* Modal Overlay */
+                .ai-modal-overlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100vw;
+                        height: 100vh;
+                        background: rgba(0, 0, 0, 0.8);
+                        backdrop-filter: blur(5px);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 1000;
+                        opacity: 0;
+                        visibility: hidden;
+                        transition: opacity 0.3s, visibility 0.3s;
+                }
+
+                .ai-modal-overlay.active {
+                        opacity: 1;
+                        visibility: visible;
+                }
+
+                /* Modal Box */
+                .ai-modal {
+                        background: var(--card);
+                        border-radius: 12px;
+                        width: 90%;
+                        max-width: 600px;
+                        border: 1px solid var(--border);
+                        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+                        transform: scale(0.9);
+                        transition: transform 0.3s;
+                }
+
+                .ai-modal-overlay.active .ai-modal {
+                        transform: scale(1);
+                }
+
+                .ai-modal-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 20px;
+                        border-bottom: 1px solid var(--border);
+                }
+
+                .ai-modal-header h3 {
+                        margin: 0;
+                        color: #10a37f;
+                }
+
+                .ai-modal-close {
+                        background: none;
+                        border: none;
+                        color: var(--txt-muted);
+                        font-size: 1.5rem;
+                        cursor: pointer;
+                        padding: 0;
+                        width: 30px;
+                        height: 30px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 50%;
+                        transition: all 0.2s;
+                }
+
+                .ai-modal-close:hover {
+                        background: var(--code-bg);
+                        color: var(--txt);
+                }
+
+                .ai-modal-body {
+                        padding: 20px;
+                }
+
+                .ai-modal-body p {
+                        color: var(--txt-muted);
+                        margin-bottom: 15px;
+                }
+
+                .ai-modal-body textarea {
+                        width: 100%;
+                        min-height: 120px;
+                        background: var(--code-bg);
+                        border: 1px solid var(--border);
+                        border-radius: 8px;
+                        color: var(--txt);
+                        padding: 15px;
+                        font-family: inherit;
+                        font-size: 1rem;
+                        resize: vertical;
+                }
+
+                .ai-modal-body textarea:focus {
+                        outline: none;
+                        border-color: #10a37f;
+                }
+
+                .ai-modal-body textarea::placeholder {
+                        color: var(--txt-muted);
+                }
+
+                .ai-modal-footer {
+                        padding: 15px 20px;
+                        border-top: 1px solid var(--border);
+                        display: flex;
+                        justify-content: flex-end;
+                }
+
+                .ai-modal-btn {
+                        background: linear-gradient(135deg, #10a37f, #1a7f5a);
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        transition: all 0.2s;
+                }
+
+                .ai-modal-btn:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(16, 163, 127, 0.4);
+                }
+
+                @media (max-width: 768px) {
+                        .ask-ai-btn {
+                                bottom: 80px;
+                                left: 20px;
+                                padding: 10px 16px;
+                                font-size: 0.9rem;
+                        }
+                }
+        </style>
+
+        <script>
+                function openAiModal() {
+                        document.getElementById('aiModal').classList.add('active');
+                        document.getElementById('aiInput').focus();
+                }
+
+                function closeAiModal(event) {
+                        if (event && event.target !== document.getElementById('aiModal')) return;
+                        document.getElementById('aiModal').classList.remove('active');
+                }
+
+                // Close on Escape key
+                document.addEventListener('keydown', function (e) {
+                        if (e.key === 'Escape') {
+                                document.getElementById('aiModal').classList.remove('active');
+                        }
+                });
+
+                function askChatGPT() {
+                        const userRequest = document.getElementById('aiInput').value.trim();
+                        if (!userRequest) {
+                                alert('Please describe what pattern you want to match!');
+                                return;
+                        }
+
+                        const regexDocs = `You are a regex expert. The user is using Python's "regex" module (not "re") which supports advanced features like fuzzy matching, Unicode properties, and more.
+
+AVAILABLE REGEX FEATURES:
+
+FLAGS: (?i) case-insensitive, (?m) multiline, (?s) dotall, (?x) verbose
+QUANTIFIERS: * + ? {n} {n,} {n,m} and lazy versions *? +? ??
+ANCHORS: ^ $ \\b \\B \\A \\Z
+GROUPS: (pattern) (?:pattern) (?P<name>pattern) \\1 backreferences
+LOOKAROUND: (?=) (?!) (?<=) (?<!)
+CHARACTER CLASSES: [abc] [a-z] [^abc]
+SHORTHAND: \\d \\D \\w \\W \\s \\S .
+UNICODE CATEGORIES: \\p{L} \\p{Lu} \\p{Ll} \\p{N} \\p{P} \\p{S} \\P{...}
+EMOJI: \\p{Extended_Pictographic} \\p{Emoji_Modifier}
+SCRIPTS: \\p{Latin} \\p{Cyrillic} \\p{Arabic} \\p{Han} \\p{Hangul}
+FUZZY MATCHING: (?:pattern){e<=n} allows n errors, {i<=n} insertions, {d<=n} deletions, {s<=n} substitutions
+CONDITIONALS: (?(id)yes|no)
+RECURSION: (?R) (?1) (?&name)
+
+TASK: Generate a regex pattern for the user's request. 
+- Explain what each part of the pattern does
+- Give the final pattern on its own line so they can copy it
+- Keep explanations simple and beginner-friendly
+
+USER'S REQUEST: ${userRequest}`;
+
+                        const encodedPrompt = encodeURIComponent(regexDocs);
+                        const chatGPTUrl = `https://chat.openai.com/?q=${encodedPrompt}`;
+
+                        window.open(chatGPTUrl, '_blank');
+                        closeAiModal();
+                }
+        </script>
+</body>
+
+</html>
