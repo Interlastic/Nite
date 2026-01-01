@@ -476,7 +476,7 @@ function createDictRow(dictId, idx, keyVal, valueVal, keyPh, valPh, keyOnly, val
     <div class="dict-row" data-row-idx="${idx}">
         <button type="button" class="dict-remove-btn" onclick="removeDictRow(this)">−</button>
         <input type="text" class="styled-input dict-key" placeholder="${escapeForHtml(keyPh)}" value="${escapeForHtml(keyVal)}" ${keyOnlyAttr}>
-        <input type="text" class="styled-input dict-value" placeholder="${escapeForHtml(valPh)}" value="${escapeForHtml(valueVal)}" ${valOnlyAttr}>
+        <textarea class="styled-textarea dict-value" placeholder="${escapeForHtml(valPh)}" ${valOnlyAttr}>${escapeForHtml(valueVal)}</textarea>
     </div>`;
 }
 
