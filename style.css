@@ -1131,14 +1131,21 @@ input:checked+.slider:before {
 
 .dict-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
 }
 
-.dict-row .dict-key,
+.dict-row .dict-key {
+    flex: 0 0 35%;
+    min-width: 0;
+}
+
 .dict-row .dict-value {
     flex: 1;
     min-width: 0;
+    min-height: 38px;
+    max-height: 150px;
+    resize: vertical;
 }
 
 .dict-remove-btn {
