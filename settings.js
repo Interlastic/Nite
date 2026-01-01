@@ -661,16 +661,21 @@ async function saveChanges() {
         // --- SEND TO WORKER ---
         status.innerText = "Sending to Bot...";
 
+        const bodyData = {
+            serverid: serverId,
+            settings: payload
+        };
+
+        // Debug: log what we're sending
+        console.log("Sending payload:", JSON.stringify(bodyData, null, 2));
+
         const response = await fetch(`${WORKER}/update-settings`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': token
             },
-            body: JSON.stringify({
-                serverid: serverId,
-                settings: payload
-            })
+            body: JSON.stringify(bodyData)
         });
 
         if (response.ok) {
