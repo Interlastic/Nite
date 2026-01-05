@@ -9,31 +9,65 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
 </head>
 
 <body>
-    <div class="profileWrapper">
-        <div id="profilePic" class="profilePic">
-            <img src="pic.png" alt="Profile Picture">
-        </div>
+    <section class="page" id="home">
+        <div class="profileWrapper">
+            <div id="profilePic" class="profilePic">
+                <img src="pic.png" alt="Profile Picture">
+            </div>
 
-        <div class="profileTextCircle">
-            <svg viewBox="0 0 200 200" width="240" height="240">
-                <path id="textPath" d="M 100, 100 m -75, 0 a 75,75 0 1,1 150,0 a 75,75 0 1,1 -150,0" fill="none"></path>
-                <text>
-                    <textPath href="#textPath" startOffset="0%">
-                        INTERLASTIC • INTERLASTIC • INTERLASTIC •
-                    </textPath>
-                </text>
-            </svg>
+            <div class="profileTextCircle">
+                <svg viewBox="0 0 200 200" width="240" height="240">
+                    <path id="textPath" d="M 100, 100 m -75, 0 a 75,75 0 1,1 150,0 a 75,75 0 1,1 -150,0" fill="none">
+                    </path>
+                    <text>
+                        <textPath href="#textPath" startOffset="0%">
+                            INTERLASTIC • INTERLASTIC • INTERLASTIC •
+                        </textPath>
+                    </text>
+                </svg>
+            </div>
+            <div class="hiTextContainer">
+                <div class="hiText" style="--delay: 0s">Hey, I'm Interlastic,</div>
+                <div class="hiText" style="--delay: 0.2s;">I don't have much...</div>
+                <div class="hiText" style="--delay: 0.4s;">But you can check out my Discord bot!</div>
+                <div class="hiText" style="--delay: 0.5s;">↓</div>
+            </div>
         </div>
-        <div class="hiTextContainer">
-            <div class="hiText" style="--delay: 0s">Hey, I'm Interlastic,</div>
-            <div class="hiText" style="--delay: 0.2s;">I don't have much...</div>
-            <div class="hiText" style="--delay: 0.4s;">But you can check out my Discord bot!</div>
-            <div class="hiText" style="--delay: 0.5s;">↓</div>
+    </section>
+
+    <section class="page" id="bot">
+        <div class="botContent">
+            <h2>Nite Bot</h2>
+            <p>A very dumb, baby-like penguin for your Discord server.</p>
+
+            <div class="botStats">
+                <div class="statItem">
+                    <span class="statValue">20</span>
+                    <span class="statLabel">Servers</span>
+                </div>
+                <div class="statItem">
+                    <span class="statValue">4000+</span>
+                    <span class="statLabel">Summed Members</span>
+                </div>
+            </div>
+
+            <div class="featuresSection">
+                <h3>What can Nite do?</h3>
+                <p class="featureText">
+                    Nite makes your Discord experience better. Chat with a quirky penguin bot, get help from a smart AI
+                    assistant, or let Nite manage your server effortlessly. From organizing channels to analyzing your
+                    dreams, Nite handles it all with personality. Whether you want silly conversations with Egor the cat
+                    or a powerful tool to streamline your workflow, Nite's got you covered.
+                </p>
+            </div>
+
+            <a href="#" class="inviteBtn">Invite Nite</a>
         </div>
-    </div>
+    </section>
 
 </body>
 
