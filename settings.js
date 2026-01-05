@@ -248,7 +248,7 @@ function renderSettingsList(settingsList) {
                 html += `<div class="section-title">${item.text}${createHelpIcon(item.help)}</div>`;
                 break;
             case 'switch':
-                html += createToggle(item.key, item.label, item.sublabel, GLOBAL_SETTINGS[item.key] !== false, item.help);
+                html += createToggle(item.key, item.label, item.sublabel, GLOBAL_SETTINGS[item.key] === true, item.help);
                 break;
             case 'select':
                 html += createSelect(item.key, item.label, item.options, GLOBAL_SETTINGS[item.key] || item.default, item.help);
