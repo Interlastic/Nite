@@ -15,7 +15,7 @@ const animateCounters = () => {
         const target = +counter.getAttribute('data-target');
         let startTime = null;
 
-        const easeOutQuad = (t) => 1 - Math.pow(1 - t, 4);
+        const easeOutQuad = (t) => 1 - Math.pow(1 - t, 3.23);
 
         const step = (timestamp) => {
             if (!startTime) startTime = timestamp;
