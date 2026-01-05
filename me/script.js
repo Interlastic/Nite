@@ -1,8 +1,11 @@
 document.querySelectorAll('.hiText').forEach((hiText) => {
     hiText.addEventListener('click', () => {
-        const nextSection = document.getElementById('bot');
-        if (nextSection) {
-            nextSection.scrollIntoView({ behavior: 'smooth' });
+        const sections = Array.from(document.querySelectorAll('.page'));
+        const currentSection = hiText.closest('.page');
+        const currentIndex = sections.indexOf(currentSection);
+
+        if (currentIndex !== -1 && currentIndex < sections.length - 1) {
+            sections[currentIndex + 1].scrollIntoView({ behavior: 'smooth' });
         }
     });
 });
@@ -52,3 +55,39 @@ const botSection = document.getElementById('bot');
 if (botSection) {
     observer.observe(botSection);
 }
+
+// Modal Logic
+const modal = document.getElementById('infoModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalDesc = document.getElementById('modalDesc');
+const closeBtn = document.querySelector('.close-btn');
+
+document.querySelectorAll('.box').forEach(box => {
+    box.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent triggering other click events
+        const title = box.getAttribute('data-title');
+        const desc = box.getAttribute('data-desc');
+
+        modalTitle.innerText = title;
+        modalDesc.innerHTML = desc;
+
+        modal.classList.add('show');
+    });
+});
+
+const closeModal = () => {
+    modal.classList.remove('show');
+};
+
+closeBtn.addEventListener('click', closeModal);
+
+window.addEventListener('click', (e) => {
+    if (e.target === modal) {
+        closeModal();
+    }
+});
+
+// Prevent modal content clicks from closing the modal
+document.querySelector('.modal-content').addEventListener('click', (e) => {
+    e.stopPropagation();
+});
