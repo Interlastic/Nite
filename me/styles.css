@@ -428,6 +428,14 @@ body::before {
     height: 110px;
 }
 
+.box-6 {
+    --radius: 380px;
+    --start-angle: 300deg;
+    animation-duration: 24s;
+    width: 110px;
+    height: 110px;
+}
+
 @keyframes orbit {
     from {
         transform: rotate(var(--start-angle)) translateX(var(--radius)) rotate(calc(-1 * var(--start-angle)));
