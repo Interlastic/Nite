@@ -529,3 +529,148 @@ body::before {
     text-decoration-color: rgba(255, 255, 255, 0.8);
     color: #fff;
 }
+
+/* Mobile Optimization */
+/* Mobile Optimization */
+@media (max-width: 768px) {
+    .page {
+        height: auto;
+        min-height: 100vh;
+        padding: 60px 20px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #extra.page {
+        justify-content: flex-start;
+        padding-top: 60px;
+    }
+
+    /* Home Section */
+    .profileWrapper {
+        width: 180px;
+        height: 180px;
+    }
+
+    .profilePic {
+        width: 140px;
+        height: 140px;
+    }
+
+    .profileTextCircle {
+        width: 190px;
+        height: 190px;
+    }
+
+    .hiTextContainer {
+        width: 100%;
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .hiText {
+        font-size: 13px;
+        letter-spacing: 1px;
+    }
+
+    /* Bot Section */
+    .botContent h2 {
+        font-size: 2.2rem;
+    }
+
+    .botStats {
+        gap: 20px;
+    }
+
+    .statValue {
+        font-size: 1.5rem;
+    }
+
+    .featuresSection {
+        padding: 20px;
+    }
+
+    /* Extra Section (Floating Boxes & About) */
+    .floating-boxes {
+        position: relative;
+        height: auto;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        padding: 20px 0;
+        width: 100%;
+        max-width: 400px;
+        margin-top: 20px;
+        order: 2;
+        /* Putting boxes below */
+    }
+
+    .aboutContent {
+        margin-top: 0;
+        margin-bottom: 30px;
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+        order: 1;
+        /* Putting about me above */
+    }
+
+    .box {
+        position: relative;
+        animation: none !important;
+        transform: none !important;
+        width: 100%;
+        height: 120px;
+        margin: 0;
+        left: auto !important;
+        top: auto !important;
+    }
+
+    .box:hover {
+        transform: scale(1.03) !important;
+    }
+
+    .box-2,
+    .box-3,
+    .box-4,
+    .box-5,
+    .box-6 {
+        width: 100%;
+        height: 120px;
+    }
+
+    .box-1 {
+        --radius: 0;
+    }
+
+    .box-2 {
+        --radius: 0;
+    }
+
+    .box-3 {
+        --radius: 0;
+    }
+
+    .box-4 {
+        --radius: 0;
+    }
+
+    .box-5 {
+        --radius: 0;
+    }
+
+    .box-6 {
+        --radius: 0;
+    }
+
+    /* Modal */
+    .modal-content {
+        width: 85%;
+        padding: 30px 20px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+}
