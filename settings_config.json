@@ -207,6 +207,19 @@
       {
         "type": "supportChannelList",
         "key": "support_channels"
+      },
+      {
+        "type": "textarea",
+        "key": "add_context",
+        "label": "Additional Context",
+        "placeholder": "Enter additional context...",
+        "maxLength": 1000
+      },
+      {
+        "type": "namedContentList",
+        "key": "custom_knowledge",
+        "label": "Custom Knowledge Base",
+        "help": "Define custom knowledge entries. Up to 5 items."
       }
     ]
   },
