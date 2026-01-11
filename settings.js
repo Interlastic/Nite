@@ -260,13 +260,16 @@ function renderSettingsList(settingsList) {
                 } else if (typeof val !== 'string') {
                     val = item.default || "";
                 }
-                html += createTextarea(item.key, item.label, item.placeholder, val, item.help, item.only);
+                html += createTextarea(item.key, item.label, item.placeholder, val, item.help, item.only, item.maxLength);
                 break;
             case 'channelPick':
                 html += createChannelSelect(item.key, item.label, GLOBAL_SETTINGS[item.key], item.help);
                 break;
             case 'dict':
                 html += createDict(item.key, item.label, GLOBAL_SETTINGS[item.key] || {}, item.keyPlaceholder, item.valuePlaceholder, item.help, item.keyOnly, item.valueOnly);
+                break;
+            case 'namedContentList':
+                html += createNamedContentList(item.key, item.label, GLOBAL_SETTINGS[item.key] || [], item.help);
                 break;
             case 'commandList':
                 html += renderCommandList();
@@ -406,12 +409,29 @@ function createSelect(id, label, options, selectedVal, help) {
     </div>`;
 }
 
-function createTextarea(id, label, placeholder, value, help, only) {
+function createTextarea(id, label, placeholder, value, help, only, maxLength) {
     const onlyAttr = only ? `data-only="${only}"` : '';
+    const maxLenAttr = maxLength ? `maxlength="${maxLength}"` : '';
+    const charCount = maxLength ? `<div class="char-count" style="text-align:right; font-size:0.8rem; color:#aaa; margin-top:4px;"><span id="${id}-count">${value ? value.length : 0}</span>/${maxLength}</div>` : '';
+
+    // Add event listener for character count update if maxLength is present
+    setTimeout(() => {
+        if (maxLength) {
+            const el = document.getElementById(id);
+            const countEl = document.getElementById(`${id}-count`);
+            if (el && countEl) {
+                el.addEventListener('input', () => {
+                    countEl.innerText = el.value.length;
+                });
+            }
+        }
+    }, 0);
+
     return `
     <div class="form-group">
         <label class="form-label">${label}${createHelpIcon(help)}</label>
-        <textarea id="${id}" class="styled-textarea" placeholder="${escapeForHtml(placeholder)}" ${onlyAttr}>${escapeForHtml(value)}</textarea>
+        <textarea id="${id}" class="styled-textarea" placeholder="${escapeForHtml(placeholder)}" ${onlyAttr} ${maxLenAttr}>${escapeForHtml(value)}</textarea>
+        ${charCount}
     </div>`;
 }
 
@@ -494,6 +514,96 @@ function addDictRow(dictId, keyPh, valPh, keyOnly, valueOnly) {
 function removeDictRow(btn) {
     const row = btn.closest('.dict-row');
     if (row) row.remove();
+}
+
+// --- NAMED CONTENT LIST TYPE ---
+function createNamedContentList(id, label, dataList, help) {
+    // Limit to 5
+    const MAX_ITEMS = 5;
+    const currentCount = Array.isArray(dataList) ? dataList.length : 0;
+
+    let rowsHtml = '';
+    if (Array.isArray(dataList)) {
+        dataList.forEach((item, idx) => {
+            rowsHtml += createNamedContentListRow(idx, item.name || '', item.description || '', item.skill || '');
+        });
+    }
+
+    const isMaxed = currentCount >= MAX_ITEMS;
+
+    return `
+    <div class="form-group ncl-container" data-ncl-id="${id}">
+        <label class="form-label">${label}${createHelpIcon(help)} <span style="font-size:0.8rem; color:#aaa; font-weight:normal;">(Max 5)</span></label>
+        <div class="ncl-rows" id="ncl-rows-${id}">
+            ${rowsHtml}
+        </div>
+        <button type="button" class="dict-add-btn" id="btn-add-${id}" onclick="addNamedContentListRow('${id}')" ${isMaxed ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>
+            + Add Item
+        </button>
+    </div>`;
+}
+
+function createNamedContentListRow(idx, name, desc, content) {
+    const nameLimit = 100;
+    const descLimit = 100;
+    const contentLimit = 10000;
+
+    return `
+    <div class="ncl-row" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px; position: relative;">
+        <button type="button" class="dict-remove-btn" onclick="removeNamedContentListRow(this)" style="position: absolute; right: 10px; top: 10px;">−</button>
+        
+        <div style="margin-bottom: 8px;">
+            <label style="font-size: 0.8rem; color: #ccc;">Name</label>
+            <input type="text" class="styled-input ncl-name" placeholder="Name" value="${escapeForHtml(name)}" maxlength="${nameLimit}">
+        </div>
+        
+        <div style="margin-bottom: 8px;">
+            <label style="font-size: 0.8rem; color: #ccc;">Description</label>
+            <input type="text" class="styled-input ncl-desc" placeholder="Description" value="${escapeForHtml(desc)}" maxlength="${descLimit}">
+        </div>
+
+        <div>
+            <label style="font-size: 0.8rem; color: #ccc;">Content (Skill)</label>
+            <textarea class="styled-textarea ncl-content" placeholder="Content..." maxlength="${contentLimit}" style="min-height: 80px;">${escapeForHtml(content)}</textarea>
+        </div>
+    </div>`;
+}
+
+function addNamedContentListRow(id) {
+    const container = document.getElementById(`ncl-rows-${id}`);
+    const rows = container.querySelectorAll('.ncl-row');
+    if (rows.length >= 5) return;
+
+    const rowHtml = createNamedContentListRow(rows.length, '', '', '');
+    container.insertAdjacentHTML('beforeend', rowHtml);
+
+    // Update button state
+    checkNamedContentListLimit(id);
+}
+
+function removeNamedContentListRow(btn) {
+    const row = btn.closest('.ncl-row');
+    const container = row.closest('.ncl-container');
+    const id = container.getAttribute('data-ncl-id');
+
+    if (row) row.remove();
+    checkNamedContentListLimit(id);
+}
+
+function checkNamedContentListLimit(id) {
+    const container = document.getElementById(`ncl-rows-${id}`);
+    const btn = document.getElementById(`btn-add-${id}`);
+    const count = container.querySelectorAll('.ncl-row').length;
+
+    if (count >= 5) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+    } else {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+    }
 }
 
 // --- NAVIGATION ---
@@ -627,6 +737,29 @@ async function saveChanges() {
                             }
                         });
                         payload[item.key] = dictObj;
+                    }
+                }
+                else if (item.type === 'namedContentList') {
+                    const container = document.querySelector(`.ncl-container[data-ncl-id="${item.key}"]`);
+                    if (container) {
+                        const rows = container.querySelectorAll('.ncl-row');
+                        const list = [];
+                        rows.forEach(row => {
+                            const name = row.querySelector('.ncl-name').value;
+                            const desc = row.querySelector('.ncl-desc').value;
+                            const content = row.querySelector('.ncl-content').value;
+
+                            // Only add if at least name is present? Or allow empty? 
+                            // Let's allow partials, but ideally name is key.
+                            if (name || desc || content) {
+                                list.push({
+                                    name: name,
+                                    description: desc,
+                                    skill: content
+                                });
+                            }
+                        });
+                        payload[item.key] = list;
                     }
                 }
             });
