@@ -1,0 +1,74 @@
+/* Emoji Picker Styles */
+.emoji-btn {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    z-index: 5;
+}
+
+.emoji-btn:hover {
+    opacity: 1;
+}
+
+.emoji-grid-container {
+    max-height: 400px;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.emoji-category-title {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: #aaa;
+    margin: 15px 0 10px 0;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 5px;
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 8px;
+}
+
+.emoji-item {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.emoji-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.1);
+}
+
+.emoji-item img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .emoji-grid-container {
+        max-height: 60vh;
+    }
+
+    .emoji-item {
+        width: 36px;
+        height: 36px;
+    }
+}

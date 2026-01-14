@@ -209,6 +209,10 @@
         "key": "support_channels"
       },
       {
+        "type": "title",
+        "text": "AI Context"
+      },
+      {
         "type": "textarea",
         "key": "add_context",
         "label": "Additional Context",
