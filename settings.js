@@ -334,7 +334,7 @@ function renderSettingsList(settingsList) {
                 html += `<div class="section-title">${item.text}${createHelpIcon(item.help)}</div>`;
                 break;
             case 'switch':
-                html += createToggle(item.key, item.label, item.sublabel, GLOBAL_SETTINGS[item.key] === true, item.help);
+                html += createToggle(item.key, item.label, item.sublabel, toBoolean(GLOBAL_SETTINGS[item.key]), item.help);
                 break;
             case 'select':
                 html += createSelect(item.key, item.label, item.options, GLOBAL_SETTINGS[item.key] || item.default, item.help);
@@ -379,7 +379,7 @@ function renderCommandList() {
     let html = `<div class="commands-grid">`;
     GLOBAL_COMMANDS.forEach(cmd => {
         const key = `${cmd.name}_enabled`;
-        const isEnabled = GLOBAL_SETTINGS[key] !== false;
+        const isEnabled = GLOBAL_SETTINGS[key] === undefined || toBoolean(GLOBAL_SETTINGS[key]);
         html += `
         <div class="command-card" style="display:flex; flex-direction:column; align-items:flex-start; gap:8px;">
             <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
@@ -419,6 +419,16 @@ function renderSupportChannelList(key) {
 }
 
 // --- HELPER COMPONENT GENERATORS ---
+
+// Normalize value to boolean (handles Python "True"/"False" strings)
+function toBoolean(val) {
+    if (typeof val === 'boolean') return val;
+    if (typeof val === 'string') {
+        const lower = val.toLowerCase();
+        return lower === 'true' || lower === '1';
+    }
+    return Boolean(val);
+}
 
 // Escape special characters for HTML attributes
 function escapeForHtml(str) {
