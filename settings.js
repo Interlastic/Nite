@@ -248,6 +248,11 @@ async function initSettingsFlow(serverId, token) {
 
                 document.getElementById('loading-text').classList.add('hide');
 
+                // Sync enabled bools from actual message arrays (bot uses messages !== false for enabled state)
+                // This ensures website matches Discord dashboard behavior
+                GLOBAL_SETTINGS.welcome_enabled_bool = GLOBAL_SETTINGS.welcome_messages !== false;
+                GLOBAL_SETTINGS.goodbye_enabled_bool = GLOBAL_SETTINGS.goodbye_messages !== false;
+
                 // 4. Render Interface
                 renderInterface();
                 return;
