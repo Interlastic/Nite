@@ -368,6 +368,9 @@ function renderSettingsList(settingsList) {
             case 'supportChannelList':
                 html += renderSupportChannelList(item.key);
                 break;
+            case 'embedMaker':
+                html += createEmbedMakerButton(item.key, item.label, item.buttonText, item.help);
+                break;
             default:
                 console.warn("Unknown setting type:", item.type);
         }
@@ -714,6 +717,158 @@ function checkNamedContentListLimit(id) {
     }
 }
 
+// --- EMBED MAKER ---
+function createEmbedMakerButton(key, label, buttonText, help) {
+    const hasEmbed = GLOBAL_SETTINGS[key] && Object.keys(GLOBAL_SETTINGS[key]).length > 0;
+    const statusText = hasEmbed ? '✓ Embed configured' : 'No embed set';
+    const statusColor = hasEmbed ? '#3ba55c' : '#72767d';
+
+    return `
+    <div class="form-group embed-maker-group" data-embed-key="${key}">
+        <label class="form-label">${label}${createHelpIcon(help)}</label>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button type="button" class="dict-add-btn" onclick="openEmbedMaker('${key}')" style="margin: 0;">
+                ${buttonText || 'Edit Embed'}
+            </button>
+            <span class="embed-status" id="embed-status-${key}" style="font-size: 0.85rem; color: ${statusColor};">${statusText}</span>
+            ${hasEmbed ? `<button type="button" class="dict-remove-btn" onclick="clearEmbed('${key}')" style="position: static; width: 24px; height: 24px; font-size: 16px;" title="Remove embed">−</button>` : ''}
+        </div>
+    </div>`;
+}
+
+function openEmbedMaker(key) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'embed-maker-modal';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    `;
+
+    // Modal container
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        width: 95%;
+        max-width: 1200px;
+        height: 90%;
+        background: #36393f;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    `;
+
+    // Header
+    const header = document.createElement('div');
+    header.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background: #2f3136;
+        border-bottom: 1px solid #202225;
+    `;
+    header.innerHTML = `
+        <h3 style="margin: 0; color: #fff;">Embed Editor</h3>
+        <div style="display: flex; gap: 10px;">
+            <button id="embed-save-btn" style="padding: 8px 16px; background: #3ba55c; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">Save Embed</button>
+            <button id="embed-cancel-btn" style="padding: 8px 16px; background: #4f545c; color: #fff; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+        </div>
+    `;
+
+    // Iframe
+    const iframe = document.createElement('iframe');
+    iframe.id = 'embed-maker-iframe';
+    iframe.src = 'embed_maker.html';
+    iframe.style.cssText = `
+        flex: 1;
+        width: 100%;
+        border: none;
+    `;
+
+    modal.appendChild(header);
+    modal.appendChild(iframe);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Store key for save
+    overlay.dataset.embedKey = key;
+
+    // Load existing embed data into iframe when ready
+    iframe.onload = function () {
+        const existingEmbed = GLOBAL_SETTINGS[key];
+        if (existingEmbed && iframe.contentWindow.loadEmbedData) {
+            iframe.contentWindow.loadEmbedData(existingEmbed);
+        }
+    };
+
+    // Event handlers
+    document.getElementById('embed-save-btn').onclick = function () {
+        saveEmbedFromModal(key);
+    };
+
+    document.getElementById('embed-cancel-btn').onclick = function () {
+        closeEmbedMaker();
+    };
+
+    // Close on escape
+    overlay.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeEmbedMaker();
+    });
+}
+
+function closeEmbedMaker() {
+    const modal = document.getElementById('embed-maker-modal');
+    if (modal) modal.remove();
+}
+
+function saveEmbedFromModal(key) {
+    const iframe = document.getElementById('embed-maker-iframe');
+    if (iframe && iframe.contentWindow.getEmbedData) {
+        const embedData = iframe.contentWindow.getEmbedData();
+        GLOBAL_SETTINGS[key] = embedData;
+
+        // Update status display
+        const statusEl = document.getElementById(`embed-status-${key}`);
+        if (statusEl) {
+            const hasEmbed = embedData && Object.keys(embedData).length > 0;
+            statusEl.textContent = hasEmbed ? '✓ Embed configured' : 'No embed set';
+            statusEl.style.color = hasEmbed ? '#3ba55c' : '#72767d';
+        }
+
+        closeEmbedMaker();
+    } else {
+        alert('Could not retrieve embed data. Please try again.');
+    }
+}
+
+function clearEmbed(key) {
+    if (confirm('Remove this embed?')) {
+        GLOBAL_SETTINGS[key] = null;
+        // Re-render the embed maker group
+        const group = document.querySelector(`.embed-maker-group[data-embed-key="${key}"]`);
+        if (group) {
+            const statusEl = group.querySelector('.embed-status');
+            if (statusEl) {
+                statusEl.textContent = 'No embed set';
+                statusEl.style.color = '#72767d';
+            }
+            // Remove the remove button
+            const removeBtn = group.querySelector('.dict-remove-btn');
+            if (removeBtn) removeBtn.remove();
+        }
+    }
+}
+
 // --- NAVIGATION ---
 function switchTab(btn, targetId) {
     const allBtns = Array.from(document.querySelectorAll('.nav-item'));
@@ -868,6 +1023,12 @@ async function saveChanges() {
                             }
                         });
                         payload[item.key] = list;
+                    }
+                }
+                else if (item.type === 'embedMaker') {
+                    // Embed data is stored in GLOBAL_SETTINGS by the modal
+                    if (GLOBAL_SETTINGS[item.key]) {
+                        payload[item.key] = GLOBAL_SETTINGS[item.key];
                     }
                 }
             });

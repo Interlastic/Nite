@@ -111,11 +111,10 @@
         "sublabel": ""
       },
       {
-        "type": "textarea",
-        "key": "welcome_messages",
-        "label": "Messages",
-        "placeholder": "Separate with | . Use {mention}, {username}, {displayname}",
-        "join": " | "
+        "type": "embedMaker",
+        "key": "welcome_message",
+        "label": "Welcome Message",
+        "buttonText": "Edit Welcome Message"
       },
       {
         "type": "channelPick",
@@ -145,11 +144,10 @@
         "sublabel": ""
       },
       {
-        "type": "textarea",
-        "key": "goodbye_messages",
-        "label": "Messages",
-        "placeholder": "Separate with | . Use {mention}, {username}, {displayname}",
-        "join": " | "
+        "type": "embedMaker",
+        "key": "goodbye_message",
+        "label": "Goodbye Message",
+        "buttonText": "Edit Goodbye Message"
       },
       {
         "type": "channelPick",

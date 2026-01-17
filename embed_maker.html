@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embed Maker</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'gg sans', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #36393f;
+            color: #dcddde;
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .editor,
+        .preview {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        h2 {
+            margin-bottom: 16px;
+            color: #fff;
+            font-size: 18px;
+        }
+
+        h3 {
+            margin: 16px 0 12px;
+            color: #b9bbbe;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: #b9bbbe;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .char-count {
+            font-size: 11px;
+            color: #72767d;
+            text-transform: none;
+            font-weight: 400;
+        }
+
+        .char-count.warning {
+            color: #faa61a;
+        }
+
+        .char-count.error {
+            color: #ed4245;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background: #40444b;
+            color: #dcddde;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus,
+        textarea:focus {
+            box-shadow: 0 0 0 2px #5865f2;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        input[type="color"] {
+            height: 40px;
+            padding: 4px;
+            cursor: pointer;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .placeholder-help {
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .placeholder-help summary {
+            color: #72767d;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .placeholder-help summary:hover {
+            color: #b9bbbe;
+        }
+
+        .placeholder-list {
+            margin-top: 8px;
+            padding: 8px;
+            background: #2f3136;
+            border-radius: 4px;
+        }
+
+        .placeholder-list code {
+            background: #40444b;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin: 2px;
+            display: inline-block;
+        }
+
+        /* Embed Tabs */
+        .embed-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .embed-tab {
+            background: #40444b;
+            color: #b9bbbe;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .embed-tab:hover {
+            background: #4f545c;
+        }
+
+        .embed-tab.active {
+            background: #5865f2;
+            color: #fff;
+        }
+
+        .embed-tab.has-content {
+            border-bottom: 2px solid #3ba55c;
+        }
+
+        .add-embed-btn {
+            background: #3ba55c;
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        .add-embed-btn:hover {
+            background: #2d8049;
+        }
+
+        .remove-embed-btn {
+            background: #ed4245;
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 12px;
+            margin-left: auto;
+        }
+
+        .embed-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        /* Fields Section */
+        .fields-container {
+            border: 1px solid #40444b;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .field-item {
+            background: #2f3136;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .field-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .field-header span {
+            font-weight: 600;
+            font-size: 12px;
+            color: #b9bbbe;
+        }
+
+        .remove-field {
+            background: #ed4245;
+            color: #fff;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .field-inputs {
+            display: grid;
+            gap: 8px;
+        }
+
+        .field-inputs input,
+        .field-inputs textarea {
+            font-size: 13px;
+            padding: 8px;
+        }
+
+        .field-inputs textarea {
+            min-height: 50px;
+        }
+
+        .field-count {
+            font-size: 12px;
+            color: #72767d;
+            margin-bottom: 8px;
+        }
+
+        /* Discord Message Preview */
+        .discord-message {
+            display: flex;
+            padding: 4px 0;
+        }
+
+        .app-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 16px;
+            flex-shrink: 0;
+            background: #5865f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .app-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .message-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .app-name {
+            font-weight: 600;
+            font-size: 16px;
+            color: #ffffff;
+            margin-right: 6px;
+        }
+
+        .app-badge {
+            background: #5865f2;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 4px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            margin-right: 8px;
+        }
+
+        .message-timestamp {
+            color: #72767d;
+            font-size: 12px;
+        }
+
+        .message-text {
+            color: #dcddde;
+            font-size: 16px;
+            line-height: 1.375;
+            margin-bottom: 4px;
+            white-space: pre-line;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .discord-mention {
+            background: rgba(88, 101, 242, 0.3);
+            color: #dee0fc;
+            padding: 0 2px;
+            border-radius: 3px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .discord-mention:hover {
+            background: #5865f2;
+            color: #ffffff;
+        }
+
+        /* Discord Markdown Styles */
+        .md-codeblock {
+            background: #2b2d31;
+            border-radius: 4px;
+            padding: 8px;
+            margin: 4px 0;
+            overflow-x: auto;
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+
+        .md-inline-code {
+            background: #2b2d31;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            font-size: 85%;
+        }
+
+        .md-blockquote {
+            border-left: 4px solid #4e5058;
+            padding-left: 12px;
+            margin: 4px 0;
+            color: #b5bac1;
+        }
+
+        .md-header {
+            margin: 8px 0 4px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .md-h1 {
+            font-size: 24px;
+        }
+
+        .md-h2 {
+            font-size: 20px;
+        }
+
+        .md-h3 {
+            font-size: 16px;
+        }
+
+        .md-list-item {
+            margin-left: 16px;
+            list-style-position: inside;
+        }
+
+        .md-list-item.md-ol {
+            list-style-type: decimal;
+        }
+
+        .md-link {
+            color: #00aff4;
+            text-decoration: none;
+        }
+
+        .md-link:hover {
+            text-decoration: underline;
+        }
+
+        .md-spoiler {
+            background: #1e1f22;
+            color: transparent;
+            padding: 0 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .md-spoiler.revealed {
+            background: #4e5058;
+            color: #dcddde;
+        }
+
+        .embeds-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        /* Discord Embed Preview */
+        .embed-preview {
+            background: #2f3136;
+            border-radius: 4px;
+            padding: 12px 16px;
+            border-left: 4px solid #5865f2;
+            max-width: 520px;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .embed-author {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .embed-author img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+
+        .embed-author a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .embed-author a:hover {
+            text-decoration: underline;
+        }
+
+        .embed-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .embed-title a {
+            color: #00aff4;
+            text-decoration: none;
+        }
+
+        .embed-title a:hover {
+            text-decoration: underline;
+        }
+
+        .embed-description {
+            font-size: 14px;
+            line-height: 1.375;
+            color: #dcddde;
+            white-space: pre-line;
+            margin-bottom: 8px;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .embed-fields {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .embed-field {
+            min-width: 0;
+        }
+
+        .embed-field.inline {
+            grid-column: span 1;
+        }
+
+        .embed-field.full {
+            grid-column: span 3;
+        }
+
+        .embed-field-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 2px;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .embed-field-value {
+            font-size: 14px;
+            color: #b9bbbe;
+            white-space: pre-line;
+            line-height: 1.375;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .embed-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #b9bbbe;
+        }
+
+        .embed-footer img {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .embed-footer-text {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .embed-footer-separator {
+            color: #72767d;
+        }
+
+        .embed-thumbnail {
+            float: right;
+            margin-left: 16px;
+            margin-bottom: 8px;
+            max-width: 80px;
+            max-height: 80px;
+            border-radius: 4px;
+        }
+
+        .embed-image {
+            max-width: 100%;
+            border-radius: 4px;
+            margin-top: 12px;
+        }
+
+        .output-section {
+            margin-top: 20px;
+        }
+
+        button {
+            background: #5865f2;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #4752c4;
+        }
+
+        button:disabled {
+            background: #4f545c;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .add-field {
+            background: #3ba55c;
+            margin-bottom: 8px;
+        }
+
+        .add-field:hover:not(:disabled) {
+            background: #2d8049;
+        }
+
+        .json-output {
+            background: #2f3136;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .copy-btn {
+            background: #4f545c;
+        }
+
+        .copy-btn:hover {
+            background: #5d6269;
+        }
+
+        .empty-state {
+            color: #72767d;
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        .embed-section {
+            border: 1px solid #40444b;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="editor">
+            <h2>Embed Editor</h2>
+
+            <h3>App Settings</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>App Name <span class="char-count" id="app-name-count">8 / 32</span></label>
+                    <input type="text" id="app-name" placeholder="My Bot" value="Nite Bot" maxlength="32">
+                </div>
+                <div class="form-group">
+                    <label>App Icon URL</label>
+                    <input type="text" id="app-icon" placeholder="https://...">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Message Content
+                    <span class="char-count" id="message-count">0 / 2000</span>
+                </label>
+                <textarea id="embed-message" placeholder="Message content (outside embed)" maxlength="2000"></textarea>
+                <details class="placeholder-help">
+                    <summary>Available Placeholders</summary>
+                    <div class="placeholder-list">
+                        <code>{mention}</code> <code>{channellink}</code> <code>{username}</code>
+                        <code>{displayname}</code>
+                        <code>{channel}</code> <code>{server}</code> <code>{membercount}</code>
+                        <code>{date}</code> <code>{time}</code> <code>{userid}</code> <code>{serverid}</code>
+                        <code>{profileurl}</code> <code>{profileopenurl}</code>
+                        <span style="color: #72767d; font-size: 11px; display: block; margin-top: 4px;">Escape with \{
+                            and \}</span>
+                    </div>
+                </details>
+                <details class="placeholder-help">
+                    <summary>Markdown Formatting</summary>
+                    <div class="placeholder-list">
+                        <code>*italic*</code> <code>**bold**</code> <code>***bold italic***</code>
+                        <code>__underline__</code> <code>~~strikethrough~~</code> <code>||spoiler||</code>
+                        <code>`code`</code> <code>```code block```</code>
+                        <code>[link](url)</code> <code>&lt;url&gt;</code>
+                        <code># Header</code> <code>&gt; Quote</code> <code>- List</code>
+                    </div>
+                </details>
+            </div>
+
+            <h3>Embeds</h3>
+            <div class="embed-tabs" id="embed-tabs"></div>
+            <div class="embed-controls">
+                <button class="add-embed-btn" id="add-embed-btn" onclick="addEmbed()">+ Add Embed</button>
+                <button class="remove-embed-btn" id="remove-embed-btn" onclick="removeCurrentEmbed()">Remove This
+                    Embed</button>
+                <span class="field-count" id="embed-count">1 / 10 embeds</span>
+            </div>
+
+            <div id="embed-editor">
+                <!-- Embed fields will be populated here -->
+            </div>
+
+            <div class="output-section">
+                <div class="btn-row">
+                    <button onclick="generateJSON()">Generate JSON</button>
+                    <button class="copy-btn" onclick="copyJSON()">Copy</button>
+                </div>
+                <div class="json-output" id="json-output"></div>
+            </div>
+        </div>
+
+        <div class="preview">
+            <h2>Preview</h2>
+            <div class="discord-message">
+                <div class="app-avatar" id="preview-app-avatar">N</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="app-name" id="preview-app-name">Nite Bot</span>
+                        <span class="app-badge">APP</span>
+                        <span class="message-timestamp" id="preview-msg-timestamp">Today at --:--</span>
+                    </div>
+                    <div class="message-text" id="preview-message"></div>
+                    <div class="embeds-container" id="embeds-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Discord API Limits
+        const LIMITS = {
+            message: 2000,
+            title: 256,
+            description: 4096,
+            fieldName: 256,
+            fieldValue: 1024,
+            footer: 2048,
+            authorName: 256
+        };
+        const MAX_FIELDS = 25;
+        const MAX_EMBEDS = 10;
+
+        // State
+        let embeds = [createEmptyEmbed()];
+        let currentEmbedIndex = 0;
+
+        function createEmptyEmbed() {
+            return {
+                authorName: '',
+                authorIcon: '',
+                authorUrl: '',
+                title: '',
+                titleUrl: '',
+                description: '',
+                color: '#5865f2',
+                thumbnail: '',
+                image: '',
+                fields: [],
+                footerText: '',
+                footerIcon: '',
+                timestamp: ''
+            };
+        }
+
+        // Placeholder definitions (for preview only)
+        const PLACEHOLDERS = {
+            '{mention}': '@username',
+            '{channellink}': '#general',
+            '{username}': 'username',
+            '{displayname}': 'User 1',
+            '{profileurl}': 'https://cdn.discordapp.com/embed/avatars/0.png',
+            '{profileopenurl}': 'https://discord.com/users/123456789012345678',
+            '{server}': 'My Server',
+            '{servername}': 'My Server',
+            '{membercount}': '1,234',
+            '{channel}': 'general',
+            '{date}': new Date().toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }),
+            '{time}': new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            '{userid}': '123456789012345678',
+            '{serverid}': '987654321098765432'
+        };
+
+        function replacePlaceholders(text, forHtml = false) {
+            if (!text) return text;
+            let result = text;
+            for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
+                if (placeholder === '{mention}' && forHtml) {
+                    result = result.split(placeholder).join('<span class="discord-mention">@username</span>');
+                } else {
+                    result = result.split(placeholder).join(value);
+                }
+            }
+            return result;
+        }
+
+        // For fields where mention/channellink don't work (like embed author name)
+        function escapeAndReplacePlaceholdersNoMention(text) {
+            if (!text) return '';
+            let escaped = escapeHtml(text);
+            // Handle escape sequences
+            const ESCAPE_OPEN = '___ESCAPED_OPEN_BRACE___';
+            const ESCAPE_CLOSE = '___ESCAPED_CLOSE_BRACE___';
+            escaped = escaped.split('\\{').join(ESCAPE_OPEN);
+            escaped = escaped.split('\\}').join(ESCAPE_CLOSE);
+            // Replace placeholders (skip mention and channellink - they don't work in author)
+            for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
+                if (placeholder !== '{mention}' && placeholder !== '{channellink}') {
+                    escaped = escaped.split(placeholder).join(escapeHtml(value));
+                }
+            }
+            // Restore escaped braces
+            escaped = escaped.split(ESCAPE_OPEN).join('{');
+            escaped = escaped.split(ESCAPE_CLOSE).join('}');
+            return escaped;
+        }
+
+        function escapeAndReplacePlaceholders(text) {
+            if (!text) return '';
+            // First escape HTML
+            let escaped = escapeHtml(text);
+            // Handle escape sequences for braces: \{ -> { and \} -> }
+            const ESCAPE_OPEN = '___ESCAPED_OPEN_BRACE___';
+            const ESCAPE_CLOSE = '___ESCAPED_CLOSE_BRACE___';
+            escaped = escaped.split('\\{').join(ESCAPE_OPEN);
+            escaped = escaped.split('\\}').join(ESCAPE_CLOSE);
+            // Replace styled placeholders (mention and channellink)
+            escaped = escaped.split('{mention}').join('<span class="discord-mention">@username</span>');
+            escaped = escaped.split('{channellink}').join('<span class="discord-mention">#general</span>');
+            // Replace other placeholders
+            for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
+                if (placeholder !== '{mention}' && placeholder !== '{channellink}') {
+                    escaped = escaped.split(placeholder).join(escapeHtml(value));
+                }
+            }
+            // Restore escaped braces
+            escaped = escaped.split(ESCAPE_OPEN).join('{');
+            escaped = escaped.split(ESCAPE_CLOSE).join('}');
+            // Apply Discord markdown
+            escaped = parseDiscordMarkdown(escaped);
+            return escaped;
+        }
+
+        function parseDiscordMarkdown(text) {
+            if (!text) return '';
+            let result = text;
+
+            // Code blocks (must be first to protect content)
+            result = result.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
+                return `<pre class="md-codeblock${lang ? ' lang-' + lang : ''}"><code>${code.trim()}</code></pre>`;
+            });
+
+            // Inline code (protect from other formatting)
+            const inlineCodePlaceholders = [];
+            result = result.replace(/`([^`]+)`/g, (match, code) => {
+                const placeholder = `ICODE${inlineCodePlaceholders.length}EDOCI`;
+                inlineCodePlaceholders.push(`<code class="md-inline-code">${code}</code>`);
+                return placeholder;
+            });
+
+            // Multi-line quote (>>>)
+            result = result.replace(/^&gt;&gt;&gt;\s?([\s\S]+)$/gm, '<blockquote class="md-blockquote md-blockquote-multi">$1</blockquote>');
+
+            // Single line quote (>)
+            result = result.replace(/^&gt;\s?(.+)$/gm, '<div class="md-blockquote">$1</div>');
+
+            // Headers (# ## ###)
+            result = result.replace(/^###\s+(.+)$/gm, '<h3 class="md-header md-h3">$1</h3>');
+            result = result.replace(/^##\s+(.+)$/gm, '<h2 class="md-header md-h2">$1</h2>');
+            result = result.replace(/^#\s+(.+)$/gm, '<h1 class="md-header md-h1">$1</h1>');
+
+            // Lists (- or * or numbered)
+            result = result.replace(/^[\-\*]\s+(.+)$/gm, '<li class="md-list-item">$1</li>');
+            result = result.replace(/^\d+\.\s+(.+)$/gm, '<li class="md-list-item md-ol">$1</li>');
+
+            // Links [text](url)
+            result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="md-link" target="_blank">$1</a>');
+
+            // Auto-linked URLs <https://...>
+            result = result.replace(/&lt;(https?:\/\/[^&]+)&gt;/g, '<a href="$1" class="md-link" target="_blank">$1</a>');
+
+            // Spoiler ||text||
+            result = result.replace(/\|\|([^|]+)\|\|/g, '<span class="md-spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+
+            // Bold italic underline (***__text__***)
+            result = result.replace(/\*\*\*__(.+?)__\*\*\*/g, '<strong><em><u>$1</u></em></strong>');
+
+            // Bold italic (***text***)
+            result = result.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+
+            // Bold underline (**__text__**)
+            result = result.replace(/\*\*__(.+?)__\*\*/g, '<strong><u>$1</u></strong>');
+
+            // Bold strikethrough (~~**text**~~)
+            result = result.replace(/~~\*\*(.+?)\*\*~~/g, '<del><strong>$1</strong></del>');
+
+            // Bold (** or __)
+            result = result.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+            // Underline (__)
+            result = result.replace(/__(.+?)__/g, '<u>$1</u>');
+
+            // Italic (* or _) - be careful not to match already processed
+            result = result.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+            result = result.replace(/(?<!_)_([^_]+)_(?!_)/g, '<em>$1</em>');
+
+            // Strikethrough (~~)
+            result = result.replace(/~~(.+?)~~/g, '<del>$1</del>');
+
+            // Restore inline code
+            inlineCodePlaceholders.forEach((code, i) => {
+                result = result.replace(`ICODE${i}EDOCI`, code);
+            });
+
+            return result;
+        }
+
+
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById('embed-tabs');
+            tabsContainer.innerHTML = '';
+            embeds.forEach((embed, i) => {
+                const tab = document.createElement('button');
+                tab.className = 'embed-tab' + (i === currentEmbedIndex ? ' active' : '');
+                if (embedHasContent(embed)) tab.classList.add('has-content');
+                tab.textContent = `Embed ${i + 1}`;
+                tab.onclick = () => switchEmbed(i);
+                tabsContainer.appendChild(tab);
+            });
+            document.getElementById('embed-count').textContent = `${embeds.length} / ${MAX_EMBEDS} embeds`;
+            document.getElementById('add-embed-btn').disabled = embeds.length >= MAX_EMBEDS;
+            document.getElementById('remove-embed-btn').style.display = embeds.length > 1 ? 'block' : 'none';
+        }
+
+        function embedHasContent(embed) {
+            return embed.title || embed.description || embed.fields.length > 0 || embed.authorName || embed.footerText || embed.image || embed.thumbnail;
+        }
+
+        function switchEmbed(index) {
+            saveCurrentEmbed();
+            currentEmbedIndex = index;
+            loadEmbed(embeds[index]);
+            renderTabs();
+        }
+
+        function addEmbed() {
+            if (embeds.length >= MAX_EMBEDS) return;
+            saveCurrentEmbed();
+            embeds.push(createEmptyEmbed());
+            currentEmbedIndex = embeds.length - 1;
+            loadEmbed(embeds[currentEmbedIndex]);
+            renderTabs();
+            updatePreview();
+        }
+
+        function removeCurrentEmbed() {
+            if (embeds.length <= 1) return;
+            embeds.splice(currentEmbedIndex, 1);
+            currentEmbedIndex = Math.min(currentEmbedIndex, embeds.length - 1);
+            loadEmbed(embeds[currentEmbedIndex]);
+            renderTabs();
+            updatePreview();
+        }
+
+        function saveCurrentEmbed() {
+            const embed = embeds[currentEmbedIndex];
+            embed.authorName = document.getElementById('embed-author-name')?.value || '';
+            embed.authorIcon = document.getElementById('embed-author-icon')?.value || '';
+            embed.authorUrl = document.getElementById('embed-author-url')?.value || '';
+            embed.title = document.getElementById('embed-title')?.value || '';
+            embed.titleUrl = document.getElementById('embed-title-url')?.value || '';
+            embed.description = document.getElementById('embed-description')?.value || '';
+            embed.color = document.getElementById('embed-color')?.value || '#5865f2';
+            embed.thumbnail = document.getElementById('embed-thumbnail')?.value || '';
+            embed.image = document.getElementById('embed-image')?.value || '';
+            embed.footerText = document.getElementById('embed-footer')?.value || '';
+            embed.footerIcon = document.getElementById('embed-footer-icon')?.value || '';
+            embed.timestamp = document.getElementById('embed-timestamp')?.value || '';
+
+            // Save fields
+            embed.fields = [];
+            document.querySelectorAll('#fields-container .field-item').forEach(item => {
+                const name = item.querySelector('.field-name')?.value || '';
+                const value = item.querySelector('.field-value')?.value || '';
+                const inline = item.querySelector('.field-inline')?.checked || false;
+                if (name || value) {
+                    embed.fields.push({ name: name || '\u200b', value: value || '\u200b', inline });
+                }
+            });
+        }
+
+        function loadEmbed(embed) {
+            renderEmbedEditor();
+            document.getElementById('embed-author-name').value = embed.authorName;
+            document.getElementById('embed-author-icon').value = embed.authorIcon;
+            document.getElementById('embed-author-url').value = embed.authorUrl;
+            document.getElementById('embed-title').value = embed.title;
+            document.getElementById('embed-title-url').value = embed.titleUrl;
+            document.getElementById('embed-description').value = embed.description;
+            document.getElementById('embed-color').value = embed.color;
+            document.getElementById('embed-thumbnail').value = embed.thumbnail;
+            document.getElementById('embed-image').value = embed.image;
+            document.getElementById('embed-footer').value = embed.footerText;
+            document.getElementById('embed-footer-icon').value = embed.footerIcon;
+            document.getElementById('embed-timestamp').value = embed.timestamp;
+
+            // Load fields
+            const fieldsContainer = document.getElementById('fields-container');
+            fieldsContainer.innerHTML = embed.fields.length === 0 ? '<span class="empty-state">No fields added</span>' : '';
+            embed.fields.forEach((field, i) => {
+                addFieldWithData(field.name, field.value, field.inline, i);
+            });
+            updateFieldCount();
+        }
+
+        function renderEmbedEditor() {
+            document.getElementById('embed-editor').innerHTML = `
+                <div class="embed-section">
+                    <h3 style="margin-top:0">Author</h3>
+                    <div class="form-group">
+                        <label>Author Name <span class="char-count" id="author-name-count">0 / 256</span></label>
+                        <input type="text" id="embed-author-name" placeholder="Author name" maxlength="256" oninput="updatePreview()">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Author Icon URL</label>
+                            <input type="text" id="embed-author-icon" placeholder="https://..." oninput="updatePreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>Author URL</label>
+                            <input type="text" id="embed-author-url" placeholder="https://..." oninput="updatePreview()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="embed-section">
+                    <h3 style="margin-top:0">Content</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Title <span class="char-count" id="title-count">0 / 256</span></label>
+                            <input type="text" id="embed-title" placeholder="Embed title" maxlength="256" oninput="updatePreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>Title URL</label>
+                            <input type="text" id="embed-title-url" placeholder="https://..." oninput="updatePreview()">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description <span class="char-count" id="description-count">0 / 4096</span></label>
+                        <textarea id="embed-description" placeholder="Embed description" maxlength="4096" oninput="updatePreview()"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Color</label>
+                        <input type="color" id="embed-color" value="#5865f2" oninput="updatePreview()">
+                    </div>
+                </div>
+
+                <div class="embed-section">
+                    <h3 style="margin-top:0">Images</h3>
+                    <div class="form-group">
+                        <label>Thumbnail URL</label>
+                        <input type="text" id="embed-thumbnail" placeholder="https://..." oninput="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Image URL</label>
+                        <input type="text" id="embed-image" placeholder="https://..." oninput="updatePreview()">
+                    </div>
+                </div>
+
+                <div class="embed-section">
+                    <h3 style="margin-top:0">Fields</h3>
+                    <button class="add-field" id="add-field-btn" onclick="addField()">+ Add Field</button>
+                    <div class="field-count" id="field-count">0 / 25 fields</div>
+                    <div class="fields-container" id="fields-container">
+                        <span class="empty-state">No fields added</span>
+                    </div>
+                </div>
+
+                <div class="embed-section">
+                    <h3 style="margin-top:0">Footer</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Footer Text <span class="char-count" id="footer-count">0 / 2048</span></label>
+                            <input type="text" id="embed-footer" placeholder="Footer text" maxlength="2048" oninput="updatePreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>Footer Icon URL</label>
+                            <input type="text" id="embed-footer-icon" placeholder="https://..." oninput="updatePreview()">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Timestamp</label>
+                        <input type="datetime-local" id="embed-timestamp" oninput="updatePreview()">
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateFieldCount() {
+            const count = document.querySelectorAll('#fields-container .field-item').length;
+            document.getElementById('field-count').textContent = `${count} / ${MAX_FIELDS} fields`;
+            document.getElementById('add-field-btn').disabled = count >= MAX_FIELDS;
+        }
+
+        function addField() {
+            addFieldWithData('', '', false);
+        }
+
+        function addFieldWithData(name, value, inline, existingIndex) {
+            const fieldsContainer = document.getElementById('fields-container');
+            const currentCount = fieldsContainer.querySelectorAll('.field-item').length;
+            if (currentCount >= MAX_FIELDS) return;
+
+            const emptyState = fieldsContainer.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            const fieldId = Date.now() + Math.random();
+            const fieldItem = document.createElement('div');
+            fieldItem.className = 'field-item';
+            fieldItem.dataset.id = fieldId;
+            fieldItem.innerHTML = `
+                <div class="field-header">
+                    <span>Field ${currentCount + 1}</span>
+                    <button class="remove-field" onclick="removeField('${fieldId}')">Remove</button>
+                </div>
+                <div class="field-inputs">
+                    <label style="font-size: 11px;">Name <span class="char-count">0 / 256</span></label>
+                    <input type="text" placeholder="Field name" class="field-name" maxlength="256" value="${escapeHtml(name === '\u200b' ? '' : name)}" oninput="updatePreview()">
+                    <label style="font-size: 11px; margin-top: 4px;">Value <span class="char-count">0 / 1024</span></label>
+                    <textarea placeholder="Field value" class="field-value" maxlength="1024" oninput="updatePreview()">${escapeHtml(value === '\u200b' ? '' : value)}</textarea>
+                    <label class="checkbox-label">
+                        <input type="checkbox" class="field-inline" ${inline ? 'checked' : ''} onchange="updatePreview()">
+                        Inline
+                    </label>
+                </div>
+            `;
+            fieldsContainer.appendChild(fieldItem);
+            updateFieldCount();
+            updatePreview();
+        }
+
+        function removeField(id) {
+            const field = document.querySelector(`[data-id="${id}"]`);
+            if (field) {
+                field.remove();
+                const fieldsContainer = document.getElementById('fields-container');
+                if (fieldsContainer.querySelectorAll('.field-item').length === 0) {
+                    fieldsContainer.innerHTML = '<span class="empty-state">No fields added</span>';
+                }
+                // Renumber fields
+                fieldsContainer.querySelectorAll('.field-item').forEach((item, i) => {
+                    item.querySelector('.field-header span').textContent = `Field ${i + 1}`;
+                });
+                updateFieldCount();
+                updatePreview();
+            }
+        }
+
+        function formatTimestamp(isoString) {
+            if (!isoString) return '';
+            const date = new Date(isoString);
+            const now = new Date();
+            const isToday = date.toDateString() === now.toDateString();
+            const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (isToday) return `Today at ${time}`;
+            return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + time;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updatePreview() {
+            saveCurrentEmbed();
+
+            // App header
+            const rawAppName = document.getElementById('app-name').value || 'Bot';
+            // Replace all placeholders except mention for app name
+            let appName = rawAppName;
+            for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
+                if (placeholder !== '{mention}') {
+                    appName = appName.split(placeholder).join(value);
+                }
+            }
+            const appIcon = document.getElementById('app-icon').value;
+            document.getElementById('preview-app-name').textContent = appName;
+
+            const avatarEl = document.getElementById('preview-app-avatar');
+            if (appIcon) {
+                avatarEl.innerHTML = `<img src="${appIcon}" onerror="this.style.display='none'; this.parentElement.textContent='${appName.charAt(0).toUpperCase()}'">`;
+            } else {
+                avatarEl.textContent = appName.charAt(0).toUpperCase();
+            }
+
+            // Timestamp
+            const now = new Date();
+            document.getElementById('preview-msg-timestamp').textContent = `Today at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+            // Message
+            document.getElementById('preview-message').innerHTML = escapeAndReplacePlaceholders(document.getElementById('embed-message').value);
+
+            // Render all embeds
+            const container = document.getElementById('embeds-container');
+            container.innerHTML = '';
+            embeds.forEach((embed, i) => {
+                if (!embedHasContent(embed) && embed.color === '#5865f2') return;
+                container.appendChild(renderEmbedPreview(embed));
+            });
+
+            // Update char counts
+            updateCharCounts();
+            renderTabs();
+        }
+
+        function renderEmbedPreview(embed) {
+            const div = document.createElement('div');
+            div.className = 'embed-preview';
+            div.style.borderLeftColor = embed.color;
+
+            let html = '';
+
+            // Thumbnail
+            if (embed.thumbnail) {
+                html += `<img class="embed-thumbnail" src="${escapeHtml(replacePlaceholders(embed.thumbnail))}" onerror="this.style.display='none'">`;
+            }
+
+            // Author
+            if (embed.authorName) {
+                html += '<div class="embed-author">';
+                if (embed.authorIcon) {
+                    html += `<img src="${escapeHtml(replacePlaceholders(embed.authorIcon))}" onerror="this.style.display='none'">`;
+                }
+                if (embed.authorUrl) {
+                    html += `<a href="${escapeHtml(embed.authorUrl)}" target="_blank">${escapeAndReplacePlaceholdersNoMention(embed.authorName)}</a>`;
+                } else {
+                    html += `<span>${escapeAndReplacePlaceholdersNoMention(embed.authorName)}</span>`;
+                }
+                html += '</div>';
+            }
+
+            // Title
+            if (embed.title) {
+                html += '<div class="embed-title">';
+                if (embed.titleUrl) {
+                    html += `<a href="${escapeHtml(embed.titleUrl)}" target="_blank">${escapeAndReplacePlaceholders(embed.title)}</a>`;
+                } else {
+                    html += escapeAndReplacePlaceholders(embed.title);
+                }
+                html += '</div>';
+            }
+
+            // Description
+            if (embed.description) {
+                html += `<div class="embed-description">${escapeAndReplacePlaceholders(embed.description)}</div>`;
+            }
+
+            // Fields
+            if (embed.fields.length > 0) {
+                html += '<div class="embed-fields">';
+                embed.fields.forEach(field => {
+                    const fieldClass = field.inline ? 'inline' : 'full';
+                    html += `<div class="embed-field ${fieldClass}">
+                        <div class="embed-field-name">${escapeAndReplacePlaceholders(field.name)}</div>
+                        <div class="embed-field-value">${escapeAndReplacePlaceholders(field.value)}</div>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+
+            // Image
+            if (embed.image) {
+                html += `<img class="embed-image" src="${escapeHtml(replacePlaceholders(embed.image))}" onerror="this.style.display='none'">`;
+            }
+
+            // Footer
+            if (embed.footerText || embed.timestamp) {
+                html += '<div class="embed-footer">';
+                if (embed.footerIcon && embed.footerText) {
+                    html += `<img src="${escapeHtml(replacePlaceholders(embed.footerIcon))}" onerror="this.style.display='none'">`;
+                }
+                html += '<div class="embed-footer-text">';
+                html += `<span>${escapeAndReplacePlaceholders(embed.footerText)}</span>`;
+                if (embed.footerText && embed.timestamp) {
+                    html += '<span class="embed-footer-separator">•</span>';
+                }
+                html += `<span>${formatTimestamp(embed.timestamp)}</span>`;
+                html += '</div></div>';
+            }
+
+            div.innerHTML = html;
+            return div;
+        }
+
+        function updateCharCounts() {
+            const countEl = (id, len, max) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = `${len} / ${max}`;
+                el.classList.remove('warning', 'error');
+                if (len >= max) el.classList.add('error');
+                else if (len >= max * 0.9) el.classList.add('warning');
+            };
+            countEl('app-name-count', document.getElementById('app-name').value.length, 32);
+            countEl('message-count', document.getElementById('embed-message').value.length, LIMITS.message);
+            countEl('title-count', document.getElementById('embed-title')?.value.length || 0, LIMITS.title);
+            countEl('description-count', document.getElementById('embed-description')?.value.length || 0, LIMITS.description);
+            countEl('footer-count', document.getElementById('embed-footer')?.value.length || 0, LIMITS.footer);
+            countEl('author-name-count', document.getElementById('embed-author-name')?.value.length || 0, LIMITS.authorName);
+        }
+
+        function generateJSON() {
+            saveCurrentEmbed();
+
+            const embedsData = embeds.filter(embedHasContent).map(embed => {
+                const e = {
+                    author: embed.authorName ? {
+                        name: embed.authorName,
+                        icon_url: embed.authorIcon || undefined,
+                        url: embed.authorUrl || undefined
+                    } : undefined,
+                    title: embed.title || undefined,
+                    url: embed.titleUrl || undefined,
+                    description: embed.description || undefined,
+                    color: parseInt(embed.color.replace('#', ''), 16),
+                    thumbnail: embed.thumbnail ? { url: embed.thumbnail } : undefined,
+                    image: embed.image ? { url: embed.image } : undefined,
+                    fields: embed.fields.length > 0 ? embed.fields : undefined,
+                    footer: embed.footerText ? {
+                        text: embed.footerText,
+                        icon_url: embed.footerIcon || undefined
+                    } : undefined,
+                    timestamp: embed.timestamp ? new Date(embed.timestamp).toISOString() : undefined
+                };
+                cleanObject(e);
+                return e;
+            });
+
+            const result = {
+                content: document.getElementById('embed-message').value || undefined,
+                embeds: embedsData.length > 0 ? embedsData : undefined
+            };
+            cleanObject(result);
+
+            document.getElementById('json-output').textContent = JSON.stringify(result, null, 2);
+        }
+
+        function cleanObject(obj) {
+            Object.keys(obj).forEach(key => {
+                if (obj[key] === undefined) {
+                    delete obj[key];
+                } else if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                    cleanObject(obj[key]);
+                }
+            });
+        }
+
+        function copyJSON() {
+            const output = document.getElementById('json-output').textContent;
+            if (output) navigator.clipboard.writeText(output);
+        }
+
+        // --- IFRAME API (for use when embedded in manage.html) ---
+        // Get embed data for external use (returns the full payload)
+        function getEmbedData() {
+            saveCurrentEmbed();
+            const content = document.getElementById('embed-message').value;
+            const appName = document.getElementById('app-name').value;
+            const appIcon = document.getElementById('app-icon').value;
+            const embedsData = embeds.filter(e => embedHasContent(e) || e.color !== '#5865f2').map(embed => {
+                const embedObj = {
+                    title: embed.title || undefined,
+                    description: embed.description || undefined,
+                    color: parseInt(embed.color.replace('#', ''), 16),
+                    author: embed.authorName ? {
+                        name: embed.authorName,
+                        icon_url: embed.authorIcon || undefined,
+                        url: embed.authorUrl || undefined
+                    } : undefined,
+                    thumbnail: embed.thumbnail ? { url: embed.thumbnail } : undefined,
+                    image: embed.image ? { url: embed.image } : undefined,
+                    fields: embed.fields.length > 0 ? embed.fields.map(f => ({
+                        name: f.name,
+                        value: f.value,
+                        inline: f.inline || false
+                    })) : undefined,
+                    footer: embed.footerText ? {
+                        text: embed.footerText,
+                        icon_url: embed.footerIcon || undefined
+                    } : undefined,
+                    timestamp: embed.timestamp ? new Date(embed.timestamp).toISOString() : undefined,
+                    url: embed.titleUrl || undefined
+                };
+                cleanObject(embedObj);
+                return embedObj;
+            });
+
+            return {
+                username: appName || undefined,
+                avatar_url: appIcon || undefined,
+                content: content || undefined,
+                embeds: embedsData.length > 0 ? embedsData : undefined
+            };
+        }
+
+        // Load embed data from external source (when editing existing embed)
+        function loadEmbedData(data) {
+            if (!data) return;
+
+            // Load app name and icon
+            if (data.username) {
+                document.getElementById('app-name').value = data.username;
+            }
+            if (data.avatar_url) {
+                document.getElementById('app-icon').value = data.avatar_url;
+            }
+
+            // Load message content
+            if (data.content) {
+                document.getElementById('embed-message').value = data.content;
+            }
+
+            // Load embeds
+            if (data.embeds && Array.isArray(data.embeds)) {
+                embeds = data.embeds.map(e => ({
+                    authorName: e.author?.name || '',
+                    authorIcon: e.author?.icon_url || '',
+                    authorUrl: e.author?.url || '',
+                    title: e.title || '',
+                    titleUrl: e.url || '',
+                    description: e.description || '',
+                    color: e.color ? '#' + e.color.toString(16).padStart(6, '0') : '#5865f2',
+                    thumbnail: e.thumbnail?.url || '',
+                    image: e.image?.url || '',
+                    fields: (e.fields || []).map(f => ({
+                        name: f.name || '',
+                        value: f.value || '',
+                        inline: f.inline || false
+                    })),
+                    footerText: e.footer?.text || '',
+                    footerIcon: e.footer?.icon_url || '',
+                    timestamp: e.timestamp ? e.timestamp.slice(0, 16) : ''
+                }));
+
+                if (embeds.length === 0) {
+                    embeds = [createEmptyEmbed()];
+                }
+
+                currentEmbedIndex = 0;
+                loadEmbed(embeds[0]);
+                renderTabs();
+            }
+
+            updatePreview();
+        }
+
+        // Expose functions globally for iframe access
+        window.getEmbedData = getEmbedData;
+        window.loadEmbedData = loadEmbedData;
+
+        // Init
+        document.getElementById('embed-message').addEventListener('input', updatePreview);
+        document.getElementById('app-name').addEventListener('input', updatePreview);
+        document.getElementById('app-icon').addEventListener('input', updatePreview);
+
+        renderTabs();
+        loadEmbed(embeds[0]);
+        updatePreview();
+    </script>
+</body>
+
+</html>
