@@ -371,6 +371,9 @@ function renderSettingsList(settingsList) {
             case 'embedMaker':
                 html += createEmbedMakerButton(item.key, item.label, item.buttonText, item.help);
                 break;
+            case 'chatbotList':
+                html += renderChatbotList(item.key);
+                break;
             default:
                 console.warn("Unknown setting type:", item.type);
         }
@@ -1031,6 +1034,29 @@ async function saveChanges() {
                         payload[item.key] = GLOBAL_SETTINGS[item.key];
                     }
                 }
+                else if (item.type === 'chatbotList') {
+                    // Collect existing chatbots from GLOBAL_SETTINGS
+                    const existingChatbots = GLOBAL_SETTINGS[item.key] || {};
+
+                    // Merge with pending chatbots (marked for role creation)
+                    const allChatbots = { ...existingChatbots };
+                    Object.entries(PENDING_CHATBOTS).forEach(([tempId, botData]) => {
+                        allChatbots[tempId] = { ...botData, _pending: true };
+                    });
+
+                    payload[item.key] = allChatbots;
+
+                    // Also store chatbot config settings
+                    const sharedMemoryEl = document.getElementById('chatbot_shared_memory');
+                    const autoReplyEl = document.getElementById('chatbot_auto_reply_on_name');
+                    const historyModeEl = document.getElementById('chatbot_history_mode');
+
+                    payload.chatbot_config = {
+                        shared_memory: sharedMemoryEl ? sharedMemoryEl.checked : false,
+                        auto_reply_on_name: autoReplyEl ? autoReplyEl.checked : false,
+                        history_mode: historyModeEl ? historyModeEl.value : 'ai_only'
+                    };
+                }
             });
         });
 
@@ -1086,6 +1112,10 @@ async function saveChanges() {
 
             // Update Global Settings
             Object.assign(GLOBAL_SETTINGS, payload);
+
+            // Clear pending chatbots after successful save
+            PENDING_CHATBOTS = {};
+            refreshChatbotGrid();
         } else {
             throw new Error("Worker rejected update");
         }
@@ -1210,7 +1240,223 @@ function renderSwitcherGrid(el, list) {
             <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:100%;">${safeName}</span>
         </div>`;
     }).join('');
-}// --- EMOJI PICKER ---
+}
+
+// --- CHATBOT MANAGEMENT ---
+let PENDING_CHATBOTS = {}; // Track new chatbots that need roles created
+
+function renderChatbotList(key) {
+    const chatbots = GLOBAL_SETTINGS[key] || {};
+    const entries = Object.entries(chatbots);
+
+    let cardsHtml = '';
+    entries.forEach(([roleId, botData]) => {
+        cardsHtml += createChatbotCard(roleId, botData);
+    });
+
+    // Also render pending new chatbots
+    Object.entries(PENDING_CHATBOTS).forEach(([tempId, botData]) => {
+        cardsHtml += createChatbotCard(tempId, botData, true);
+    });
+
+    return `
+    <div class="chatbot-list-container" data-chatbot-key="${key}">
+        <div class="chatbot-grid" id="chatbot-grid-${key}">
+            ${cardsHtml || '<p style="color:#72767d; font-style:italic;">No chatbots configured yet.</p>'}
+        </div>
+        <button type="button" class="dict-add-btn" onclick="openChatbotModal()" style="margin-top: 15px;">
+            + Create Chatbot
+        </button>
+    </div>`;
+}
+
+function createChatbotCard(roleId, botData, isPending = false) {
+    const name = escapeForHtml(botData.name || 'Unnamed Bot');
+    const prompt = escapeForHtml((botData.system_prompt || '').substring(0, 100));
+    const avatarUrl = botData.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
+    const isNsfw = botData.nsfw ? '🔞' : '';
+    const pendingBadge = isPending ? '<span style="background:#5865F2; color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-left:8px;">NEW</span>' : '';
+    const roleInfo = isPending ? '' : `<span style="font-size:0.7rem; color:#72767d;">Role ID: ${roleId}</span>`;
+
+    return `
+    <div class="chatbot-card" data-role-id="${roleId}" data-pending="${isPending}">
+        <div class="chatbot-card-header">
+            <img src="${avatarUrl}" class="chatbot-avatar" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+            <div class="chatbot-info">
+                <div class="chatbot-name">${name} ${isNsfw} ${pendingBadge}</div>
+                ${roleInfo}
+            </div>
+            <div class="chatbot-actions">
+                <button type="button" class="chatbot-edit-btn" onclick="openChatbotModal('${roleId}', ${isPending})" title="Edit">✏️</button>
+                <button type="button" class="chatbot-delete-btn" onclick="deleteChatbot('${roleId}', ${isPending})" title="Delete">🗑️</button>
+            </div>
+        </div>
+        <div class="chatbot-prompt">${prompt}${prompt.length >= 100 ? '...' : ''}</div>
+    </div>`;
+}
+
+function openChatbotModal(roleId = null, isPending = false) {
+    const isEditing = roleId !== null;
+    let existingData = {};
+
+    if (isEditing) {
+        if (isPending) {
+            existingData = PENDING_CHATBOTS[roleId] || {};
+        } else {
+            existingData = (GLOBAL_SETTINGS.chatbots || {})[roleId] || {};
+        }
+    }
+
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'chatbot-modal';
+    overlay.className = 'modal show';
+    overlay.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close-btn" onclick="closeChatbotModal()">&times;</span>
+            <h3>${isEditing ? 'Edit Chatbot' : 'Create Chatbot'}</h3>
+            
+            <div class="form-group">
+                <label class="form-label">Bot Name</label>
+                <input type="text" id="chatbot-name" class="styled-input" placeholder="e.g. Research Assistant" value="${escapeForHtml(existingData.name || '')}" maxlength="50">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">System Prompt</label>
+                <textarea id="chatbot-prompt" class="styled-textarea" placeholder="Describe the bot's personality and role..." style="min-height: 120px;" maxlength="2000">${escapeForHtml(existingData.system_prompt || '')}</textarea>
+                <div style="text-align:right; font-size:0.8rem; color:#aaa; margin-top:4px;">
+                    <span id="chatbot-prompt-count">${(existingData.system_prompt || '').length}</span>/2000
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Avatar URL (optional)</label>
+                <input type="text" id="chatbot-avatar" class="styled-input" placeholder="https://... (auto-fetched if empty)" value="${escapeForHtml(existingData.avatar_url || '')}">
+            </div>
+            
+            <div class="toggle-wrapper" style="margin-bottom: 20px;">
+                <div class="toggle-label-group">
+                    <span class="form-label" style="margin:0;">NSFW Mode</span>
+                    <span class="form-sublabel" style="margin:0;">Bypass content restrictions (18+ channels only)</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="chatbot-nsfw" ${existingData.nsfw ? 'checked' : ''}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="dict-add-btn" style="background:#4f545c;" onclick="closeChatbotModal()">Cancel</button>
+                <button type="button" class="dict-add-btn" style="background:#3ba55c;" onclick="saveChatbot('${roleId || ''}', ${isPending})">${isEditing ? 'Save Changes' : 'Create'}</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Add character count listener
+    document.getElementById('chatbot-prompt').addEventListener('input', function () {
+        document.getElementById('chatbot-prompt-count').textContent = this.value.length;
+    });
+
+    // Close on outside click
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeChatbotModal();
+    });
+
+    // Focus name input
+    setTimeout(() => document.getElementById('chatbot-name').focus(), 100);
+}
+
+function closeChatbotModal() {
+    const modal = document.getElementById('chatbot-modal');
+    if (modal) modal.remove();
+}
+
+function saveChatbot(roleId, isPending) {
+    const name = document.getElementById('chatbot-name').value.trim();
+    const prompt = document.getElementById('chatbot-prompt').value.trim();
+    const avatar = document.getElementById('chatbot-avatar').value.trim();
+    const nsfw = document.getElementById('chatbot-nsfw').checked;
+
+    if (!name) {
+        alert('Please enter a bot name.');
+        return;
+    }
+
+    if (!prompt) {
+        alert('Please enter a system prompt.');
+        return;
+    }
+
+    const botData = {
+        name: name,
+        system_prompt: prompt,
+        nsfw: nsfw
+    };
+
+    if (avatar) {
+        botData.avatar_url = avatar;
+    }
+
+    if (roleId && !isPending) {
+        // Editing existing bot
+        if (!GLOBAL_SETTINGS.chatbots) GLOBAL_SETTINGS.chatbots = {};
+        GLOBAL_SETTINGS.chatbots[roleId] = botData;
+    } else if (roleId && isPending) {
+        // Editing pending bot
+        PENDING_CHATBOTS[roleId] = botData;
+    } else {
+        // New bot - add to pending with temp ID
+        const tempId = 'new_' + Date.now();
+        botData._pending = true;
+        PENDING_CHATBOTS[tempId] = botData;
+    }
+
+    closeChatbotModal();
+    refreshChatbotGrid();
+}
+
+function deleteChatbot(roleId, isPending) {
+    const confirmMsg = isPending
+        ? 'Remove this pending chatbot?'
+        : 'Delete this chatbot? The Discord role will NOT be deleted automatically.';
+
+    if (!confirm(confirmMsg)) return;
+
+    if (isPending) {
+        delete PENDING_CHATBOTS[roleId];
+    } else {
+        if (GLOBAL_SETTINGS.chatbots) {
+            delete GLOBAL_SETTINGS.chatbots[roleId];
+        }
+    }
+
+    refreshChatbotGrid();
+}
+
+function refreshChatbotGrid() {
+    const container = document.querySelector('.chatbot-list-container');
+    if (!container) return;
+
+    const key = container.dataset.chatbotKey;
+    const chatbots = GLOBAL_SETTINGS[key] || {};
+
+    let cardsHtml = '';
+    Object.entries(chatbots).forEach(([roleId, botData]) => {
+        cardsHtml += createChatbotCard(roleId, botData);
+    });
+    Object.entries(PENDING_CHATBOTS).forEach(([tempId, botData]) => {
+        cardsHtml += createChatbotCard(tempId, botData, true);
+    });
+
+    const grid = document.getElementById(`chatbot-grid-${key}`);
+    if (grid) {
+        grid.innerHTML = cardsHtml || '<p style="color:#72767d; font-style:italic;">No chatbots configured yet.</p>';
+    }
+}
+
+// --- EMOJI PICKER ---
 let currentEmojiTarget = null;
 let emojiModal = null;
 

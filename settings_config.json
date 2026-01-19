@@ -226,6 +226,53 @@
     ]
   },
   {
+    "id": "tab-chatbots",
+    "name": "Chatbots",
+    "icon": "robot",
+    "settings": [
+      {
+        "type": "header",
+        "text": "Custom Chatbots"
+      },
+      {
+        "type": "text",
+        "text": "Create AI personas that respond when mentioned. Each chatbot gets a role - mention the role to trigger a response.",
+        "style": "color:#aaa; font-size:0.9rem; margin-bottom:20px;"
+      },
+      {
+        "type": "chatbotList",
+        "key": "chatbots"
+      },
+      {
+        "type": "title",
+        "text": "Chatbot Settings"
+      },
+      {
+        "type": "switch",
+        "key": "chatbot_shared_memory",
+        "label": "Shared Memory",
+        "sublabel": "Chatbots can see each other's messages"
+      },
+      {
+        "type": "switch",
+        "key": "chatbot_auto_reply_on_name",
+        "label": "Auto Reply on Name",
+        "sublabel": "Chatbots respond when their name is mentioned by another chatbot"
+      },
+      {
+        "type": "select",
+        "key": "chatbot_history_mode",
+        "label": "History Mode",
+        "options": [
+          {"val": "ai_only", "txt": "AI Interactions Only"},
+          {"val": "channel", "txt": "Full Channel History"},
+          {"val": "none", "txt": "No Memory"}
+        ],
+        "default": "ai_only"
+      }
+    ]
+  },
+  {
     "id": "tab-additional",
     "name": "Additional",
     "icon": "cog",
