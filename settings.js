@@ -1274,7 +1274,7 @@ function createChatbotCard(roleId, botData, isPending = false) {
     const name = escapeForHtml(botData.name || 'Unnamed Bot');
     const prompt = escapeForHtml((botData.system_prompt || '').substring(0, 100));
     const avatarUrl = botData.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
-    const isNsfw = botData.nsfw ? '🔞' : '';
+    const isNsfw = botData.nsfw ? '<span style="background:#ed4245; color:#fff; font-size:0.65rem; padding:2px 5px; border-radius:3px; margin-left:6px; font-weight:600;">18+</span>' : '';
     const pendingBadge = isPending ? '<span style="background:#5865F2; color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-left:8px;">NEW</span>' : '';
     const roleInfo = isPending ? '' : `<span style="font-size:0.7rem; color:#72767d;">Role ID: ${roleId}</span>`;
 
@@ -1287,8 +1287,12 @@ function createChatbotCard(roleId, botData, isPending = false) {
                 ${roleInfo}
             </div>
             <div class="chatbot-actions">
-                <button type="button" class="chatbot-edit-btn" onclick="openChatbotModal('${roleId}', ${isPending})" title="Edit">✏️</button>
-                <button type="button" class="chatbot-delete-btn" onclick="deleteChatbot('${roleId}', ${isPending})" title="Delete">🗑️</button>
+                <button type="button" class="chatbot-edit-btn" onclick="openChatbotModal('${roleId}', ${isPending})" title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
+                <button type="button" class="chatbot-delete-btn" onclick="deleteChatbot('${roleId}', ${isPending})" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
             </div>
         </div>
         <div class="chatbot-prompt">${prompt}${prompt.length >= 100 ? '...' : ''}</div>
