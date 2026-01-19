@@ -236,7 +236,7 @@
       },
       {
         "type": "text",
-        "text": "Create AI personas that respond when mentioned. Each chatbot gets a role - mention the role to trigger a response.",
+        "text": "Create AI personas that respond when mentioned.",
         "style": "color:#aaa; font-size:0.9rem; margin-bottom:20px;"
       },
       {
