@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Nite</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Introduction page specific styles */
+        .intro-box {
+            max-width: 550px;
+            width: 95%;
+        }
+
+        .intro-header {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .intro-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .intro-subtitle {
+            color: #b9bbbe;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        /* Server Selection UI */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            margin: 0;
+        }
+
+        .btn-refresh {
+            background: #4f545c;
+            color: #fff;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            width: auto;
+            margin: 0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-refresh:hover:not(:disabled) {
+            background: #686d73;
+        }
+
+        .spinning svg {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .server-grid-intro {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding: 10px;
+            border-radius: 8px;
+            background: #202225;
+        }
+
+        /* Interests Selection UI */
+        .interests-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .interest-card {
+            background: #2f3136;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .interest-card:hover {
+            background: #36393f;
+            border-color: #4f545c;
+        }
+
+        .interest-card.selected {
+            border-color: #3ba55c;
+            background: rgba(59, 165, 92, 0.1);
+        }
+
+        .interest-card.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            color: #3ba55c;
+            font-weight: bold;
+        }
+
+        .interest-name {
+            display: block;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .interest-desc {
+            display: block;
+            font-size: 0.8rem;
+            color: #b9bbbe;
+        }
+
+        .actions-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        /* Gray Button Style (Back/Skip) */
+        .btn-gray {
+            background: transparent;
+            color: #dcddde;
+            border: 1px solid #4f545c;
+        }
+
+        .btn-gray:hover {
+            background: #4f545c;
+            color: #fff;
+        }
+
+        /* Green Button Style (Next Selected) */
+        .btn-green {
+            background: #3ba55c;
+            color: #fff;
+        }
+
+        /* Step Indicator */
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .step {
+            width: 35px;
+            height: 3px;
+            background: #2f3136;
+            border-radius: 2px;
+        }
+
+        .step.active {
+            background: var(--btn);
+        }
+
+        .help-text {
+            background: #2f3136;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #b9bbbe;
+            border-left: 3px solid var(--btn);
+            text-align: left;
+        }
+
+        .help-text strong {
+            color: #fff;
+        }
+
+        .server-card.add-bot-card {
+            background: var(--acc);
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loginbtn" class="accountbtn">
+        <div id="user-view" class="btn-content-normal" onclick="handleAuthClick()">
+            <img src="Discord_Logo.png" alt="Discord Logo" width="20" height="20"
+                style="vertical-align:middle; margin-right:8px;">
+            <span id="lbl-btn-username">Login with Discord</span>
+        </div>
+        <div id="logout-view" class="btn-content-logout">
+            <p class="logouttext">Log out?</p>
+            <div class="logout-actions">
+                <button class="btn-logout" onclick="logout()">Yes</button>
+                <button class="btn-cancel" onclick="closeLogout()">No</button>
+            </div>
+        </div>
+    </div>
+    <div id="logOutContainer" class="logOutContainer" onclick="closeLogout()"></div>
+
+    <!-- Login View -->
+    <div id="view-login" class="box intro-box">
+        <div class="intro-header">
+            <h1 class="intro-title">Welcome to Nite</h1>
+            <p class="intro-subtitle">The modular companion for your Discord server.</p>
+        </div>
+        <button class="btn-login" onclick="openLogin()">Login with Discord</button>
+    </div>
+
+    <!-- Step 1: Server Selection -->
+    <div id="view-setup" class="box intro-box hide">
+        <div class="intro-header">
+            <h1 class="intro-title">Choose a Server</h1>
+            <p class="intro-subtitle">Select which community you want to enhance.</p>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step active"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+        </div>
+
+        <div class="section-header">
+            <h3 class="section-title">Your Servers</h3>
+            <button id="btn-refresh" class="btn-refresh" onclick="refreshServers()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15">
+                    </path>
+                </svg>
+                Refresh
+            </button>
+        </div>
+
+        <div id="server-list" class="server-grid-intro"></div>
+        <p id="status" style="color:#aaa; font-size:0.8rem; margin-top:15px; text-align:center;"></p>
+    </div>
+
+    <!-- Step 2: Interests -->
+    <div id="view-interests" class="box intro-box hide">
+        <div class="intro-header">
+            <h1 class="intro-title">What do you want to do?</h1>
+            <p class="intro-subtitle">Help us customize your experience on <strong id="selected-server-name"
+                    style="color:#fff;"></strong></p>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step active"></div>
+            <div class="step active"></div>
+            <div class="step"></div>
+        </div>
+
+        <div class="interests-grid">
+            <div class="interest-card" onclick="toggleInterest(this, 'chatbots')">
+                <span class="interest-name">Chatbots</span>
+                <span class="interest-desc">AI personas with specific personalities.</span>
+            </div>
+            <div class="interest-card" onclick="toggleInterest(this, 'ai')">
+                <span class="interest-name">AI Interaction</span>
+                <span class="interest-desc">Directly ask and brainstorm with the AI.</span>
+            </div>
+            <div class="interest-card" onclick="toggleInterest(this, 'games')">
+                <span class="interest-name">Games</span>
+                <span class="interest-desc">Play Rock Paper Scissors and more.</span>
+            </div>
+            <div class="interest-card" onclick="toggleInterest(this, 'fun')">
+                <span class="interest-name">Fun</span>
+                <span class="interest-desc">Meme commands and fake messages.</span>
+            </div>
+        </div>
+
+        <div class="actions-row">
+            <button class="btn-gray" onclick="goBackToSetup()">Back</button>
+            <button id="btn-next" class="btn-gray" onclick="finishOnboarding()">Skip</button>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            API_URL: "https://api.niteapiworker.workers.dev",
+            INVITE_URL: "https://discord.com/oauth2/authorize?client_id=1371513819104415804&permissions=2815042428980240&integration_type=0&scope=bot+applications.commands"
+        };
+
+        let selectedServer = null;
+        let selectedInterests = new Set();
+
+        // --- AUTH ---
+        function getCookie(name) {
+            const m = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return m ? m[2] : null;
+        }
+        function setCookie(n, v) {
+            const d = new Date(); d.setTime(d.getTime() + 7 * 24 * 60 * 60 * 1000);
+            document.cookie = `${n}=${v};path=/;expires=${d.toUTCString()};Secure;SameSite=Lax`;
+        }
+
+        function openLogin() { window.open(CONFIG.API_URL + "/auth", "Login", "width=500,height=800"); }
+        function logout() {
+            document.cookie = "auth_token=;path=/;max-age=0";
+            document.cookie = "auth_user=;path=/;max-age=0";
+            location.reload();
+        }
+
+        function handleAuthClick() {
+            if (!getCookie("auth_token")) openLogin();
+            else toggleLogoutMenu();
+        }
+        function toggleLogoutMenu() {
+            document.getElementById('loginbtn').classList.toggle('expanded');
+            document.getElementById('logOutContainer').classList.toggle('active');
+        }
+        window.closeLogout = function () {
+            document.getElementById('loginbtn').classList.remove('expanded');
+            document.getElementById('logOutContainer').classList.remove('active');
+        };
+
+        // --- UI & DATA ---
+        function updateUI(username) {
+            if (!username) return;
+            document.getElementById('lbl-btn-username').innerText = username;
+            document.getElementById('view-login').classList.add('hide');
+            document.getElementById('view-setup').classList.remove('hide');
+        }
+
+        async function fetchServers() {
+            const token = getCookie("auth_token");
+            if (!token) return;
+            const btn = document.getElementById('btn-refresh');
+            const status = document.getElementById('status');
+            if (btn) btn.classList.add('spinning'), btn.disabled = true;
+            status.innerText = "Syncing servers...";
+
+            try {
+                await fetch(CONFIG.API_URL + "/trigger", { headers: { "Authorization": token } });
+                let attempts = 0;
+                while (attempts < 25) {
+                    attempts++;
+                    const res = await fetch(`${CONFIG.API_URL}/check?t=${Date.now()}`, {
+                        headers: { "Authorization": token },
+                        cache: "no-store"
+                    });
+                    if (res.status === 200) {
+                        const data = await res.json();
+                        renderServers(data.servers);
+                        status.innerText = "Select a server above.";
+                        if (btn) btn.classList.remove('spinning'), btn.disabled = false;
+                        return;
+                    }
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+                status.innerText = "Sync delayed. Try refreshing.";
+            } catch (e) { status.innerText = "Error loading servers."; }
+            finally { if (btn) btn.classList.remove('spinning'), btn.disabled = false; }
+        }
+
+        function renderServers(list) {
+            const container = document.getElementById('server-list');
+            const addCard = `
+                <div class="server-card add-bot-card" onclick="window.open('${CONFIG.INVITE_URL}', '_blank')">
+                    <img src="plus.svg" class="server-avatar" alt="+" style="background:transparent;">
+                    <span>Add to Server</span>
+                </div>`;
+            if (!list || list.length === 0) { container.innerHTML = addCard; return; }
+            const html = list.map(s => `
+                <div class="server-card" onclick="moveToInterests('${s.id}', '${s.name.replace(/'/g, "\\'")}', '${s.picture_url}')">
+                    <img src="${s.picture_url || 'https://cdn.discordapp.com/embed/avatars/0.png'}" class="server-avatar" alt="">
+                    <span>${s.name}</span>
+                </div>`).join('');
+            container.innerHTML = html + addCard;
+        }
+
+        // --- NAVIGATION ---
+        function moveToInterests(id, name, icon) {
+            selectedServer = { id, name, icon };
+            document.getElementById('selected-server-name').innerText = name;
+            document.getElementById('view-setup').classList.add('hide');
+            document.getElementById('view-interests').classList.remove('hide');
+        }
+
+        function goBackToSetup() {
+            document.getElementById('view-interests').classList.add('hide');
+            document.getElementById('view-setup').classList.remove('hide');
+        }
+
+        function toggleInterest(card, interest) {
+            card.classList.toggle('selected');
+            if (selectedInterests.has(interest)) selectedInterests.delete(interest);
+            else selectedInterests.add(interest);
+
+            // Update button label and color
+            const nextBtn = document.getElementById('btn-next');
+            if (selectedInterests.size > 0) {
+                nextBtn.innerText = "Next";
+                nextBtn.classList.remove('btn-gray');
+                nextBtn.classList.add('btn-green');
+            } else {
+                nextBtn.innerText = "Skip";
+                nextBtn.classList.remove('btn-green');
+                nextBtn.classList.add('btn-gray');
+            }
+        }
+
+        function finishOnboarding() {
+            if (!selectedServer) return;
+            const params = new URLSearchParams({
+                id: selectedServer.id,
+                name: selectedServer.name,
+                icon: selectedServer.icon,
+                interests: Array.from(selectedInterests).join(',')
+            });
+            window.location.href = `manage.html?${params.toString()}`;
+        }
+
+        function refreshServers() { fetchServers(); }
+
+        // --- INIT ---
+        window.addEventListener("message", (e) => {
+            if (e.origin !== CONFIG.API_URL) return;
+            if (e.data.type === "LOGIN_SUCCESS") {
+                setCookie("auth_token", e.data.token);
+                setCookie("auth_user", e.data.username);
+                updateUI(e.data.username);
+                fetchServers();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = getCookie("auth_user");
+            if (user) { updateUI(user); fetchServers(); }
+        });
+    </script>
+</body>
+
+</html>

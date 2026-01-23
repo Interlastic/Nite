@@ -672,11 +672,12 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>App Name <span class="char-count" id="app-name-count">8 / 32</span></label>
-                    <input type="text" id="app-name" placeholder="My Bot" value="Nite Bot" maxlength="32">
+                    <input type="text" id="app-name" placeholder="My Bot" value="Welcomer" maxlength="32">
                 </div>
                 <div class="form-group">
                     <label>App Icon URL</label>
-                    <input type="text" id="app-icon" placeholder="https://...">
+                    <input type="text" id="app-icon" placeholder="https://..."
+                        value="https://em-content.zobj.net/source/twitter/86/waving-hand-sign_1f44b.png">
                 </div>
             </div>
 
@@ -689,11 +690,15 @@
                 <details class="placeholder-help">
                     <summary>Available Placeholders</summary>
                     <div class="placeholder-list">
-                        <code>{mention}</code> <code>{channellink}</code> <code>{username}</code>
-                        <code>{displayname}</code>
-                        <code>{channel}</code> <code>{server}</code> <code>{membercount}</code>
-                        <code>{date}</code> <code>{time}</code> <code>{userid}</code> <code>{serverid}</code>
+                        <code>{mention}</code> <code>{username}</code> <code>{displayname}</code> <code>{userid}</code>
+                        <code>{server}</code> <code>{serverid}</code> <code>{membercount}</code>
+                        <code>{channel}</code> <code>{channellink}</code>
+                        <code>{date}</code> <code>{time}</code>
                         <code>{profileurl}</code> <code>{profileopenurl}</code>
+                        <div style="margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+                            <span style="color: #b9bbbe; font-size: 11px; font-weight: 600;">NEW:</span>
+                            <code>{join_method}</code> <code>{invite_link}</code> <code>{time_to_return}</code>
+                        </div>
                         <span style="color: #72767d; font-size: 11px; display: block; margin-top: 4px;">Escape with \{
                             and \}</span>
                     </div>
@@ -738,7 +743,7 @@
                 <div class="app-avatar" id="preview-app-avatar">N</div>
                 <div class="message-content">
                     <div class="message-header">
-                        <span class="app-name" id="preview-app-name">Nite Bot</span>
+                        <span class="app-name" id="preview-app-name">Welcomer</span>
                         <span class="app-badge">APP</span>
                         <span class="message-timestamp" id="preview-msg-timestamp">Today at --:--</span>
                     </div>
@@ -800,7 +805,10 @@
             '{date}': new Date().toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }),
             '{time}': new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             '{userid}': '123456789012345678',
-            '{serverid}': '987654321098765432'
+            '{serverid}': '987654321098765432',
+            '{join_method}': 'Invite Link',
+            '{invite_link}': 'https://discord.gg/example',
+            '{time_to_return}': '15 days'
         };
 
         function replacePlaceholders(text, forHtml = false) {
