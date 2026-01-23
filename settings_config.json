@@ -264,9 +264,18 @@
         "key": "chatbot_history_mode",
         "label": "History Mode",
         "options": [
-          {"val": "ai_only", "txt": "AI Interactions Only"},
-          {"val": "channel", "txt": "Full Channel History"},
-          {"val": "none", "txt": "No Memory"}
+          {
+            "val": "ai_only",
+            "txt": "AI Interactions Only"
+          },
+          {
+            "val": "channel",
+            "txt": "Full Channel History"
+          },
+          {
+            "val": "none",
+            "txt": "No Memory"
+          }
         ],
         "default": "ai_only"
       }

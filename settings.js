@@ -250,8 +250,14 @@ async function initSettingsFlow(serverId, token) {
 
                 // Sync enabled bools from actual message arrays (bot uses messages !== false for enabled state)
                 // This ensures website matches Discord dashboard behavior
-                GLOBAL_SETTINGS.welcome_enabled_bool = GLOBAL_SETTINGS.welcome_messages !== false;
-                GLOBAL_SETTINGS.goodbye_enabled_bool = GLOBAL_SETTINGS.goodbye_messages !== false;
+                // Sync enabled bools from actual message arrays (bot uses messages !== false for enabled state)
+                // This ensures website matches Discord dashboard behavior (Legacy Support)
+                if (GLOBAL_SETTINGS.welcome_enabled_bool === undefined) {
+                    GLOBAL_SETTINGS.welcome_enabled_bool = GLOBAL_SETTINGS.welcome_messages !== false;
+                }
+                if (GLOBAL_SETTINGS.goodbye_enabled_bool === undefined) {
+                    GLOBAL_SETTINGS.goodbye_enabled_bool = GLOBAL_SETTINGS.goodbye_messages !== false;
+                }
 
                 // 4. Render Interface
                 renderInterface();
@@ -740,9 +746,56 @@ function createEmbedMakerButton(key, label, buttonText, help) {
 }
 
 function openEmbedMaker(key) {
+    // Determine if this is welcome or goodbye
+    const isWelcome = key === 'welcome_message';
+    const modalTitle = isWelcome ? 'Welcome Messages' : 'Goodbye Messages';
+
+    // Define valid interaction types based on welcome/goodbye
+    const validInteractions = isWelcome
+        ? ['bot_joined', 'member_joined', 'member_returned']
+        : ['bot_left', 'member_left'];
+
+    const interactionLabels = {
+        'bot_joined': 'Bot Joined',
+        'bot_left': 'Bot Left',
+        'member_joined': 'Member Joined',
+        'member_left': 'Member Left',
+        'member_returned': 'Member Returned'
+    };
+
+    // Load existing data structure or create new
+    const retention = GLOBAL_SETTINGS.member_history_retention_days || 30;
+
+    // Convert Global Settings (definitions + interactions) into Editor Array
+    const allDefs = GLOBAL_SETTINGS.welcome_goodbye_definitions || {};
+    const allInts = GLOBAL_SETTINGS.welcome_goodbye_interactions || {};
+
+    let loadedDefinitions = [];
+
+    Object.keys(allDefs).forEach(defId => {
+        const intTypes = allInts[defId] || [];
+        // Check if this definition belongs to the current mode (Welcome or Goodbye)
+        const belongsToMode = intTypes.some(type => validInteractions.includes(type));
+
+        // Also include if it has NO interactions yet (orphaned?) - usually we skip, but let's be safe
+        // Actually, if we are creating new ones, they start in the editor.
+        if (belongsToMode) {
+            loadedDefinitions.push({
+                id: defId,
+                ...allDefs[defId],
+                interactions: intTypes
+            });
+        }
+    });
+
+    let editorData = {
+        definitions: loadedDefinitions,
+        retention_days: retention
+    };
+
     // Create modal overlay
     const overlay = document.createElement('div');
-    overlay.id = 'embed-maker-modal';
+    overlay.id = 'multi-embed-modal';
     overlay.style.cssText = `
         position: fixed;
         top: 0;
@@ -757,12 +810,11 @@ function openEmbedMaker(key) {
         justify-content: center;
     `;
 
-    // Modal container
     const modal = document.createElement('div');
     modal.style.cssText = `
         width: 95%;
-        max-width: 1200px;
-        height: 90%;
+        max-width: 900px;
+        max-height: 90vh;
         background: #36393f;
         border-radius: 8px;
         display: flex;
@@ -781,52 +833,554 @@ function openEmbedMaker(key) {
         border-bottom: 1px solid #202225;
     `;
     header.innerHTML = `
-        <h3 style="margin: 0; color: #fff;">Embed Editor</h3>
+        <h3 style="margin: 0; color: #fff;">${modalTitle}</h3>
         <div style="display: flex; gap: 10px;">
-            <button id="embed-save-btn" style="padding: 8px 16px; background: #3ba55c; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">Save Embed</button>
-            <button id="embed-cancel-btn" style="padding: 8px 16px; background: #4f545c; color: #fff; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+            <button id="save-all-defs" style="padding: 8px 16px; background: #3ba55c; color: #fff; border:none; border-radius: 4px; cursor: pointer; font-weight: 500;">Save All</button>
+            <button id="cancel-all-defs" style="padding: 8px 16px; background: #4f545c; color: #fff; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
         </div>
     `;
 
-    // Iframe
-    const iframe = document.createElement('iframe');
-    iframe.id = 'embed-maker-iframe';
-    iframe.src = 'embed_maker.html';
-    iframe.style.cssText = `
+    // Content area
+    const content = document.createElement('div');
+    content.id = 'definitions-content';
+    content.style.cssText = `
         flex: 1;
-        width: 100%;
-        border: none;
+        overflow-y: auto;
+        padding: 20px;
     `;
 
     modal.appendChild(header);
-    modal.appendChild(iframe);
+    modal.appendChild(content);
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    // Store key for save
-    overlay.dataset.embedKey = key;
+    // Store data in overlay dataset
+    overlay.dataset.editorKey = key;
+    overlay.dataset.editorData = JSON.stringify(editorData);
 
-    // Load existing embed data into iframe when ready
+    // Render definitions
+    renderDefinitions();
+
+    // Event handlers
+    document.getElementById('save-all-defs').onclick = function () {
+        saveAllDefinitions(key);
+    };
+
+    document.getElementById('cancel-all-defs').onclick = function () {
+        closeMultiEmbedModal();
+    };
+
+    overlay.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeMultiEmbedModal();
+    });
+
+    // Helper functions
+    function renderDefinitions() {
+        const data = JSON.parse(overlay.dataset.editorData);
+        const contentDiv = document.getElementById('definitions-content');
+
+        let html = '';
+
+        // Render each definition
+        data.definitions.forEach((def, index) => {
+            html += createDefinitionEditor(def, index, validInteractions, interactionLabels);
+        });
+
+        // Add new definition button
+        html += `
+        <button type="button" class="dict-add-btn" onclick="addNewDefinition()" style="margin-bottom: 20px;">
+            + Add Another Message
+        </button>`;
+
+        // Member history retention slider
+        html += `
+        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-top: 10px;">
+            <label style="display: block; color: #b9bbbe; font-weight: 600; margin-bottom: 8px;">Member History Retention</label>
+            <p style="font-size: 0.85rem; color: #72767d; margin-bottom: 10px;">Members who left more than this many days ago won't trigger 'member returned' messages</p>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <input type="range" id="retention-slider" class="styled-slider" min="30" max="120" step="10" value="${data.retention_days}" 
+                       oninput="document.getElementById('retention-value').textContent = this.value">
+                <span id="retention-value" style="min-width: 40px; color: #fff; font-weight: 600;">${data.retention_days}</span>
+                <span style="color: #72767d; font-size: 0.85rem;">days</span>
+            </div>
+        </div>`;
+
+        contentDiv.innerHTML = html;
+    }
+
+    function createDefinitionEditor(def, index, validInteractions, interactionLabels) {
+        const defId = def.id || String(index + 1);
+        const content = def.content || '';
+        const hasEmbed = def.embeds && def.embeds.length > 0;
+        const hasContent = content.trim().length > 0;
+        const hasMessage = hasContent || hasEmbed;
+        const interactions = def.interactions || [];
+
+        let interactionSwitches = '';
+        validInteractions.forEach(intType => {
+            const isOn = interactions.includes(intType);
+            interactionSwitches += `
+            <label class="interaction-switch">
+                <span>${interactionLabels[intType]}</span>
+                <label class="switch" style="margin-left: 8px;">
+                    <input type="checkbox" class="interaction-toggle" data-def-index="${index}" data-interaction="${intType}" ${isOn ? 'checked' : ''} 
+                           onchange="toggleInteractionSwitch(this)">
+                    <span class="slider"></span>
+                </label>
+            </label>`;
+        });
+
+        // Message preview
+        let previewText = '';
+        if (hasContent) {
+            previewText = content.substring(0, 60) + (content.length > 60 ? '...' : '');
+        }
+        if (hasEmbed) {
+            previewText += (hasContent ? ' + ' : '') + 'Embed';
+        }
+        if (!hasMessage) {
+            previewText = 'No message configured';
+        }
+
+        return `
+        <div class="definition-editor-card" data-def-index="${index}" style="background: #2f3136; border: 1px solid #202225; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h4 style="margin: 0; color: #fff;">Definition ${parseInt(index) + 1}</h4>
+                <button type="button" class="chatbot-delete-btn" onclick="removeDefinition(${index})" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+            </div>
+            
+            <div class="form-group">
+                <button type="button" class="dict-add-btn" onclick="openEmbedEditorForDef(${index})" style="margin: 0; width: 100%;">
+                    Configure Message
+                </button>
+                <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.15); border-radius: 4px; font-size: 0.85rem; color: ${hasMessage ? '#dcddde' : '#72767d'}; font-style: ${hasMessage ? 'normal' : 'italic'};">
+                    ${escapeForHtml(previewText)}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Triggers On:</label>
+                <div class="interaction-switches-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                    ${interactionSwitches}
+                </div>
+            </div>
+        </div>`;
+    }
+}
+
+function closeMultiEmbedModal() {
+    const modal = document.getElementById('multi-embed-modal');
+    if (modal) modal.remove();
+}
+
+// Toggle interaction switch with mutual exclusivity
+function toggleInteractionSwitch(checkbox) {
+    const defIndex = parseInt(checkbox.dataset.defIndex);
+    const interaction = checkbox.dataset.interaction;
+    const isEnabled = checkbox.checked;
+
+    const modal = document.getElementById('multi-embed-modal');
+    const data = JSON.parse(modal.dataset.editorData);
+
+    if (isEnabled) {
+        // Turn OFF this interaction on ALL other definitions
+        data.definitions.forEach((def, idx) => {
+            if (idx !== defIndex) {
+                def.interactions = (def.interactions || []).filter(i => i !== interaction);
+            }
+        });
+
+        // Turn ON for this definition
+        if (!data.definitions[defIndex].interactions) {
+            data.definitions[defIndex].interactions = [];
+        }
+        if (!data.definitions[defIndex].interactions.includes(interaction)) {
+            data.definitions[defIndex].interactions.push(interaction);
+        }
+
+        // Update UI for all other checkboxes with this interaction
+        document.querySelectorAll(`.interaction-toggle[data-interaction="${interaction}"]`).forEach(cb => {
+            if (parseInt(cb.dataset.defIndex) !== defIndex) {
+                cb.checked = false;
+            }
+        });
+    } else {
+        // Turn OFF for this definition
+        if (data.definitions[defIndex].interactions) {
+            data.definitions[defIndex].interactions = data.definitions[defIndex].interactions.filter(i => i !== interaction);
+        }
+    }
+
+    // Save updated data
+    modal.dataset.editorData = JSON.stringify(data);
+}
+
+// Add new definition
+function addNewDefinition() {
+    const modal = document.getElementById('multi-embed-modal');
+    const data = JSON.parse(modal.dataset.editorData);
+
+    const newDef = {
+        id: String(data.definitions.length + 1),
+        content: '',
+        interactions: []
+    };
+
+    data.definitions.push(newDef);
+    modal.dataset.editorData = JSON.stringify(data);
+
+    // Re-render
+    const contentDiv = document.querySelector('#multi-embed-modal #definitions-content');
+    const overlay = document.getElementById('multi-embed-modal');
+    const key = overlay.dataset.editorKey;
+    const isWelcome = key === 'welcome_message';
+    const validInteractions = isWelcome
+        ? ['bot_joined', 'member_joined', 'member_returned']
+        : ['bot_left', 'member_left'];
+    const interactionLabels = {
+        'bot_joined': 'Bot Joined',
+        'bot_left': 'Bot Left',
+        'member_joined': 'Member Joined',
+        'member_left': 'Member Left',
+        'member_returned': 'Member Returned'
+    };
+
+    let html = '';
+    data.definitions.forEach((def, index) => {
+        html += createDefinitionEditor(def, index, validInteractions, interactionLabels);
+    });
+
+    html += `<button type="button" class="dict-add-btn" onclick="addNewDefinition()" style="margin-bottom: 20px;">+ Add Another Message</button>`;
+    html += `
+    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-top: 10px;">
+        <label style="display: block; color: #b9bbbe; font-weight: 600; margin-bottom: 8px;">Member History Retention</label>
+        <p style="font-size: 0.85rem; color: #72767d; margin-bottom: 10px;">Members who left more than this many days ago won't trigger 'member returned' messages</p>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <input type="range" id="retention-slider" class="styled-slider" min="30" max="120" step="10" value="${data.retention_days}" 
+                   oninput="document.getElementById('retention-value').textContent = this.value">
+            <span id="retention-value" style="min-width: 40px; color: #fff; font-weight: 600;">${data.retention_days}</span>
+            <span style="color: #72767d; font-size: 0.85rem;">days</span>
+        </div>
+    </div>`;
+
+    contentDiv.innerHTML = html;
+
+    // Helper function (repeated because it's in closure)
+    function createDefinitionEditor(def, index, validInteractions, interactionLabels) {
+        const defId = def.id || String(index + 1);
+        const content = escapeForHtml(def.content || '');
+        const hasEmbed = def.embeds && def.embeds.length > 0;
+        const interactions = def.interactions || [];
+        const webhookExpanded = def.username || def.avatar_url;
+
+        let interactionSwitches = '';
+        validInteractions.forEach(intType => {
+            const isOn = interactions.includes(intType);
+            interactionSwitches += `
+            <label class="interaction-switch">
+                <span>${interactionLabels[intType]}</span>
+                <label class="switch" style="margin-left: 8px;">
+                    <input type="checkbox" class="interaction-toggle" data-def-index="${index}" data-interaction="${intType}" ${isOn ? 'checked' : ''} 
+                           onchange="toggleInteractionSwitch(this)">
+                    <span class="slider"></span>
+                </label>
+            </label>`;
+        });
+
+        return `
+        <div class="definition-editor-card" data-def-index="${index}" style="background: #2f3136; border: 1px solid #202225; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h4 style="margin: 0; color: #fff;">Definition ${parseInt(index) + 1}</h4>
+                <button type="button" class="chatbot-delete-btn" onclick="removeDefinition(${index})" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+            </div>
+            <div class="form-group">
+                <button type="button" class="dict-add-btn" onclick="openEmbedEditorForDef(${index})" style="margin: 0; width: 100%;">Configure Message</button>
+                <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.15); border-radius: 4px; font-size: 0.85rem; color: ${(content || hasEmbed) ? '#dcddde' : '#72767d'}; font-style: ${(content || hasEmbed) ? 'normal' : 'italic'};">  
+                    ${content ? escapeForHtml(content.substring(0, 60) + (content.length > 60 ? '...' : '')) + (hasEmbed ? ' + Embed' : '') : (hasEmbed ? 'Embed only' : 'No message configured')}
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Triggers On:</label>
+                <div class="interaction-switches-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">${interactionSwitches}</div>
+            </div>
+        </div>`;
+    }
+}
+
+// Remove definition
+function removeDefinition(index) {
+    showDeleteConfirmation(() => {
+        const modal = document.getElementById('multi-embed-modal');
+        const data = JSON.parse(modal.dataset.editorData);
+
+        data.definitions.splice(index, 1);
+        modal.dataset.editorData = JSON.stringify(data);
+
+        // Re-render (same as addNewDefinition)
+        const contentDiv = document.querySelector('#multi-embed-modal #definitions-content');
+        const overlay = document.getElementById('multi-embed-modal');
+        const key = overlay.dataset.editorKey;
+        const isWelcome = key === 'welcome_message';
+        const validInteractions = isWelcome
+            ? ['bot_joined', 'member_joined', 'member_returned']
+            : ['bot_left', 'member_left'];
+        const interactionLabels = {
+            'bot_joined': 'Bot Joined',
+            'bot_left': 'Bot Left',
+            'member_joined': 'Member Joined',
+            'member_left': 'Member Left',
+            'member_returned': 'Member Returned'
+        };
+
+        let html = '';
+        data.definitions.forEach((def, idx) => {
+            html += createDefinitionEditorSimple(def, idx, validInteractions, interactionLabels);
+        });
+        html += `<button type="button" class="dict-add-btn" onclick="addNewDefinition()" style="margin-bottom: 20px;">+ Add Another Message</button>`;
+        html += `
+        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-top: 10px;">
+            <label style="display: block; color: #b9bbbe; font-weight: 600; margin-bottom: 8px;">Member History Retention</label>
+            <p style="font-size: 0.85rem; color: #72767d; margin-bottom: 10px;">Members who left more than this many days ago won't trigger 'member returned' messages</p>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <input type="range" id="retention-slider" class="styled-slider" min="30" max="120" step="10" value="${data.retention_days}" 
+                       oninput="document.getElementById('retention-value').textContent = this.value">
+                <span id="retention-value" style="min-width: 40px; color: #fff; font-weight: 600;">${data.retention_days}</span>
+                <span style="color: #72767d; font-size: 0.85rem;">days</span>
+            </div>
+        </div>`;
+        contentDiv.innerHTML = html;
+    });
+}
+
+function showDeleteConfirmation(onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-modal-overlay';
+
+    overlay.innerHTML = `
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                Delete Message?
+            </div>
+            <div class="confirm-modal-body">
+                Are you sure you want to delete this message definition? This action cannot be undone.
+            </div>
+            <div class="confirm-modal-footer">
+                <button class="confirm-btn-cancel">Cancel</button>
+                <button class="confirm-btn-delete">Delete</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Close on overlay click or cancel
+    const close = () => {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 150);
+    };
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) close();
+    });
+
+    overlay.querySelector('.confirm-btn-cancel').addEventListener('click', close);
+
+    // Handle confirm
+    overlay.querySelector('.confirm-btn-delete').addEventListener('click', () => {
+        onConfirm();
+        close();
+    });
+}
+
+function createDefinitionEditorSimple(def, index, validInteractions, interactionLabels) {
+    const defId = def.id || String(index + 1);
+    const content = def.content || '';
+    const hasEmbed = def.embeds && def.embeds.length > 0;
+    const hasContent = content.trim().length > 0;
+    const hasMessage = hasContent || hasEmbed;
+    const interactions = def.interactions || [];
+
+    let interactionSwitches = '';
+    validInteractions.forEach(intType => {
+        const isOn = interactions.includes(intType);
+        interactionSwitches += `
+        <label class="interaction-switch">
+            <span>${interactionLabels[intType]}</span>
+            <label class="switch" style="margin-left: 8px;">
+                <input type="checkbox" class="interaction-toggle" data-def-index="${index}" data-interaction="${intType}" ${isOn ? 'checked' : ''} 
+                       onchange="toggleInteractionSwitch(this)">
+                <span class="slider"></span>
+            </label>
+        </label>`;
+    });
+
+    // Message preview
+    let previewText = '';
+    if (hasContent) {
+        previewText = content.substring(0, 60) + (content.length > 60 ? '...' : '');
+    }
+    if (hasEmbed) {
+        previewText += (hasContent ? ' + ' : '') + 'Embed';
+    }
+    if (!hasMessage) {
+        previewText = 'No message configured';
+    }
+
+    return `
+    <div class="definition-editor-card" data-def-index="${index}" style="background: #2f3136; border: 1px solid #202225; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="margin: 0; color: #fff;">Definition ${parseInt(index) + 1}</h4>
+            <button type="button" class="chatbot-delete-btn" onclick="removeDefinition(${index})" title="Delete">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+        </div>
+        
+        <div class="form-group">
+            <button type="button" class="dict-add-btn" onclick="openEmbedEditorForDef(${index})" style="margin: 0; width: 100%;">
+                Configure Message
+            </button>
+            <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.15); border-radius: 4px; font-size: 0.85rem; color: ${hasMessage ? '#dcddde' : '#72767d'}; font-style: ${hasMessage ? 'normal' : 'italic'};">
+                ${escapeForHtml(previewText)}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Triggers On:</label>
+            <div class="interaction-switches-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                ${interactionSwitches}
+            </div>
+        </div>
+    </div>`;
+}
+
+// Open embed editor for specific definition
+function openEmbedEditorForDef(defIndex) {
+    const modal = document.getElementById('multi-embed-modal');
+    const data = JSON.parse(modal.dataset.editorData);
+    const def = data.definitions[defIndex];
+
+    // Create nested iframe modal
+    const embedOverlay = document.createElement('div');
+    embedOverlay.id = 'nested-embed-editor';
+    embedOverlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 11000; display: flex; flex-direction: column; align-items: center; justify-content: center;`;
+
+    const embedContainer = document.createElement('div');
+    embedContainer.style.cssText = `width: 95%; max-width: 1200px; height: 90%; background: #36393f; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden;`;
+
+    const embedHeader = document.createElement('div');
+    embedHeader.style.cssText = `display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #2f3136; border-bottom: 1px solid #202225;`;
+    embedHeader.innerHTML = `<h3 style="margin: 0; color: #fff;">Embed Editor</h3><div style="display: flex; gap: 10px;"><button id="save-nested-embed" style="padding: 8px 16px; background: #3ba55c; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">Save Embed</button><button id="cancel-nested-embed" style="padding: 8px 16px; background: #4f545c; color: #fff; border: none; border-radius: 4px; cursor: pointer;">Cancel</button></div>`;
+
+    const iframe = document.createElement('iframe');
+    iframe.src = 'embed_maker.html';
+    iframe.style.cssText = 'flex: 1; width: 100%; border: none;';
+
+    embedContainer.appendChild(embedHeader);
+    embedContainer.appendChild(iframe);
+    embedOverlay.appendChild(embedContainer);
+    document.body.appendChild(embedOverlay);
+
+    // Load existing embed
     iframe.onload = function () {
-        const existingEmbed = GLOBAL_SETTINGS[key];
-        if (existingEmbed && iframe.contentWindow.loadEmbedData) {
-            iframe.contentWindow.loadEmbedData(existingEmbed);
+        if (iframe.contentWindow.loadEmbedData) {
+            // Construct full data object to pass to embed maker
+            // ensuring we pass top-level fields correctly
+            const fullData = {
+                username: def.username,
+                avatar_url: def.avatar_url,
+                content: def.content,
+                embeds: def.embeds
+            };
+            iframe.contentWindow.loadEmbedData(fullData);
         }
     };
 
-    // Event handlers
-    document.getElementById('embed-save-btn').onclick = function () {
-        saveEmbedFromModal(key);
+    // Save button
+    // Save button
+    document.getElementById('save-nested-embed').onclick = function () {
+        if (iframe.contentWindow.getEmbedData) {
+            const embedData = iframe.contentWindow.getEmbedData();
+
+            // Correctly unpack the data to top-level fields
+            def.content = embedData.content || '';
+            def.username = embedData.username;
+            def.avatar_url = embedData.avatar_url;
+            def.embeds = embedData.embeds || [];
+
+            modal.dataset.editorData = JSON.stringify(data);
+
+            // Update status in main UI
+
+            // Re-render the list to show updated previews
+            const contentDiv = document.querySelector('#multi-embed-modal #definitions-content');
+            const overlay = document.getElementById('multi-embed-modal');
+            const key = overlay.dataset.editorKey;
+            const isWelcome = key === 'welcome_message';
+            const validInteractions = isWelcome
+                ? ['bot_joined', 'member_joined', 'member_returned']
+                : ['bot_left', 'member_left'];
+            const interactionLabels = {
+                'bot_joined': 'Bot Joined',
+                'bot_left': 'Bot Left',
+                'member_joined': 'Member Joined',
+                'member_left': 'Member Left',
+                'member_returned': 'Member Returned'
+            };
+
+            let html = '';
+            data.definitions.forEach((d, idx) => {
+                html += createDefinitionEditorSimple(d, idx, validInteractions, interactionLabels);
+            });
+            html += `<button type="button" class="dict-add-btn" onclick="addNewDefinition()" style="margin-bottom: 20px;">+ Add Another Message</button>`;
+            html += `
+            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-top: 10px;">
+                <label style="display: block; color: #b9bbbe; font-weight: 600; margin-bottom: 8px;">Member History Retention</label>
+                <p style="font-size: 0.85rem; color: #72767d; margin-bottom: 10px;">Members who left more than this many days ago won't trigger 'member returned' messages</p>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <input type="range" id="retention-slider" class="styled-slider" min="30" max="120" step="10" value="${data.retention_days}" 
+                           oninput="document.getElementById('retention-value').textContent = this.value">
+                    <span id="retention-value" style="min-width: 40px; color: #fff; font-weight: 600;">${data.retention_days}</span>
+                    <span style="color: #72767d; font-size: 0.85rem;">days</span>
+                </div>
+            </div>`;
+            contentDiv.innerHTML = html;
+        }
+        embedOverlay.remove();
     };
 
-    document.getElementById('embed-cancel-btn').onclick = function () {
-        closeEmbedMaker();
+    // Cancel button
+    document.getElementById('cancel-nested-embed').onclick = function () {
+        embedOverlay.remove();
     };
+}
 
-    // Close on escape
-    overlay.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closeEmbedMaker();
-    });
+// Save all definitions
+function saveAllDefinitions(key) {
+    const modal = document.getElementById('multi-embed-modal');
+    const data = JSON.parse(modal.dataset.editorData);
+
+    // Get retention days
+    const retentionSlider = document.getElementById('retention-slider');
+    if (retentionSlider) {
+        data.retention_days = parseInt(retentionSlider.value);
+    }
+
+    // Save to GLOBAL_SETTINGS
+    GLOBAL_SETTINGS[key] = data;
+
+    // Update status display
+    const statusEl = document.getElementById(`embed-status-${key}`);
+    if (statusEl) {
+        const hasDefinitions = data.definitions.length > 0;
+        statusEl.textContent = hasDefinitions ? `✓ ${data.definitions.length} definition${data.definitions.length > 1 ? 's' : ''} configured` : 'No definitions set';
+        statusEl.style.color = hasDefinitions ? '#3ba55c' : '#72767d';
+    }
+
+    closeMultiEmbedModal();
 }
 
 function closeEmbedMaker() {
@@ -1029,9 +1583,45 @@ async function saveChanges() {
                     }
                 }
                 else if (item.type === 'embedMaker') {
-                    // Embed data is stored in GLOBAL_SETTINGS by the modal
-                    if (GLOBAL_SETTINGS[item.key]) {
-                        payload[item.key] = GLOBAL_SETTINGS[item.key];
+                    // New multi-definition structure
+                    if (GLOBAL_SETTINGS[item.key] && GLOBAL_SETTINGS[item.key].definitions) {
+                        const editorData = GLOBAL_SETTINGS[item.key];
+
+                        // Convert to backend format
+                        // Build welcome_goodbye_definitions and welcome_goodbye_interactions
+                        const definitions = {};
+                        const interactions = {};
+
+                        editorData.definitions.forEach((def, index) => {
+                            const defId = String(index + 1);
+
+                            // Build definition object
+                            const defObj = {};
+                            if (def.content) defObj.content = def.content;
+                            if (def.embeds && def.embeds.length > 0) defObj.embeds = def.embeds;
+                            if (def.username) defObj.username = def.username;
+                            if (def.avatar_url) defObj.avatar_url = def.avatar_url;
+
+                            // Only add if has content or embed
+                            if (defObj.content || defObj.embeds) {
+                                definitions[defId] = defObj;
+                                if (def.interactions && def.interactions.length > 0) {
+                                    interactions[defId] = def.interactions;
+                                }
+                            }
+                        });
+
+                        // Save to payload
+                        payload.welcome_goodbye_definitions = payload.welcome_goodbye_definitions || {};
+                        payload.welcome_goodbye_interactions = payload.welcome_goodbye_interactions || {};
+
+                        Object.assign(payload.welcome_goodbye_definitions, definitions);
+                        Object.assign(payload.welcome_goodbye_interactions, interactions);
+
+                        // Save retention days
+                        if (editorData.retention_days) {
+                            payload.member_history_retention_days = editorData.retention_days;
+                        }
                     }
                 }
                 else if (item.type === 'chatbotList') {
@@ -1056,6 +1646,29 @@ async function saveChanges() {
                         auto_reply_on_name: autoReplyEl ? autoReplyEl.checked : false,
                         history_mode: historyModeEl ? historyModeEl.value : 'ai_only'
                     };
+                }
+                else if (item.type === 'slider') {
+                    const el = document.getElementById(item.key);
+                    if (el) {
+                        payload[item.key] = parseInt(el.value);
+                    }
+                }
+                else if (item.type === 'interactionDefinitions') {
+                    // Definitions and interactions are managed in GLOBAL_SETTINGS
+                    // Save both keys
+                    const defKey = item.key;
+                    const intKey = item.interactionsKey;
+
+                    if (GLOBAL_SETTINGS[defKey]) {
+                        payload[defKey] = GLOBAL_SETTINGS[defKey];
+                    }
+                    if (GLOBAL_SETTINGS[intKey]) {
+                        payload[intKey] = GLOBAL_SETTINGS[intKey];
+                    }
+                }
+                else if (item.type === 'memberHistoryViewer') {
+                    // Read-only, don't save from UI
+                    // member_history is managed by the bot
                 }
             });
         });
