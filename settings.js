@@ -1255,44 +1255,35 @@ async function saveChanges() {
                     }
                 }
                 else if (item.type === 'embedMaker') {
-                    // New multi-definition structure
-                    if (GLOBAL_SETTINGS[item.key] && GLOBAL_SETTINGS[item.key].definitions) {
+                    // Welcome/Goodbye Interaction System (special handling)
+                    if (['welcome_message', 'goodbye_message'].includes(item.key)) {
                         const editorData = GLOBAL_SETTINGS[item.key];
+                        if (editorData && editorData.definitions) {
+                            payload.welcome_goodbye_definitions = payload.welcome_goodbye_definitions || {};
+                            payload.welcome_goodbye_interactions = payload.welcome_goodbye_interactions || {};
 
-                        // Convert to backend format
-                        // Build welcome_goodbye_definitions and welcome_goodbye_interactions
-                        const definitions = {};
-                        const interactions = {};
+                            editorData.definitions.forEach(def => {
+                                if ((def.interactions && def.interactions.length > 0) || def.content || (def.embeds && def.embeds.length > 0)) {
+                                    const defObj = {};
+                                    if (def.content) defObj.content = def.content;
+                                    if (def.embeds && def.embeds.length > 0) defObj.embeds = def.embeds;
+                                    if (def.username) defObj.username = def.username;
+                                    if (def.avatar_url) defObj.avatar_url = def.avatar_url;
 
-                        editorData.definitions.forEach((def, index) => {
-                            const defId = String(index + 1);
-
-                            // Build definition object
-                            const defObj = {};
-                            if (def.content) defObj.content = def.content;
-                            if (def.embeds && def.embeds.length > 0) defObj.embeds = def.embeds;
-                            if (def.username) defObj.username = def.username;
-                            if (def.avatar_url) defObj.avatar_url = def.avatar_url;
-
-                            // Only add if has content or embed
-                            if (defObj.content || defObj.embeds) {
-                                definitions[defId] = defObj;
-                                if (def.interactions && def.interactions.length > 0) {
-                                    interactions[defId] = def.interactions;
+                                    // Use the persistent def.id to avoid overwriting other category
+                                    payload.welcome_goodbye_definitions[def.id] = defObj;
+                                    payload.welcome_goodbye_interactions[def.id] = def.interactions || [];
                                 }
+                            });
+
+                            if (editorData.retention_days) {
+                                payload.member_history_retention_days = editorData.retention_days;
                             }
-                        });
-
-                        // Save to payload
-                        payload.welcome_goodbye_definitions = payload.welcome_goodbye_definitions || {};
-                        payload.welcome_goodbye_interactions = payload.welcome_goodbye_interactions || {};
-
-                        Object.assign(payload.welcome_goodbye_definitions, definitions);
-                        Object.assign(payload.welcome_goodbye_interactions, interactions);
-
-                        // Save retention days
-                        if (editorData.retention_days) {
-                            payload.member_history_retention_days = editorData.retention_days;
+                        }
+                    } else {
+                        // Standard single embedMaker
+                        if (GLOBAL_SETTINGS[item.key]) {
+                            payload[item.key] = GLOBAL_SETTINGS[item.key];
                         }
                     }
                 }
