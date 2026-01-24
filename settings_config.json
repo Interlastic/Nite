@@ -114,7 +114,8 @@
         "type": "embedMaker",
         "key": "welcome_message",
         "label": "Welcome Message",
-        "buttonText": "Edit Welcome Message"
+        "buttonText": "Edit Welcome Message",
+        "help": "Use {mention}, {username}, {server}, {membercount}. NEW: {join_method}, {invite_link}, {time_to_return} (returns only)."
       },
       {
         "type": "channelPick",
@@ -147,7 +148,8 @@
         "type": "embedMaker",
         "key": "goodbye_message",
         "label": "Goodbye Message",
-        "buttonText": "Edit Goodbye Message"
+        "buttonText": "Edit Goodbye Message",
+        "help": "Use {mention}, {username}, {server}, {membercount}. NEW: {join_method}, {invite_link}."
       },
       {
         "type": "channelPick",
