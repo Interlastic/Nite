@@ -1067,7 +1067,7 @@ function saveEmbedFromModal(key) {
         GLOBAL_SETTINGS[key] = embedData;
 
         // Update status display
-        const statusEl = document.getElementById(`embed - status - ${key} `);
+        const statusEl = document.getElementById(`embed-status-${key}`);
         if (statusEl) {
             const hasEmbed = embedData && Object.keys(embedData).length > 0;
             statusEl.textContent = hasEmbed ? '✓ Embed configured' : 'No embed set';
@@ -1084,7 +1084,7 @@ function clearEmbed(key) {
     if (confirm('Remove this embed?')) {
         GLOBAL_SETTINGS[key] = null;
         // Re-render the embed maker group
-        const group = document.querySelector(`.embed - maker - group[data - embed - key="${key}"]`);
+        const group = document.querySelector(`.embed-maker-group[data-embed-key="${key}"]`);
         if (group) {
             const statusEl = group.querySelector('.embed-status');
             if (statusEl) {
@@ -1205,7 +1205,7 @@ async function saveChanges() {
                 else if (item.type === 'commandList') {
                     // Iterate commands
                     GLOBAL_COMMANDS.forEach(cmd => {
-                        const k = `${cmd.name} _enabled`;
+                        const k = `${cmd.name}_enabled`;
                         const cBox = document.getElementById(k);
                         if (cBox) {
                             payload[k] = cBox.checked;
@@ -1213,11 +1213,11 @@ async function saveChanges() {
                     });
                 }
                 else if (item.type === 'supportChannelList') {
-                    const chks = document.querySelectorAll(`.support - channel - chk[data - setting - key="${item.key}"]: checked`);
+                    const chks = document.querySelectorAll(`.support-channel-chk[data-setting-key="${item.key}"]:checked`);
                     payload[item.key] = Array.from(chks).map(cb => cb.value);
                 }
                 else if (item.type === 'dict') {
-                    const container = document.querySelector(`.dict - container[data - dict - id="${item.key}"]`);
+                    const container = document.querySelector(`.dict-container[data-dict-id="${item.key}"]`);
                     if (container) {
                         const rows = container.querySelectorAll('.dict-row');
                         const dictObj = {};
@@ -1232,7 +1232,7 @@ async function saveChanges() {
                     }
                 }
                 else if (item.type === 'namedContentList') {
-                    const container = document.querySelector(`.ncl - container[data - ncl - id="${item.key}"]`);
+                    const container = document.querySelector(`.ncl-container[data-ncl-id="${item.key}"]`);
                     if (container) {
                         const rows = container.querySelectorAll('.ncl-row');
                         const list = [];
