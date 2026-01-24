@@ -778,6 +778,31 @@ function openEmbedMaker(key) {
         }
     });
 
+    // Legacy Fallback: If no interactive definitions found, load from the legacy key
+    if (loadedDefinitions.length === 0 && GLOBAL_SETTINGS[key]) {
+        const legacy = GLOBAL_SETTINGS[key];
+        if (legacy.content || (legacy.embeds && legacy.embeds.length > 0)) {
+            // Migrated to interaction 1 (or next available)
+            const allIds = Object.keys(allDefs).map(id => parseInt(id)).filter(id => !isNaN(id));
+            const nextId = allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
+
+            loadedDefinitions.push({
+                id: String(nextId),
+                content: legacy.content || '',
+                embeds: legacy.embeds || [],
+                username: legacy.username,
+                avatar_url: legacy.avatar_url,
+                interactions: isWelcome ? ['member_joined'] : ['member_left']
+            });
+
+            // Sync to Global to ensure saveChanges sees it even if not edited
+            GLOBAL_SETTINGS.welcome_goodbye_definitions = GLOBAL_SETTINGS.welcome_goodbye_definitions || {};
+            GLOBAL_SETTINGS.welcome_goodbye_interactions = GLOBAL_SETTINGS.welcome_goodbye_interactions || {};
+            GLOBAL_SETTINGS.welcome_goodbye_definitions[String(nextId)] = loadedDefinitions[0];
+            GLOBAL_SETTINGS.welcome_goodbye_interactions[String(nextId)] = loadedDefinitions[0].interactions;
+        }
+    }
+
     let editorData = {
         definitions: loadedDefinitions,
         retention_days: retention
@@ -1255,36 +1280,9 @@ async function saveChanges() {
                     }
                 }
                 else if (item.type === 'embedMaker') {
-                    // Welcome/Goodbye Interaction System (special handling)
-                    if (['welcome_message', 'goodbye_message'].includes(item.key)) {
-                        const editorData = GLOBAL_SETTINGS[item.key];
-                        if (editorData && editorData.definitions) {
-                            payload.welcome_goodbye_definitions = payload.welcome_goodbye_definitions || {};
-                            payload.welcome_goodbye_interactions = payload.welcome_goodbye_interactions || {};
-
-                            editorData.definitions.forEach(def => {
-                                if ((def.interactions && def.interactions.length > 0) || def.content || (def.embeds && def.embeds.length > 0)) {
-                                    const defObj = {};
-                                    if (def.content) defObj.content = def.content;
-                                    if (def.embeds && def.embeds.length > 0) defObj.embeds = def.embeds;
-                                    if (def.username) defObj.username = def.username;
-                                    if (def.avatar_url) defObj.avatar_url = def.avatar_url;
-
-                                    // Use the persistent def.id to avoid overwriting other category
-                                    payload.welcome_goodbye_definitions[def.id] = defObj;
-                                    payload.welcome_goodbye_interactions[def.id] = def.interactions || [];
-                                }
-                            });
-
-                            if (editorData.retention_days) {
-                                payload.member_history_retention_days = editorData.retention_days;
-                            }
-                        }
-                    } else {
-                        // Standard single embedMaker
-                        if (GLOBAL_SETTINGS[item.key]) {
-                            payload[item.key] = GLOBAL_SETTINGS[item.key];
-                        }
+                    // Standard single embedMaker or Welcome/Goodbye Interaction system
+                    if (GLOBAL_SETTINGS[item.key]) {
+                        payload[item.key] = GLOBAL_SETTINGS[item.key];
                     }
                 }
                 else if (item.type === 'chatbotList') {
@@ -1325,12 +1323,45 @@ async function saveChanges() {
             });
         });
 
-        // Backend expects 'welcome_messages' to be an Array or False
-        if (payload.welcome_enabled_bool === false) payload.welcome_messages = false;
-        delete payload.welcome_enabled_bool;
+        // 2. Aggregate Welcome/Goodbye Interaction Master Lists
+        if (GLOBAL_SETTINGS.welcome_goodbye_definitions) {
+            payload.welcome_goodbye_definitions = GLOBAL_SETTINGS.welcome_goodbye_definitions;
+        }
+        if (GLOBAL_SETTINGS.welcome_goodbye_interactions) {
+            payload.welcome_goodbye_interactions = GLOBAL_SETTINGS.welcome_goodbye_interactions;
+        }
+        if (GLOBAL_SETTINGS.member_history_retention_days) {
+            payload.member_history_retention_days = GLOBAL_SETTINGS.member_history_retention_days;
+        }
 
-        if (payload.goodbye_enabled_bool === false) payload.goodbye_messages = false;
-        delete payload.goodbye_enabled_bool;
+        // 3. Backend expects 'welcome_messages' to be an Array or False
+        // Maintain legacy compatibility while respecting the UI toggles
+        const welcomeEnabled = payload.welcome_enabled_bool !== undefined ? payload.welcome_enabled_bool : GLOBAL_SETTINGS.welcome_enabled_bool;
+        const goodbyeEnabled = payload.goodbye_enabled_bool !== undefined ? payload.goodbye_enabled_bool : GLOBAL_SETTINGS.goodbye_enabled_bool;
+
+        if (welcomeEnabled === false) {
+            payload.welcome_messages = false;
+            payload.welcome_enabled = false;
+        } else {
+            payload.welcome_enabled = true;
+            if (GLOBAL_SETTINGS.welcome_messages === false) {
+                payload.welcome_messages = [];
+            } else if (GLOBAL_SETTINGS.welcome_messages) {
+                payload.welcome_messages = GLOBAL_SETTINGS.welcome_messages;
+            }
+        }
+
+        if (goodbyeEnabled === false) {
+            payload.goodbye_messages = false;
+            payload.goodbye_enabled = false;
+        } else {
+            payload.goodbye_enabled = true;
+            if (GLOBAL_SETTINGS.goodbye_messages === false) {
+                payload.goodbye_messages = [];
+            } else if (GLOBAL_SETTINGS.goodbye_messages) {
+                payload.goodbye_messages = GLOBAL_SETTINGS.goodbye_messages;
+            }
+        }
 
         if (payload.welcome_messages && !Array.isArray(payload.welcome_messages)) {
             if (typeof payload.welcome_messages === 'string') {
