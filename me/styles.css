@@ -428,13 +428,6 @@ body::before {
     height: 110px;
 }
 
-.box-6 {
-    --radius: 380px;
-    --start-angle: 300deg;
-    animation-duration: 24s;
-    width: 110px;
-    height: 110px;
-}
 
 @keyframes orbit {
     from {
@@ -663,9 +656,6 @@ body::before {
         --radius: 0;
     }
 
-    .box-6 {
-        --radius: 0;
-    }
 
     /* Modal */
     .modal-content {
