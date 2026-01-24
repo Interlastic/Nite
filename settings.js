@@ -746,11 +746,9 @@ function createEmbedMakerButton(key, label, buttonText, help) {
 }
 
 function openEmbedMaker(key) {
-    // Determine if this is welcome or goodbye
     const isWelcome = key === 'welcome_message';
     const modalTitle = isWelcome ? 'Welcome Messages' : 'Goodbye Messages';
 
-    // Define valid interaction types based on welcome/goodbye
     const validInteractions = isWelcome
         ? ['bot_joined', 'member_joined', 'member_returned']
         : ['bot_left', 'member_left'];
@@ -763,22 +761,14 @@ function openEmbedMaker(key) {
         'member_returned': 'Member Returned'
     };
 
-    // Load existing data structure or create new
     const retention = GLOBAL_SETTINGS.member_history_retention_days || 30;
-
-    // Convert Global Settings (definitions + interactions) into Editor Array
     const allDefs = GLOBAL_SETTINGS.welcome_goodbye_definitions || {};
     const allInts = GLOBAL_SETTINGS.welcome_goodbye_interactions || {};
 
     let loadedDefinitions = [];
-
     Object.keys(allDefs).forEach(defId => {
         const intTypes = allInts[defId] || [];
-        // Check if this definition belongs to the current mode (Welcome or Goodbye)
         const belongsToMode = intTypes.some(type => validInteractions.includes(type));
-
-        // Also include if it has NO interactions yet (orphaned?) - usually we skip, but let's be safe
-        // Actually, if we are creating new ones, they start in the editor.
         if (belongsToMode) {
             loadedDefinitions.push({
                 id: defId,
@@ -793,45 +783,15 @@ function openEmbedMaker(key) {
         retention_days: retention
     };
 
-    // Create modal overlay
     const overlay = document.createElement('div');
     overlay.id = 'multi-embed-modal';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.85);
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    `;
+    overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center;';
 
     const modal = document.createElement('div');
-    modal.style.cssText = `
-        width: 95%;
-        max-width: 900px;
-        max-height: 90vh;
-        background: #36393f;
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    `;
+    modal.style.cssText = 'width: 95%; max-width: 900px; max-height: 90vh; background: #36393f; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden;';
 
-    // Header
     const header = document.createElement('div');
-    header.style.cssText = `
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-        background: #2f3136;
-        border-bottom: 1px solid #202225;
-    `;
+    header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #2f3136; border-bottom: 1px solid #202225;';
     header.innerHTML = `
         <h3 style="margin: 0; color: #fff;">${modalTitle}</h3>
         <div style="display: flex; gap: 10px;">
@@ -840,134 +800,23 @@ function openEmbedMaker(key) {
         </div>
     `;
 
-    // Content area
     const content = document.createElement('div');
     content.id = 'definitions-content';
-    content.style.cssText = `
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px;
-    `;
+    content.style.cssText = 'flex: 1; overflow-y: auto; padding: 20px;';
 
     modal.appendChild(header);
     modal.appendChild(content);
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    // Store data in overlay dataset
     overlay.dataset.editorKey = key;
     overlay.dataset.editorData = JSON.stringify(editorData);
 
-    // Render definitions
-    renderDefinitions();
+    refreshDefinitionsList();
 
-    // Event handlers
-    document.getElementById('save-all-defs').onclick = function () {
-        saveAllDefinitions(key);
-    };
-
-    document.getElementById('cancel-all-defs').onclick = function () {
-        closeMultiEmbedModal();
-    };
-
-    overlay.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closeMultiEmbedModal();
-    });
-
-    // Helper functions
-    function renderDefinitions() {
-        const data = JSON.parse(overlay.dataset.editorData);
-        const contentDiv = document.getElementById('definitions-content');
-
-        let html = '';
-
-        // Render each definition
-        data.definitions.forEach((def, index) => {
-            html += createDefinitionEditor(def, index, validInteractions, interactionLabels);
-        });
-
-        // Add new definition button
-        html += `
-        <button type="button" class="dict-add-btn" onclick="addNewDefinition()" style="margin-bottom: 20px;">
-            + Add Another Message
-        </button>`;
-
-        // Member history retention slider
-        html += `
-        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-top: 10px;">
-            <label style="display: block; color: #b9bbbe; font-weight: 600; margin-bottom: 8px;">Member History Retention</label>
-            <p style="font-size: 0.85rem; color: #72767d; margin-bottom: 10px;">Members who left more than this many days ago won't trigger 'member returned' messages</p>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <input type="range" id="retention-slider" class="styled-slider" min="30" max="120" step="10" value="${data.retention_days}" 
-                       oninput="document.getElementById('retention-value').textContent = this.value">
-                <span id="retention-value" style="min-width: 40px; color: #fff; font-weight: 600;">${data.retention_days}</span>
-                <span style="color: #72767d; font-size: 0.85rem;">days</span>
-            </div>
-        </div>`;
-
-        contentDiv.innerHTML = html;
-    }
-
-    function createDefinitionEditor(def, index, validInteractions, interactionLabels) {
-        const defId = def.id || String(index + 1);
-        const content = def.content || '';
-        const hasEmbed = def.embeds && def.embeds.length > 0;
-        const hasContent = content.trim().length > 0;
-        const hasMessage = hasContent || hasEmbed;
-        const interactions = def.interactions || [];
-
-        let interactionSwitches = '';
-        validInteractions.forEach(intType => {
-            const isOn = interactions.includes(intType);
-            interactionSwitches += `
-            <label class="interaction-switch">
-                <span>${interactionLabels[intType]}</span>
-                <label class="switch" style="margin-left: 8px;">
-                    <input type="checkbox" class="interaction-toggle" data-def-index="${index}" data-interaction="${intType}" ${isOn ? 'checked' : ''} 
-                           onchange="toggleInteractionSwitch(this)">
-                    <span class="slider"></span>
-                </label>
-            </label>`;
-        });
-
-        // Message preview
-        let previewText = '';
-        if (hasContent) {
-            previewText = content.substring(0, 60) + (content.length > 60 ? '...' : '');
-        }
-        if (hasEmbed) {
-            previewText += (hasContent ? ' + ' : '') + 'Embed';
-        }
-        if (!hasMessage) {
-            previewText = 'No message configured';
-        }
-
-        return `
-        <div class="definition-editor-card" data-def-index="${index}" style="background: #2f3136; border: 1px solid #202225; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h4 style="margin: 0; color: #fff;">Definition ${parseInt(index) + 1}</h4>
-                <button type="button" class="chatbot-delete-btn" onclick="removeDefinition(${index})" title="Delete">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
-            </div>
-            
-            <div class="form-group">
-                <button type="button" class="dict-add-btn" onclick="openEmbedEditorForDef(${index})" style="margin: 0; width: 100%;">
-                    Configure Message
-                </button>
-                <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.15); border-radius: 4px; font-size: 0.85rem; color: ${hasMessage ? '#dcddde' : '#72767d'}; font-style: ${hasMessage ? 'normal' : 'italic'};">
-                    ${escapeForHtml(previewText)}
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Triggers On:</label>
-                <div class="interaction-switches-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
-                    ${interactionSwitches}
-                </div>
-            </div>
-        </div>`;
-    }
+    document.getElementById('save-all-defs').onclick = () => saveAllDefinitions(key);
+    document.getElementById('cancel-all-defs').onclick = () => closeMultiEmbedModal();
+    overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMultiEmbedModal(); });
 }
 
 function closeMultiEmbedModal() {
@@ -975,66 +824,13 @@ function closeMultiEmbedModal() {
     if (modal) modal.remove();
 }
 
-// Toggle interaction switch with mutual exclusivity
-function toggleInteractionSwitch(checkbox) {
-    const defIndex = parseInt(checkbox.dataset.defIndex);
-    const interaction = checkbox.dataset.interaction;
-    const isEnabled = checkbox.checked;
-
+function refreshDefinitionsList() {
     const modal = document.getElementById('multi-embed-modal');
+    if (!modal) return;
     const data = JSON.parse(modal.dataset.editorData);
+    const contentDiv = document.getElementById('definitions-content');
+    const key = modal.dataset.editorKey;
 
-    if (isEnabled) {
-        // Turn OFF this interaction on ALL other definitions
-        data.definitions.forEach((def, idx) => {
-            if (idx !== defIndex) {
-                def.interactions = (def.interactions || []).filter(i => i !== interaction);
-            }
-        });
-
-        // Turn ON for this definition
-        if (!data.definitions[defIndex].interactions) {
-            data.definitions[defIndex].interactions = [];
-        }
-        if (!data.definitions[defIndex].interactions.includes(interaction)) {
-            data.definitions[defIndex].interactions.push(interaction);
-        }
-
-        // Update UI for all other checkboxes with this interaction
-        document.querySelectorAll(`.interaction-toggle[data-interaction="${interaction}"]`).forEach(cb => {
-            if (parseInt(cb.dataset.defIndex) !== defIndex) {
-                cb.checked = false;
-            }
-        });
-    } else {
-        // Turn OFF for this definition
-        if (data.definitions[defIndex].interactions) {
-            data.definitions[defIndex].interactions = data.definitions[defIndex].interactions.filter(i => i !== interaction);
-        }
-    }
-
-    // Save updated data
-    modal.dataset.editorData = JSON.stringify(data);
-}
-
-// Add new definition
-function addNewDefinition() {
-    const modal = document.getElementById('multi-embed-modal');
-    const data = JSON.parse(modal.dataset.editorData);
-
-    const newDef = {
-        id: String(data.definitions.length + 1),
-        content: '',
-        interactions: []
-    };
-
-    data.definitions.push(newDef);
-    modal.dataset.editorData = JSON.stringify(data);
-
-    // Re-render
-    const contentDiv = document.querySelector('#multi-embed-modal #definitions-content');
-    const overlay = document.getElementById('multi-embed-modal');
-    const key = overlay.dataset.editorKey;
     const isWelcome = key === 'welcome_message';
     const validInteractions = isWelcome
         ? ['bot_joined', 'member_joined', 'member_returned']
@@ -1049,7 +845,7 @@ function addNewDefinition() {
 
     let html = '';
     data.definitions.forEach((def, index) => {
-        html += createDefinitionEditor(def, index, validInteractions, interactionLabels);
+        html += createDefinitionEditorSimple(def, index, validInteractions, interactionLabels);
     });
 
     html += `<button type="button" class="dict-add-btn" onclick="addNewDefinition()" style="margin-bottom: 20px;">+ Add Another Message</button>`;
@@ -1066,320 +862,196 @@ function addNewDefinition() {
     </div>`;
 
     contentDiv.innerHTML = html;
-
-    // Helper function (repeated because it's in closure)
-    function createDefinitionEditor(def, index, validInteractions, interactionLabels) {
-        const defId = def.id || String(index + 1);
-        const content = escapeForHtml(def.content || '');
-        const hasEmbed = def.embeds && def.embeds.length > 0;
-        const interactions = def.interactions || [];
-        const webhookExpanded = def.username || def.avatar_url;
-
-        let interactionSwitches = '';
-        validInteractions.forEach(intType => {
-            const isOn = interactions.includes(intType);
-            interactionSwitches += `
-            <label class="interaction-switch">
-                <span>${interactionLabels[intType]}</span>
-                <label class="switch" style="margin-left: 8px;">
-                    <input type="checkbox" class="interaction-toggle" data-def-index="${index}" data-interaction="${intType}" ${isOn ? 'checked' : ''} 
-                           onchange="toggleInteractionSwitch(this)">
-                    <span class="slider"></span>
-                </label>
-            </label>`;
-        });
-
-        return `
-        <div class="definition-editor-card" data-def-index="${index}" style="background: #2f3136; border: 1px solid #202225; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h4 style="margin: 0; color: #fff;">Definition ${parseInt(index) + 1}</h4>
-                <button type="button" class="chatbot-delete-btn" onclick="removeDefinition(${index})" title="Delete">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
-            </div>
-            <div class="form-group">
-                <button type="button" class="dict-add-btn" onclick="openEmbedEditorForDef(${index})" style="margin: 0; width: 100%;">Configure Message</button>
-                <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.15); border-radius: 4px; font-size: 0.85rem; color: ${(content || hasEmbed) ? '#dcddde' : '#72767d'}; font-style: ${(content || hasEmbed) ? 'normal' : 'italic'};">  
-                    ${content ? escapeForHtml(content.substring(0, 60) + (content.length > 60 ? '...' : '')) + (hasEmbed ? ' + Embed' : '') : (hasEmbed ? 'Embed only' : 'No message configured')}
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Triggers On:</label>
-                <div class="interaction-switches-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">${interactionSwitches}</div>
-            </div>
-        </div>`;
-    }
 }
 
-// Remove definition
+function toggleInteractionSwitch(cb) {
+    const modal = document.getElementById('multi-embed-modal');
+    const data = JSON.parse(modal.dataset.editorData);
+    const defIndex = parseInt(cb.dataset.defIndex);
+    const interaction = cb.dataset.interaction;
+
+    if (cb.checked) {
+        data.definitions.forEach((def, idx) => {
+            if (idx === defIndex) {
+                if (!def.interactions) def.interactions = [];
+                if (!def.interactions.includes(interaction)) def.interactions.push(interaction);
+            } else if (def.interactions) {
+                def.interactions = def.interactions.filter(i => i !== interaction);
+            }
+        });
+    } else {
+        if (data.definitions[defIndex].interactions) {
+            data.definitions[defIndex].interactions = data.definitions[defIndex].interactions.filter(i => i !== interaction);
+        }
+    }
+
+    modal.dataset.editorData = JSON.stringify(data);
+    refreshDefinitionsList();
+}
+
+function addNewDefinition() {
+    const modal = document.getElementById('multi-embed-modal');
+    const data = JSON.parse(modal.dataset.editorData);
+
+    const existingDefs = GLOBAL_SETTINGS.welcome_goodbye_definitions || {};
+    const existingIds = Object.keys(existingDefs).map(id => parseInt(id)).filter(id => !isNaN(id));
+    const currentEditorIds = data.definitions.map(d => parseInt(d.id)).filter(id => !isNaN(id));
+    const allIds = [...existingIds, ...currentEditorIds];
+    const nextId = allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
+
+    const newDef = { id: String(nextId), content: '', interactions: [] };
+    data.definitions.push(newDef);
+    modal.dataset.editorData = JSON.stringify(data);
+    refreshDefinitionsList();
+}
+
 function removeDefinition(index) {
     showDeleteConfirmation(() => {
         const modal = document.getElementById('multi-embed-modal');
         const data = JSON.parse(modal.dataset.editorData);
-
         data.definitions.splice(index, 1);
         modal.dataset.editorData = JSON.stringify(data);
-
-        // Re-render (same as addNewDefinition)
-        const contentDiv = document.querySelector('#multi-embed-modal #definitions-content');
-        const overlay = document.getElementById('multi-embed-modal');
-        const key = overlay.dataset.editorKey;
-        const isWelcome = key === 'welcome_message';
-        const validInteractions = isWelcome
-            ? ['bot_joined', 'member_joined', 'member_returned']
-            : ['bot_left', 'member_left'];
-        const interactionLabels = {
-            'bot_joined': 'Bot Joined',
-            'bot_left': 'Bot Left',
-            'member_joined': 'Member Joined',
-            'member_left': 'Member Left',
-            'member_returned': 'Member Returned'
-        };
-
-        let html = '';
-        data.definitions.forEach((def, idx) => {
-            html += createDefinitionEditorSimple(def, idx, validInteractions, interactionLabels);
-        });
-        html += `<button type="button" class="dict-add-btn" onclick="addNewDefinition()" style="margin-bottom: 20px;">+ Add Another Message</button>`;
-        html += `
-        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-top: 10px;">
-            <label style="display: block; color: #b9bbbe; font-weight: 600; margin-bottom: 8px;">Member History Retention</label>
-            <p style="font-size: 0.85rem; color: #72767d; margin-bottom: 10px;">Members who left more than this many days ago won't trigger 'member returned' messages</p>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <input type="range" id="retention-slider" class="styled-slider" min="30" max="120" step="10" value="${data.retention_days}" 
-                       oninput="document.getElementById('retention-value').textContent = this.value">
-                <span id="retention-value" style="min-width: 40px; color: #fff; font-weight: 600;">${data.retention_days}</span>
-                <span style="color: #72767d; font-size: 0.85rem;">days</span>
-            </div>
-        </div>`;
-        contentDiv.innerHTML = html;
+        refreshDefinitionsList();
     });
 }
 
 function showDeleteConfirmation(onConfirm) {
     const overlay = document.createElement('div');
     overlay.className = 'confirm-modal-overlay';
-
     overlay.innerHTML = `
         <div class="confirm-modal-content">
-            <div class="confirm-modal-header">
-                Delete Message?
-            </div>
-            <div class="confirm-modal-body">
-                Are you sure you want to delete this message definition? This action cannot be undone.
-            </div>
+            <div class="confirm-modal-header">Delete Message?</div>
+            <div class="confirm-modal-body">Are you sure you want to delete this message definition? This action cannot be undone.</div>
             <div class="confirm-modal-footer">
                 <button class="confirm-btn-cancel">Cancel</button>
                 <button class="confirm-btn-delete">Delete</button>
             </div>
-        </div>
-    `;
-
+        </div>`;
     document.body.appendChild(overlay);
-
-    // Close on overlay click or cancel
-    const close = () => {
-        overlay.style.opacity = '0';
-        setTimeout(() => overlay.remove(), 150);
-    };
-
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) close();
-    });
-
-    overlay.querySelector('.confirm-btn-cancel').addEventListener('click', close);
-
-    // Handle confirm
-    overlay.querySelector('.confirm-btn-delete').addEventListener('click', () => {
-        onConfirm();
-        close();
-    });
+    const close = () => { overlay.style.opacity = '0'; setTimeout(() => overlay.remove(), 150); };
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    overlay.querySelector('.confirm-btn-cancel').onclick = close;
+    overlay.querySelector('.confirm-btn-delete').onclick = () => { onConfirm(); close(); };
 }
 
 function createDefinitionEditorSimple(def, index, validInteractions, interactionLabels) {
-    const defId = def.id || String(index + 1);
     const content = def.content || '';
     const hasEmbed = def.embeds && def.embeds.length > 0;
-    const hasContent = content.trim().length > 0;
-    const hasMessage = hasContent || hasEmbed;
+    const hasMessage = content.trim().length > 0 || hasEmbed;
     const interactions = def.interactions || [];
 
-    let interactionSwitches = '';
+    let switches = '';
     validInteractions.forEach(intType => {
         const isOn = interactions.includes(intType);
-        interactionSwitches += `
+        switches += `
         <label class="interaction-switch">
             <span>${interactionLabels[intType]}</span>
             <label class="switch" style="margin-left: 8px;">
-                <input type="checkbox" class="interaction-toggle" data-def-index="${index}" data-interaction="${intType}" ${isOn ? 'checked' : ''} 
-                       onchange="toggleInteractionSwitch(this)">
+                <input type="checkbox" class="interaction-toggle" data-def-index="${index}" data-interaction="${intType}" ${isOn ? 'checked' : ''} onchange="toggleInteractionSwitch(this)">
                 <span class="slider"></span>
             </label>
         </label>`;
     });
 
-    // Message preview
-    let previewText = '';
-    if (hasContent) {
-        previewText = content.substring(0, 60) + (content.length > 60 ? '...' : '');
-    }
-    if (hasEmbed) {
-        previewText += (hasContent ? ' + ' : '') + 'Embed';
-    }
-    if (!hasMessage) {
-        previewText = 'No message configured';
-    }
+    let preview = hasMessage ? content.substring(0, 60) + (content.length > 60 ? '...' : '') : 'No message configured';
+    if (hasEmbed) preview += (content ? ' + ' : '') + 'Embed';
 
     return `
     <div class="definition-editor-card" data-def-index="${index}" style="background: #2f3136; border: 1px solid #202225; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h4 style="margin: 0; color: #fff;">Definition ${parseInt(index) + 1}</h4>
+            <h4 style="margin: 0; color: #fff;">Definition ${index + 1}</h4>
             <button type="button" class="chatbot-delete-btn" onclick="removeDefinition(${index})" title="Delete">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             </button>
         </div>
-        
         <div class="form-group">
-            <button type="button" class="dict-add-btn" onclick="openEmbedEditorForDef(${index})" style="margin: 0; width: 100%;">
-                Configure Message
-            </button>
+            <button type="button" class="dict-add-btn" onclick="openEmbedEditorForDef(${index})" style="margin: 0; width: 100%;">Configure Message</button>
             <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.15); border-radius: 4px; font-size: 0.85rem; color: ${hasMessage ? '#dcddde' : '#72767d'}; font-style: ${hasMessage ? 'normal' : 'italic'};">
-                ${escapeForHtml(previewText)}
+                ${escapeForHtml(preview)}
             </div>
         </div>
-        
         <div class="form-group">
             <label class="form-label">Triggers On:</label>
-            <div class="interaction-switches-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
-                ${interactionSwitches}
-            </div>
+            <div class="interaction-switches-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">${switches}</div>
         </div>
     </div>`;
 }
 
-// Open embed editor for specific definition
 function openEmbedEditorForDef(defIndex) {
     const modal = document.getElementById('multi-embed-modal');
     const data = JSON.parse(modal.dataset.editorData);
     const def = data.definitions[defIndex];
 
-    // Create nested iframe modal
-    const embedOverlay = document.createElement('div');
-    embedOverlay.id = 'nested-embed-editor';
-    embedOverlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 11000; display: flex; flex-direction: column; align-items: center; justify-content: center;`;
+    const overlay = document.createElement('div');
+    overlay.id = 'nested-embed-editor';
+    overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 11000; display: flex; align-items: center; justify-content: center;';
 
-    const embedContainer = document.createElement('div');
-    embedContainer.style.cssText = `width: 95%; max-width: 1200px; height: 90%; background: #36393f; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden;`;
+    const container = document.createElement('div');
+    container.style.cssText = 'width: 95%; max-width: 1200px; height: 90%; background: #36393f; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden;';
 
-    const embedHeader = document.createElement('div');
-    embedHeader.style.cssText = `display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #2f3136; border-bottom: 1px solid #202225;`;
-    embedHeader.innerHTML = `<h3 style="margin: 0; color: #fff;">Embed Editor</h3><div style="display: flex; gap: 10px;"><button id="save-nested-embed" style="padding: 8px 16px; background: #3ba55c; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">Save Embed</button><button id="cancel-nested-embed" style="padding: 8px 16px; background: #4f545c; color: #fff; border: none; border-radius: 4px; cursor: pointer;">Cancel</button></div>`;
+    const header = document.createElement('div');
+    header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #2f3136; border-bottom: 1px solid #202225;';
+    header.innerHTML = '<h3 style="margin: 0; color: #fff;">Embed Editor</h3><div style="display: flex; gap: 10px;"><button id="save-nested-embed" class="dict-add-btn">Save Embed</button><button id="cancel-nested-embed" style="padding: 8px 16px; background: #4f545c; color: #fff; border: none; border-radius: 4px; cursor: pointer;">Cancel</button></div>';
 
     const iframe = document.createElement('iframe');
     iframe.src = 'embed_maker.html';
     iframe.style.cssText = 'flex: 1; width: 100%; border: none;';
+    container.append(header, iframe);
+    overlay.append(container);
+    document.body.appendChild(overlay);
 
-    embedContainer.appendChild(embedHeader);
-    embedContainer.appendChild(iframe);
-    embedOverlay.appendChild(embedContainer);
-    document.body.appendChild(embedOverlay);
-
-    // Load existing embed
-    iframe.onload = function () {
+    iframe.onload = () => {
         if (iframe.contentWindow.loadEmbedData) {
-            // Construct full data object to pass to embed maker
-            // ensuring we pass top-level fields correctly
-            const fullData = {
-                username: def.username,
-                avatar_url: def.avatar_url,
-                content: def.content,
-                embeds: def.embeds
-            };
-            iframe.contentWindow.loadEmbedData(fullData);
+            iframe.contentWindow.loadEmbedData({ username: def.username, avatar_url: def.avatar_url, content: def.content, embeds: def.embeds });
         }
     };
-
-    // Save button
-    // Save button
-    document.getElementById('save-nested-embed').onclick = function () {
+    document.getElementById('save-nested-embed').onclick = () => {
         if (iframe.contentWindow.getEmbedData) {
             const embedData = iframe.contentWindow.getEmbedData();
-
-            // Correctly unpack the data to top-level fields
             def.content = embedData.content || '';
             def.username = embedData.username;
             def.avatar_url = embedData.avatar_url;
             def.embeds = embedData.embeds || [];
-
             modal.dataset.editorData = JSON.stringify(data);
-
-            // Update status in main UI
-
-            // Re-render the list to show updated previews
-            const contentDiv = document.querySelector('#multi-embed-modal #definitions-content');
-            const overlay = document.getElementById('multi-embed-modal');
-            const key = overlay.dataset.editorKey;
-            const isWelcome = key === 'welcome_message';
-            const validInteractions = isWelcome
-                ? ['bot_joined', 'member_joined', 'member_returned']
-                : ['bot_left', 'member_left'];
-            const interactionLabels = {
-                'bot_joined': 'Bot Joined',
-                'bot_left': 'Bot Left',
-                'member_joined': 'Member Joined',
-                'member_left': 'Member Left',
-                'member_returned': 'Member Returned'
-            };
-
-            let html = '';
-            data.definitions.forEach((d, idx) => {
-                html += createDefinitionEditorSimple(d, idx, validInteractions, interactionLabels);
-            });
-            html += `<button type="button" class="dict-add-btn" onclick="addNewDefinition()" style="margin-bottom: 20px;">+ Add Another Message</button>`;
-            html += `
-            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-top: 10px;">
-                <label style="display: block; color: #b9bbbe; font-weight: 600; margin-bottom: 8px;">Member History Retention</label>
-                <p style="font-size: 0.85rem; color: #72767d; margin-bottom: 10px;">Members who left more than this many days ago won't trigger 'member returned' messages</p>
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <input type="range" id="retention-slider" class="styled-slider" min="30" max="120" step="10" value="${data.retention_days}" 
-                           oninput="document.getElementById('retention-value').textContent = this.value">
-                    <span id="retention-value" style="min-width: 40px; color: #fff; font-weight: 600;">${data.retention_days}</span>
-                    <span style="color: #72767d; font-size: 0.85rem;">days</span>
-                </div>
-            </div>`;
-            contentDiv.innerHTML = html;
+            refreshDefinitionsList();
         }
-        embedOverlay.remove();
+        overlay.remove();
     };
-
-    // Cancel button
-    document.getElementById('cancel-nested-embed').onclick = function () {
-        embedOverlay.remove();
-    };
+    document.getElementById('cancel-nested-embed').onclick = () => overlay.remove();
 }
 
-// Save all definitions
 function saveAllDefinitions(key) {
     const modal = document.getElementById('multi-embed-modal');
     const data = JSON.parse(modal.dataset.editorData);
+    const isWelcome = key === 'welcome_message';
+    const currentValidInteractions = isWelcome ? ['bot_joined', 'member_joined', 'member_returned'] : ['bot_left', 'member_left'];
 
-    // Get retention days
-    const retentionSlider = document.getElementById('retention-slider');
-    if (retentionSlider) {
-        data.retention_days = parseInt(retentionSlider.value);
-    }
+    if (!GLOBAL_SETTINGS.welcome_goodbye_definitions) GLOBAL_SETTINGS.welcome_goodbye_definitions = {};
+    if (!GLOBAL_SETTINGS.welcome_goodbye_interactions) GLOBAL_SETTINGS.welcome_goodbye_interactions = {};
 
-    // Save to GLOBAL_SETTINGS
-    GLOBAL_SETTINGS[key] = data;
+    Object.keys(GLOBAL_SETTINGS.welcome_goodbye_interactions).forEach(defId => {
+        const ints = GLOBAL_SETTINGS.welcome_goodbye_interactions[defId] || [];
+        if (ints.some(i => currentValidInteractions.includes(i))) {
+            delete GLOBAL_SETTINGS.welcome_goodbye_interactions[defId];
+            delete GLOBAL_SETTINGS.welcome_goodbye_definitions[defId];
+        }
+    });
 
-    // Update status display
+    data.definitions.forEach(def => {
+        if ((def.interactions && def.interactions.length > 0) || def.content || (def.embeds && def.embeds.length > 0)) {
+            GLOBAL_SETTINGS.welcome_goodbye_definitions[def.id] = { content: def.content, username: def.username, avatar_url: def.avatar_url, embeds: def.embeds || [] };
+            GLOBAL_SETTINGS.welcome_goodbye_interactions[def.id] = def.interactions || [];
+        }
+    });
+
+    const slider = document.getElementById('retention-slider');
+    if (slider) GLOBAL_SETTINGS.member_history_retention_days = parseInt(slider.value);
+
     const statusEl = document.getElementById(`embed-status-${key}`);
     if (statusEl) {
-        const hasDefinitions = data.definitions.length > 0;
-        statusEl.textContent = hasDefinitions ? `✓ ${data.definitions.length} definition${data.definitions.length > 1 ? 's' : ''} configured` : 'No definitions set';
-        statusEl.style.color = hasDefinitions ? '#3ba55c' : '#72767d';
+        statusEl.textContent = data.definitions.length > 0 ? `✓ ${data.definitions.length} definition${data.definitions.length > 1 ? 's' : ''} configured` : 'No definitions set';
+        statusEl.style.color = data.definitions.length > 0 ? '#3ba55c' : '#72767d';
     }
-
     closeMultiEmbedModal();
 }
 
@@ -1395,7 +1067,7 @@ function saveEmbedFromModal(key) {
         GLOBAL_SETTINGS[key] = embedData;
 
         // Update status display
-        const statusEl = document.getElementById(`embed-status-${key}`);
+        const statusEl = document.getElementById(`embed - status - ${key} `);
         if (statusEl) {
             const hasEmbed = embedData && Object.keys(embedData).length > 0;
             statusEl.textContent = hasEmbed ? '✓ Embed configured' : 'No embed set';
@@ -1412,7 +1084,7 @@ function clearEmbed(key) {
     if (confirm('Remove this embed?')) {
         GLOBAL_SETTINGS[key] = null;
         // Re-render the embed maker group
-        const group = document.querySelector(`.embed-maker-group[data-embed-key="${key}"]`);
+        const group = document.querySelector(`.embed - maker - group[data - embed - key="${key}"]`);
         if (group) {
             const statusEl = group.querySelector('.embed-status');
             if (statusEl) {
@@ -1533,7 +1205,7 @@ async function saveChanges() {
                 else if (item.type === 'commandList') {
                     // Iterate commands
                     GLOBAL_COMMANDS.forEach(cmd => {
-                        const k = `${cmd.name}_enabled`;
+                        const k = `${cmd.name} _enabled`;
                         const cBox = document.getElementById(k);
                         if (cBox) {
                             payload[k] = cBox.checked;
@@ -1541,11 +1213,11 @@ async function saveChanges() {
                     });
                 }
                 else if (item.type === 'supportChannelList') {
-                    const chks = document.querySelectorAll(`.support-channel-chk[data-setting-key="${item.key}"]:checked`);
+                    const chks = document.querySelectorAll(`.support - channel - chk[data - setting - key="${item.key}"]: checked`);
                     payload[item.key] = Array.from(chks).map(cb => cb.value);
                 }
                 else if (item.type === 'dict') {
-                    const container = document.querySelector(`.dict-container[data-dict-id="${item.key}"]`);
+                    const container = document.querySelector(`.dict - container[data - dict - id="${item.key}"]`);
                     if (container) {
                         const rows = container.querySelectorAll('.dict-row');
                         const dictObj = {};
@@ -1560,7 +1232,7 @@ async function saveChanges() {
                     }
                 }
                 else if (item.type === 'namedContentList') {
-                    const container = document.querySelector(`.ncl-container[data-ncl-id="${item.key}"]`);
+                    const container = document.querySelector(`.ncl - container[data - ncl - id="${item.key}"]`);
                     if (container) {
                         const rows = container.querySelectorAll('.ncl-row');
                         const list = [];
@@ -1654,41 +1326,22 @@ async function saveChanges() {
                     }
                 }
                 else if (item.type === 'interactionDefinitions') {
-                    // Definitions and interactions are managed in GLOBAL_SETTINGS
-                    // Save both keys
                     const defKey = item.key;
                     const intKey = item.interactionsKey;
-
-                    if (GLOBAL_SETTINGS[defKey]) {
-                        payload[defKey] = GLOBAL_SETTINGS[defKey];
-                    }
-                    if (GLOBAL_SETTINGS[intKey]) {
-                        payload[intKey] = GLOBAL_SETTINGS[intKey];
-                    }
-                }
-                else if (item.type === 'memberHistoryViewer') {
-                    // Read-only, don't save from UI
-                    // member_history is managed by the bot
+                    if (GLOBAL_SETTINGS[defKey]) payload[defKey] = GLOBAL_SETTINGS[defKey];
+                    if (GLOBAL_SETTINGS[intKey]) payload[intKey] = GLOBAL_SETTINGS[intKey];
                 }
             });
         });
 
-        // --- HARDCODED FIXES FOR WELCOME/GOODBYE ---
-        // Backend expects 'welcome_messages' to be an Array (if enabled) or False (if disabled).
-        // It does not use 'welcome_enabled_bool'.
-        if (payload.welcome_enabled_bool === false) {
-            payload.welcome_messages = false;
-        }
+        // Backend expects 'welcome_messages' to be an Array or False
+        if (payload.welcome_enabled_bool === false) payload.welcome_messages = false;
         delete payload.welcome_enabled_bool;
 
-        if (payload.goodbye_enabled_bool === false) {
-            payload.goodbye_messages = false;
-        }
+        if (payload.goodbye_enabled_bool === false) payload.goodbye_messages = false;
         delete payload.goodbye_enabled_bool;
 
-        // Ensure they are arrays if not false
         if (payload.welcome_messages && !Array.isArray(payload.welcome_messages)) {
-            // Fallback if generic splitter failed (though it shouldn't)
             if (typeof payload.welcome_messages === 'string') {
                 payload.welcome_messages = payload.welcome_messages.split('|').map(s => s.trim()).filter(s => s.length > 0);
             }
@@ -1699,48 +1352,67 @@ async function saveChanges() {
             }
         }
 
-        // --- SEND TO WORKER ---
         status.innerText = "Sending to Bot...";
-
-        const bodyData = {
-            serverid: serverId,
-            settings: payload
-        };
-
-        // Debug: log what we're sending
-        console.log("Sending payload:", JSON.stringify(bodyData, null, 2));
-
+        const bodyData = { serverid: serverId, settings: payload };
         const response = await fetch(`${WORKER}/update-settings`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': token },
             body: JSON.stringify(bodyData)
         });
 
         if (response.ok) {
             status.innerText = "Saved Successfully!";
-            status.style.color = "#4fdc7b"; // Green
-
-            // Update Global Settings
+            status.style.color = "#4fdc7b";
             Object.assign(GLOBAL_SETTINGS, payload);
-
-            // Clear pending chatbots after successful save
             PENDING_CHATBOTS = {};
             refreshChatbotGrid();
         } else {
             throw new Error("Worker rejected update");
         }
-
     } catch (e) {
         console.error(e);
         status.innerText = "Save Failed: " + e.message;
-        status.style.color = "#ed4245"; // Red
+        status.style.color = "#ed4245";
     } finally {
         btn.disabled = false;
         btn.innerText = "Save Changes";
     }
+}
+
+function saveEmbedFromModal(key) {
+    const iframe = document.getElementById('embed-maker-iframe');
+    if (iframe && iframe.contentWindow.getEmbedData) {
+        const embedData = iframe.contentWindow.getEmbedData();
+        GLOBAL_SETTINGS[key] = embedData;
+        const statusEl = document.getElementById(`embed-status-${key}`);
+        if (statusEl) {
+            const hasEmbed = embedData && Object.keys(embedData).length > 0;
+            statusEl.textContent = hasEmbed ? '✓ Embed configured' : 'No embed set';
+            statusEl.style.color = hasEmbed ? '#3ba55c' : '#72767d';
+        }
+        closeEmbedMaker();
+    }
+}
+
+function clearEmbed(key) {
+    if (confirm('Remove this embed?')) {
+        GLOBAL_SETTINGS[key] = null;
+        const group = document.querySelector(`.embed-maker-group[data-embed-key="${key}"]`);
+        if (group) {
+            const statusEl = group.querySelector('.embed-status');
+            if (statusEl) {
+                statusEl.textContent = 'No embed set';
+                statusEl.style.color = '#72767d';
+            }
+            const removeBtn = group.querySelector('.dict-remove-btn');
+            if (removeBtn) removeBtn.remove();
+        }
+    }
+}
+
+function closeEmbedMaker() {
+    const modal = document.getElementById('embed-maker-modal');
+    if (modal) modal.remove();
 }
 
 function handleAuthClick() { openLogout(); }
@@ -1749,14 +1421,9 @@ function openLogout() { document.getElementById('loginbtn').classList.add('expan
 function closeLogout() { document.getElementById('loginbtn').classList.remove('expanded'); document.getElementById('logOutContainer').classList.remove('active'); }
 function goBack() { window.location.href = "index.html"; }
 
-// --- SWITCHER HELPER (Identical to before) ---
 let cachedServers = null;
 async function fetchServersForGrid(gridEl) {
-    if (cachedServers) {
-        renderSwitcherGrid(gridEl, cachedServers);
-        return;
-    }
-
+    if (cachedServers) { renderSwitcherGrid(gridEl, cachedServers); return; }
     const token = getCookie("auth_token");
     try {
         let res = await fetch(`${WORKER}/check?t=${Date.now()}`, { headers: { "Authorization": token }, cache: "no-store" });
@@ -1767,425 +1434,156 @@ async function fetchServersForGrid(gridEl) {
         } else {
             gridEl.innerHTML = '<p style="color:#ed4245; padding:5px;">Failed to load.</p>';
         }
-    } catch (e) {
-        gridEl.innerHTML = '<p style="color:#ed4245; padding:5px;">Error loading.</p>';
-    }
+    } catch (e) { gridEl.innerHTML = '<p style="color:#ed4245; padding:5px;">Error loading.</p>'; }
 }
 
 function renderSwitcherGrid(el, list) {
-    if (!list) list = [];
     const urlParams = new URLSearchParams(window.location.search);
     const currId = urlParams.get('id');
     const currName = urlParams.get('name');
     const currIcon = urlParams.get('icon');
-    const others = list.filter(s => s.id !== currId);
-
-    const currentServer = {
-        id: currId,
-        name: currName,
-        picture_url: currIcon,
-        isCurrent: true,
-        type: 'current'
-    };
-
-    const homeCard = {
-        name: "Homepage",
-        picture_url: "https://cdn-icons-png.flaticon.com/512/25/25694.png",
-        type: 'special',
-        action: "window.location.href='index.html'"
-    };
-
-    const addCard = {
-        name: "Add to server",
-        picture_url: "https://cdn.discordapp.com/avatars/1371513819104415804/9e038eeb716c24ece29276422b52cc80.webp?size=320",
-        type: 'special',
-        action: "window.location.href='https://discord.com/oauth2/authorize?client_id=1371513819104415804&permissions=2815042428980240&integration_type=0&scope=bot+applications.commands'"
-    };
-
+    const others = (list || []).filter(s => s.id !== currId);
+    const currentServer = { id: currId, name: currName, picture_url: currIcon, type: 'current' };
+    const homeCard = { name: "Homepage", picture_url: "https://cdn-icons-png.flaticon.com/512/25/25694.png", type: 'special', action: "window.location.href='index.html'" };
+    const addCard = { name: "Add to server", picture_url: "https://cdn.discordapp.com/avatars/1371513819104415804/9e038eeb716c24ece29276422b52cc80.webp?size=320", type: 'special', action: "window.location.href='https://discord.com/oauth2/authorize?client_id=1371513819104415804&permissions=2815042428980240&integration_type=0&scope=bot+applications.commands'" };
     const fullList = [currentServer, ...others, homeCard, addCard];
     const defaultIcon = "https://cdn.discordapp.com/embed/avatars/0.png";
 
     el.innerHTML = fullList.map((s, i) => {
         const isCurrent = s.type === 'current';
         const isSpecial = s.type === 'special';
-
         const safeName = s.name ? decodeURIComponent(s.name).replace(/"/g, '&quot;') : "Unknown";
-        let safeIcon = s.picture_url || defaultIcon;
-        safeIcon = decodeURIComponent(safeIcon).replace(/"/g, '&quot;');
-
-        let clickAction = "";
-        let cardStyle = "cursor:pointer; width:100%; box-sizing:border-box;";
-
-        if (isCurrent) {
-            clickAction = "window.location.href='index.html'";
-            cardStyle += "border: 1px solid #5865F2;";
-            cardStyle += "filter: none !important; animation: none !important;";
-        } else if (isSpecial) {
-            clickAction = s.action;
-        } else {
-            const params = new URLSearchParams(window.location.search);
-            params.set('id', s.id);
-            params.set('name', s.name);
-            params.set('icon', s.picture_url || defaultIcon);
-            const dest = `manage.html?${params.toString()}`;
-            clickAction = `window.location.href='${dest}'`;
-        }
-
-        const delay = i * 0.05;
-        const popClass = i > 0 ? 'server-card-pop' : '';
-        let imgStyle = "";
-
-        if (s.name === 'Add to server') {
-            imgStyle = 'background-color: #5865F2; padding: 2px;';
-        } else if (s.name === 'Homepage') {
-            imgStyle = 'background-color: #ffffff; padding: 4px; border-radius: 50%;';
-        }
-
-        if (isCurrent) {
-            imgStyle += ' filter: none !important; -webkit-filter: none !important; animation: none !important;';
-        }
-
-        return `
-        <div class="server-card ${popClass}" 
-             onclick="${clickAction}"
-             style="${cardStyle} ${i > 0 ? `animation-delay: ${delay}s;` : ''}">
-            <img src="${safeIcon}" class="server-avatar" style="${imgStyle}">
-            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:100%;">${safeName}</span>
-        </div>`;
+        const safeIcon = (s.picture_url || defaultIcon).replace(/"/g, '&quot;');
+        let clickAction = isCurrent ? "window.location.href='index.html'" : (isSpecial ? s.action : `window.location.href='manage.html?${new URLSearchParams({ ...Object.fromEntries(urlParams), id: s.id, name: s.name, icon: s.picture_url || defaultIcon }).toString()}'`);
+        let cardStyle = `cursor:pointer; width:100%; box-sizing:border-box; ${isCurrent ? 'border: 1px solid #5865F2;' : ''}`;
+        let imgStyle = s.name === 'Add to server' ? 'background-color: #5865F2; padding: 2px;' : (s.name === 'Homepage' ? 'background-color: #ffffff; padding: 4px; border-radius: 50%;' : '');
+        return `<div class="server-card ${i > 0 ? 'server-card-pop' : ''}" onclick="${clickAction}" style="${cardStyle} ${i > 0 ? `animation-delay: ${i * 0.05}s;` : ''}"><img src="${safeIcon}" class="server-avatar" style="${imgStyle}"><span>${safeName}</span></div>`;
     }).join('');
 }
 
-// --- CHATBOT MANAGEMENT ---
-let PENDING_CHATBOTS = {}; // Track new chatbots that need roles created
-
+let PENDING_CHATBOTS = {};
 function renderChatbotList(key) {
     const chatbots = GLOBAL_SETTINGS[key] || {};
-    const entries = Object.entries(chatbots);
-
-    let cardsHtml = '';
-    entries.forEach(([roleId, botData]) => {
-        cardsHtml += createChatbotCard(roleId, botData);
-    });
-
-    // Also render pending new chatbots
-    Object.entries(PENDING_CHATBOTS).forEach(([tempId, botData]) => {
-        cardsHtml += createChatbotCard(tempId, botData, true);
-    });
-
-    return `
-    <div class="chatbot-list-container" data-chatbot-key="${key}">
-        <div class="chatbot-grid" id="chatbot-grid-${key}">
-            ${cardsHtml || '<p style="color:#72767d; font-style:italic;">No chatbots configured yet.</p>'}
-        </div>
-        <button type="button" class="dict-add-btn" onclick="openChatbotModal()" style="margin-top: 15px;">
-            + Create Chatbot
-        </button>
-    </div>`;
+    let cards = Object.entries(chatbots).map(([id, data]) => createChatbotCard(id, data)).join('') + Object.entries(PENDING_CHATBOTS).map(([id, data]) => createChatbotCard(id, data, true)).join('');
+    return `<div class="chatbot-list-container" data-chatbot-key="${key}"><div class="chatbot-grid" id="chatbot-grid-${key}">${cards || '<p style="color:#72767d; font-style:italic;">No chatbots configured yet.</p>'}</div><button type="button" class="dict-add-btn" onclick="openChatbotModal()" style="margin-top: 15px;">+ Create Chatbot</button></div>`;
 }
 
 function createChatbotCard(roleId, botData, isPending = false) {
     const name = escapeForHtml(botData.name || 'Unnamed Bot');
     const prompt = escapeForHtml((botData.system_prompt || '').substring(0, 100));
     const avatarUrl = botData.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
-    const isNsfw = botData.nsfw ? '<span style="background:#ed4245; color:#fff; font-size:0.65rem; padding:2px 5px; border-radius:3px; margin-left:6px; font-weight:600;">18+</span>' : '';
-    const pendingBadge = isPending ? '<span style="background:#5865F2; color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-left:8px;">NEW</span>' : '';
-    const roleInfo = isPending ? '' : `<span style="font-size:0.7rem; color:#72767d;">Role ID: ${roleId}</span>`;
-
-    return `
-    <div class="chatbot-card" data-role-id="${roleId}" data-pending="${isPending}">
-        <div class="chatbot-card-header">
-            <img src="${avatarUrl}" class="chatbot-avatar" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
-            <div class="chatbot-info">
-                <div class="chatbot-name">${name} ${isNsfw} ${pendingBadge}</div>
-                ${roleInfo}
-            </div>
-            <div class="chatbot-actions">
-                <button type="button" class="chatbot-edit-btn" onclick="openChatbotModal('${roleId}', ${isPending})" title="Edit">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                </button>
-                <button type="button" class="chatbot-delete-btn" onclick="deleteChatbot('${roleId}', ${isPending})" title="Delete">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
-            </div>
-        </div>
-        <div class="chatbot-prompt">${prompt}${prompt.length >= 100 ? '...' : ''}</div>
-    </div>`;
+    return `<div class="chatbot-card" data-role-id="${roleId}" data-pending="${isPending}"><div class="chatbot-card-header"><img src="${avatarUrl}" class="chatbot-avatar" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'"><div class="chatbot-info"><div class="chatbot-name">${name} ${botData.nsfw ? '<span class="nsfw-badge">18+</span>' : ''} ${isPending ? '<span class="new-badge">NEW</span>' : ''}</div>${isPending ? '' : `<span class="role-id">Role ID: ${roleId}</span>`}</div><div class="chatbot-actions"><button type="button" class="chatbot-edit-btn" onclick="openChatbotModal('${roleId}', ${isPending})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button><button type="button" class="chatbot-delete-btn" onclick="deleteChatbot('${roleId}', ${isPending})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div></div><div class="chatbot-prompt">${prompt}${prompt.length >= 100 ? '...' : ''}</div></div>`;
 }
 
 function openChatbotModal(roleId = null, isPending = false) {
-    const isEditing = roleId !== null;
-    let existingData = {};
-
-    if (isEditing) {
-        if (isPending) {
-            existingData = PENDING_CHATBOTS[roleId] || {};
-        } else {
-            existingData = (GLOBAL_SETTINGS.chatbots || {})[roleId] || {};
-        }
-    }
-
-    // Create modal overlay
+    const editing = roleId !== null;
+    const data = editing ? (isPending ? PENDING_CHATBOTS[roleId] : (GLOBAL_SETTINGS.chatbots || {})[roleId]) : {};
     const overlay = document.createElement('div');
-    overlay.id = 'chatbot-modal';
-    overlay.className = 'modal show';
-    overlay.innerHTML = `
-        <div class="modal-content" style="max-width: 500px;">
-            <span class="close-btn" onclick="closeChatbotModal()">&times;</span>
-            <h3>${isEditing ? 'Edit Chatbot' : 'Create Chatbot'}</h3>
-            
-            <div class="form-group">
-                <label class="form-label">Bot Name</label>
-                <input type="text" id="chatbot-name" class="styled-input" placeholder="e.g. Research Assistant" value="${escapeForHtml(existingData.name || '')}" maxlength="50">
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">System Prompt</label>
-                <textarea id="chatbot-prompt" class="styled-textarea" placeholder="Describe the bot's personality and role..." style="min-height: 120px;" maxlength="2000">${escapeForHtml(existingData.system_prompt || '')}</textarea>
-                <div style="text-align:right; font-size:0.8rem; color:#aaa; margin-top:4px;">
-                    <span id="chatbot-prompt-count">${(existingData.system_prompt || '').length}</span>/2000
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Avatar URL (optional)</label>
-                <input type="text" id="chatbot-avatar" class="styled-input" placeholder="https://... (auto-fetched if empty)" value="${escapeForHtml(existingData.avatar_url || '')}">
-            </div>
-            
-            <div class="toggle-wrapper" style="margin-bottom: 20px;">
-                <div class="toggle-label-group">
-                    <span class="form-label" style="margin:0;">NSFW Mode</span>
-                    <span class="form-sublabel" style="margin:0;">Bypass content restrictions (18+ channels only)</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="chatbot-nsfw" ${existingData.nsfw ? 'checked' : ''}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" class="dict-add-btn" style="background:#4f545c;" onclick="closeChatbotModal()">Cancel</button>
-                <button type="button" class="dict-add-btn" style="background:#3ba55c;" onclick="saveChatbot('${roleId || ''}', ${isPending})">${isEditing ? 'Save Changes' : 'Create'}</button>
-            </div>
-        </div>
-    `;
-
+    overlay.id = 'chatbot-modal'; overlay.className = 'modal show';
+    overlay.innerHTML = `<div class="modal-content" style="max-width: 500px;"><span class="close-btn" onclick="closeChatbotModal()">&times;</span><h3>${editing ? 'Edit' : 'Create'} Chatbot</h3><div class="form-group"><label class="form-label">Bot Name</label><input type="text" id="chatbot-name" class="styled-input" value="${escapeForHtml(data.name || '')}" maxlength="50"></div><div class="form-group"><label class="form-label">System Prompt</label><textarea id="chatbot-prompt" class="styled-textarea" style="min-height:120px;" maxlength="2000">${escapeForHtml(data.system_prompt || '')}</textarea><div class="char-count"><span id="chatbot-prompt-count">${(data.system_prompt || '').length}</span>/2000</div></div><div class="form-group"><label class="form-label">Avatar URL (optional)</label><input type="text" id="chatbot-avatar" class="styled-input" value="${escapeForHtml(data.avatar_url || '')}"></div><div class="toggle-wrapper"><div class="toggle-label-group"><span class="form-label">NSFW Mode</span><span class="form-sublabel">Bypass restrictions (18+ channels only)</span></div><label class="switch"><input type="checkbox" id="chatbot-nsfw" ${data.nsfw ? 'checked' : ''}><span class="slider"></span></label></div><div style="display:flex; gap:10px; justify-content:flex-end;"><button type="button" class="dict-add-btn" style="background:#4f545c;" onclick="closeChatbotModal()">Cancel</button><button type="button" class="dict-add-btn" style="background:#3ba55c;" onclick="saveChatbot('${roleId || ''}', ${isPending})">${editing ? 'Save' : 'Create'}</button></div></div>`;
     document.body.appendChild(overlay);
-
-    // Add character count listener
-    document.getElementById('chatbot-prompt').addEventListener('input', function () {
-        document.getElementById('chatbot-prompt-count').textContent = this.value.length;
-    });
-
-    // Close on outside click
-    overlay.addEventListener('click', function (e) {
-        if (e.target === overlay) closeChatbotModal();
-    });
-
-    // Focus name input
-    setTimeout(() => document.getElementById('chatbot-name').focus(), 100);
+    document.getElementById('chatbot-prompt').oninput = function () { document.getElementById('chatbot-prompt-count').textContent = this.value.length; };
+    overlay.onclick = (e) => { if (e.target === overlay) closeChatbotModal(); };
 }
 
-function closeChatbotModal() {
-    const modal = document.getElementById('chatbot-modal');
-    if (modal) modal.remove();
-}
+function closeChatbotModal() { const m = document.getElementById('chatbot-modal'); if (m) m.remove(); }
 
-function saveChatbot(roleId, isPending) {
+function saveChatbot(id, pending) {
     const name = document.getElementById('chatbot-name').value.trim();
     const prompt = document.getElementById('chatbot-prompt').value.trim();
     const avatar = document.getElementById('chatbot-avatar').value.trim();
     const nsfw = document.getElementById('chatbot-nsfw').checked;
-
-    if (!name) {
-        alert('Please enter a bot name.');
-        return;
-    }
-
-    if (!prompt) {
-        alert('Please enter a system prompt.');
-        return;
-    }
-
-    const botData = {
-        name: name,
-        system_prompt: prompt,
-        nsfw: nsfw
-    };
-
-    if (avatar) {
-        botData.avatar_url = avatar;
-    }
-
-    if (roleId && !isPending) {
-        // Editing existing bot
-        if (!GLOBAL_SETTINGS.chatbots) GLOBAL_SETTINGS.chatbots = {};
-        GLOBAL_SETTINGS.chatbots[roleId] = botData;
-    } else if (roleId && isPending) {
-        // Editing pending bot
-        PENDING_CHATBOTS[roleId] = botData;
-    } else {
-        // New bot - add to pending with temp ID
-        const tempId = 'new_' + Date.now();
-        botData._pending = true;
-        PENDING_CHATBOTS[tempId] = botData;
-    }
-
-    closeChatbotModal();
-    refreshChatbotGrid();
+    if (!name || !prompt) { alert('Name and prompt required'); return; }
+    const bot = { name, system_prompt: prompt, nsfw };
+    if (avatar) bot.avatar_url = avatar;
+    if (id) { if (pending) PENDING_CHATBOTS[id] = bot; else { if (!GLOBAL_SETTINGS.chatbots) GLOBAL_SETTINGS.chatbots = {}; GLOBAL_SETTINGS.chatbots[id] = bot; } }
+    else { PENDING_CHATBOTS['new_' + Date.now()] = { ...bot, _pending: true }; }
+    closeChatbotModal(); refreshChatbotGrid();
 }
 
-function deleteChatbot(roleId, isPending) {
-    const confirmMsg = isPending
-        ? 'Remove this pending chatbot?'
-        : 'Delete this chatbot? The Discord role will NOT be deleted automatically.';
-
-    if (!confirm(confirmMsg)) return;
-
-    if (isPending) {
-        delete PENDING_CHATBOTS[roleId];
-    } else {
-        if (GLOBAL_SETTINGS.chatbots) {
-            delete GLOBAL_SETTINGS.chatbots[roleId];
-        }
-    }
-
+function deleteChatbot(id, pending) {
+    if (!confirm(pending ? 'Remove pending chatbot?' : 'Delete chatbot?')) return;
+    if (pending) delete PENDING_CHATBOTS[id]; else if (GLOBAL_SETTINGS.chatbots) delete GLOBAL_SETTINGS.chatbots[id];
     refreshChatbotGrid();
 }
 
 function refreshChatbotGrid() {
-    const container = document.querySelector('.chatbot-list-container');
-    if (!container) return;
-
-    const key = container.dataset.chatbotKey;
-    const chatbots = GLOBAL_SETTINGS[key] || {};
-
-    let cardsHtml = '';
-    Object.entries(chatbots).forEach(([roleId, botData]) => {
-        cardsHtml += createChatbotCard(roleId, botData);
-    });
-    Object.entries(PENDING_CHATBOTS).forEach(([tempId, botData]) => {
-        cardsHtml += createChatbotCard(tempId, botData, true);
-    });
-
+    const c = document.querySelector('.chatbot-list-container'); if (!c) return;
+    const key = c.dataset.chatbotKey;
     const grid = document.getElementById(`chatbot-grid-${key}`);
-    if (grid) {
-        grid.innerHTML = cardsHtml || '<p style="color:#72767d; font-style:italic;">No chatbots configured yet.</p>';
-    }
+    const cards = Object.entries(GLOBAL_SETTINGS[key] || {}).map(([id, d]) => createChatbotCard(id, d)).join('') + Object.entries(PENDING_CHATBOTS).map(([id, d]) => createChatbotCard(id, d, true)).join('');
+    if (grid) grid.innerHTML = cards || '<p style="color:#72767d; font-style:italic;">No chatbots configured yet.</p>';
 }
 
-// --- EMOJI PICKER ---
-let currentEmojiTarget = null;
-let emojiModal = null;
-
-function openEmojiPicker(btn) {
-    currentEmojiTarget = btn.previousElementSibling; // The textarea
-    if (!emojiModal) {
-        createEmojiModal();
-    }
-    renderEmojiContent();
-    emojiModal.classList.add('show');
-}
-
+let currentEmojiTarget = null; let emojiModal = null;
+function openEmojiPicker(btn) { currentEmojiTarget = btn.previousElementSibling; if (!emojiModal) createEmojiModal(); renderEmojiContent(); emojiModal.classList.add('show'); }
 function createEmojiModal() {
-    emojiModal = document.createElement('div');
-    emojiModal.id = 'emoji-modal';
-    emojiModal.className = 'modal';
-    emojiModal.innerHTML = `
-        <div class="modal-content emoji-modal-content">
-            <span class="close-btn" onclick="closeEmojiModal()">&times;</span>
-            <h3 id="modalTitle">Select Emoji</h3>
-            <input type="text" id="emoji-search" class="styled-input" placeholder="Search emojis..." style="margin-bottom:15px;">
-            <div id="emoji-grid-container" class="emoji-grid-container">
-                <!-- Content injected here -->
-            </div>
-        </div>
-    `;
+    emojiModal = document.createElement('div'); emojiModal.id = 'emoji-modal'; emojiModal.className = 'modal';
+    emojiModal.innerHTML = `<div class="modal-content emoji-modal-content"><span class="close-btn" onclick="closeEmojiModal()">&times;</span><h3>Select Emoji</h3><input type="text" id="emoji-search" class="styled-input" placeholder="Search emojis..."><div id="emoji-grid-container" class="emoji-grid-container"></div></div>`;
     document.body.appendChild(emojiModal);
-
-    // Search listener
-    document.getElementById('emoji-search').addEventListener('input', (e) => {
-        renderEmojiContent(e.target.value.toLowerCase());
-    });
-
-    emojiModal.addEventListener('click', (e) => {
-        if (e.target === emojiModal) closeEmojiModal();
-    });
+    document.getElementById('emoji-search').oninput = (e) => renderEmojiContent(e.target.value.toLowerCase());
+    emojiModal.onclick = (e) => { if (e.target === emojiModal) closeEmojiModal(); };
 }
-
-function closeEmojiModal() {
-    if (emojiModal) emojiModal.classList.remove('show');
-    currentEmojiTarget = null;
-    const search = document.getElementById('emoji-search');
-    if (search) search.value = "";
-}
-
+function closeEmojiModal() { if (emojiModal) emojiModal.classList.remove('show'); currentEmojiTarget = null; const s = document.getElementById('emoji-search'); if (s) s.value = ""; }
 function renderEmojiContent(filter = "") {
-    const container = document.getElementById('emoji-grid-container');
-    if (!container) return;
-
+    const c = document.getElementById('emoji-grid-container'); if (!c) return;
     let html = "";
-
-    // 1. Custom Emojis (Server Emojis) - flexible search: underscores as spaces, any word order
-    const customFiltered = GLOBAL_EMOJIS.custom.filter(e => {
-        if (filter === "") return true;
-        // Normalize: replace underscores with spaces for matching
-        const emojiName = e.name.toLowerCase().replace(/_/g, ' ');
-        const searchTerms = filter.replace(/_/g, ' ').split(' ').filter(t => t);
-        // All search terms must be present in emoji name (any order)
-        return searchTerms.every(term => emojiName.includes(term));
-    });
-    if (customFiltered.length > 0) {
-        html += `<div class="emoji-category-title">Server Emojis</div>`;
-        html += `<div class="emoji-grid">`;
-        customFiltered.forEach(e => {
-            const format = e.animated ? `<a:${e.name}:${e.id}>` : `<:${e.name}:${e.id}>`;
-            const content = e.url ? `<img src="${e.url}" title="${e.name}" alt="${e.name}">` : `<span>${e.name}</span>`;
-            html += `<div class="emoji-item" onclick="insertEmoji('${format}')">${content}</div>`;
-        });
+    const custom = GLOBAL_EMOJIS.custom.filter(e => !filter || e.name.toLowerCase().includes(filter));
+    if (custom.length) {
+        html += `<div class="emoji-category-title">Server Emojis</div><div class="emoji-grid">`;
+        custom.forEach(e => { html += `<div class="emoji-item" onclick="insertEmoji('${e.animated ? '<a:' : '<:'}${e.name}:${e.id}>')"><img src="${e.url}" title="${e.name}"></div>`; });
         html += `</div>`;
     }
-
-    // 2. Unicode Emojis with Twemoji - organized by category
-    for (const [category, emojis] of Object.entries(UNICODE_EMOJIS)) {
-        // Filter emojis based on keyword search
-        let filteredEmojis = emojis;
-        if (filter !== "") {
-            filteredEmojis = emojis.filter(emoji => {
-                const keywords = EMOJI_KEYWORDS[emoji] || "";
-                return keywords.toLowerCase().includes(filter) || category.toLowerCase().includes(filter);
-            });
-            if (filteredEmojis.length === 0) continue; // Skip empty categories
-        }
-
-        html += `<div class="emoji-category-title">${category}</div>`;
-        html += `<div class="emoji-grid">`;
-        filteredEmojis.forEach(emoji => {
-            const twemojiUrl = getTwemojiUrl(emoji);
-            html += `<div class="emoji-item" onclick="insertEmoji('${emoji}')"><img src="${twemojiUrl}" alt="${emoji}" onerror="this.outerHTML='${emoji}'"></div>`;
-        });
+    for (const [cat, emojis] of Object.entries(UNICODE_EMOJIS)) {
+        let filtered = emojis.filter(e => !filter || (EMOJI_KEYWORDS[e] || "").toLowerCase().includes(filter));
+        if (!filtered.length) continue;
+        html += `<div class="emoji-category-title">${cat}</div><div class="emoji-grid">`;
+        filtered.forEach(e => { html += `<div class="emoji-item" onclick="insertEmoji('${e}')"><img src="${getTwemojiUrl(e)}" alt="${e}" onerror="this.outerHTML='${e}'"></div>`; });
         html += `</div>`;
     }
-
-    if (filter !== "" && customFiltered.length === 0 && html.indexOf("emoji-grid") === -1) {
-        html += `<p style="color:#aaa; font-size:0.9rem; text-align:center; margin-top:20px;">No emojis match your search.</p>`;
-    }
-
-    container.innerHTML = html;
+    c.innerHTML = html || `<p style="color:#aaa; text-align:center; margin-top:20px;">No emojis match your search.</p>`;
 }
-
 function insertEmoji(val) {
     if (currentEmojiTarget) {
-        // Insert at cursor position
-        const start = currentEmojiTarget.selectionStart;
-        const end = currentEmojiTarget.selectionEnd;
-        const text = currentEmojiTarget.value;
-        const before = text.substring(0, start);
-        const after = text.substring(end, text.length);
-        currentEmojiTarget.value = before + val + after;
-        currentEmojiTarget.selectionStart = currentEmojiTarget.selectionEnd = start + val.length;
-        currentEmojiTarget.focus();
-        // Trigger input event for auto-resize or save check
-        currentEmojiTarget.dispatchEvent(new Event('input'));
+        const s = currentEmojiTarget.selectionStart, e = currentEmojiTarget.selectionEnd, t = currentEmojiTarget.value;
+        currentEmojiTarget.value = t.substring(0, s) + val + t.substring(e);
+        currentEmojiTarget.selectionStart = currentEmojiTarget.selectionEnd = s + val.length;
+        currentEmojiTarget.focus(); currentEmojiTarget.dispatchEvent(new Event('input'));
     }
     closeEmojiModal();
+}
+
+// Fixed navigation functions
+function switchTab(btn, targetId) {
+    const allBtns = Array.from(document.querySelectorAll('.nav-item'));
+    const newIndex = allBtns.indexOf(btn);
+    if (newIndex === currentIndex) return;
+    allBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    moveGlider(btn);
+    const currentTab = document.querySelector('.tab-pane.active');
+    const nextTab = document.getElementById(targetId);
+    if (currentTab && nextTab) animateContent(currentTab, nextTab, currentIndex, newIndex);
+    currentIndex = newIndex;
+}
+
+function moveGlider(targetBtn) {
+    const glider = document.getElementById('nav-glider');
+    if (glider) {
+        glider.style.opacity = '1';
+        glider.style.top = targetBtn.offsetTop + 'px';
+        glider.style.height = targetBtn.offsetHeight + 'px';
+    }
+}
+
+function animateContent(oldTab, newTab, oldIdx, newIdx) {
+    oldTab.classList.remove('active'); oldTab.classList.add('animating');
+    newTab.classList.add('active'); newTab.classList.add('animating');
+    if (newIdx > oldIdx) { oldTab.classList.add('slide-out-up'); newTab.classList.add('slide-in-up'); }
+    else { oldTab.classList.add('slide-out-down'); newTab.classList.add('slide-in-down'); }
+    setTimeout(() => {
+        oldTab.classList.remove('animating', 'slide-out-up', 'slide-out-down', 'active');
+        newTab.classList.remove('animating', 'slide-in-up', 'slide-in-down');
+        newTab.classList.add('active');
+    }, 400);
 }
