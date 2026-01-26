@@ -117,6 +117,14 @@ function hideDirtyPopup() {
     isDirty = false;
 }
 
+function cancelChanges() {
+    if (confirm("Discard unsaved changes?")) {
+        // Simple and effective: re-render the whole interface from GLOBAL_SETTINGS
+        renderInterface();
+        hideDirtyPopup();
+    }
+}
+
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     // Page Transition: Fade in from black

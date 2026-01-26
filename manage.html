@@ -64,7 +64,10 @@
     <!-- Unsaved Changes Popup (PC Only) -->
     <div id="unsaved-popup" class="save-popup">
         <span class="popup-text">Careful! You have unsaved changes!</span>
-        <button id="btn-popup-save" class="popup-save-btn" onclick="saveChanges()">Save Changes</button>
+        <div class="popup-actions">
+            <button class="popup-cancel-btn" onclick="cancelChanges()">Cancel</button>
+            <button id="btn-popup-save" class="popup-save-btn" onclick="saveChanges()">Save Changes</button>
+        </div>
     </div>
 
     <!-- Transition Overlay: Starts active (black) -->
