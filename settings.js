@@ -118,11 +118,9 @@ function hideDirtyPopup() {
 }
 
 function cancelChanges() {
-    if (confirm("Discard unsaved changes?")) {
-        // Simple and effective: re-render the whole interface from GLOBAL_SETTINGS
-        renderInterface();
-        hideDirtyPopup();
-    }
+    // Discard immediately without confirmation
+    renderInterface();
+    hideDirtyPopup();
 }
 
 // --- INITIALIZATION ---
