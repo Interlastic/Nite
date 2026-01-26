@@ -1713,24 +1713,22 @@ details[open] .summary-inner::after {
 .save-popup {
     position: fixed;
     bottom: 15px;
-    left: 15px;
-    right: 15px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    width: 95vw;
+    max-width: 1600px;
     height: 60px;
     background: #18191c;
     border-radius: 12px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    /* Changed from space-between to group them */
-    gap: 20px;
-    /* Gap between text and button */
+    justify-content: space-between;
     padding: 0 25px;
     z-index: 3000;
     box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.5);
-    transform: translateY(100px);
     opacity: 0;
     pointer-events: none;
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s, left 0.3s;
 }
 
 .save-popup.show {
@@ -1747,6 +1745,31 @@ details[open] .summary-inner::after {
     font-weight: 600;
     color: #fff;
     font-size: 1rem;
+}
+
+.popup-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.popup-cancel-btn {
+    background: transparent;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s;
+    width: auto;
+    margin: 0;
+}
+
+.popup-cancel-btn:hover {
+    color: #5865F2;
+    text-decoration: underline;
 }
 
 .popup-save-btn {
@@ -1769,24 +1792,24 @@ details[open] .summary-inner::after {
 
 @keyframes popup {
     from {
-        transform: translateY(100px);
+        transform: translateX(-50%) translateY(100px);
         opacity: 0;
     }
 
     to {
-        transform: translateY(0);
+        transform: translateX(-50%) translateY(0);
         opacity: 1;
     }
 }
 
 @keyframes popdown {
     from {
-        transform: translateY(0);
+        transform: translateX(-50%) translateY(0);
         opacity: 1;
     }
 
     to {
-        transform: translateY(100px);
+        transform: translateX(-50%) translateY(100px);
         opacity: 0;
     }
 }
