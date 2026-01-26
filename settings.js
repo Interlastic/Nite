@@ -94,6 +94,29 @@ window.EMOJI_KEYWORDS = EMOJI_KEYWORDS; // Expose for iframe access
 function setCookie(n, v) { document.cookie = n + "=" + v + ";path=/;max-age=604800"; }
 function getCookie(n) { return (document.cookie.match(new RegExp('(^| )' + n + '=([^;]+)')) || [])[2]; }
 
+// --- DIRTY STATE MANAGEMENT ---
+let isDirty = false;
+
+function markDirty() {
+    if (window.innerWidth > 900) { // Only for PC
+        const popup = document.getElementById('unsaved-popup');
+        if (popup && !popup.classList.contains('show')) {
+            popup.classList.add('show');
+            popup.classList.remove('hide');
+        }
+    }
+    isDirty = true;
+}
+
+function hideDirtyPopup() {
+    const popup = document.getElementById('unsaved-popup');
+    if (popup && popup.classList.contains('show')) {
+        popup.classList.remove('show');
+        popup.classList.add('hide');
+    }
+    isDirty = false;
+}
+
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     // Page Transition: Fade in from black
@@ -278,6 +301,14 @@ async function initSettingsFlow(serverId, token) {
 function renderInterface() {
     renderTabs();
     initInputRestrictions(); // Apply restrictions to all inputs with data-only
+
+    // Add global change listeners for dirty state
+    const viewport = document.querySelector('.content-viewport');
+    if (viewport) {
+        viewport.addEventListener('input', markDirty);
+        viewport.addEventListener('change', markDirty);
+    }
+
     const firstTab = SETTINGS_CONFIG[0];
     if (firstTab) {
         // Set first tab as active
@@ -733,11 +764,13 @@ function addDictRow(dictId, keyPh, valPh, keyOnly, valueOnly) {
     const newRow = container.lastElementChild;
     if (keyOnly) applyInputRestriction(newRow.querySelector('.dict-key'), keyOnly);
     if (valueOnly) applyInputRestriction(newRow.querySelector('.dict-value'), valueOnly);
+    markDirty();
 }
 
 function removeDictRow(btn) {
     const row = btn.closest('.dict-row');
     if (row) row.remove();
+    markDirty();
 }
 
 // --- NAMED CONTENT LIST TYPE ---
@@ -802,6 +835,7 @@ function addNamedContentListRow(id) {
 
     // Update button state
     checkNamedContentListLimit(id);
+    markDirty();
 }
 
 function removeNamedContentListRow(btn) {
@@ -811,6 +845,7 @@ function removeNamedContentListRow(btn) {
 
     if (row) row.remove();
     checkNamedContentListLimit(id);
+    markDirty();
 }
 
 function checkNamedContentListLimit(id) {
@@ -1268,15 +1303,24 @@ function animateContent(oldTab, newTab, oldIdx, newIdx) {
 
 // --- SAVE FUNCTION ---
 async function saveChanges() {
-    const btn = document.getElementById('btn-save-changes');
+    const sidebarBtn = document.getElementById('btn-save-changes');
+    const popupBtn = document.getElementById('btn-popup-save');
     const status = document.getElementById('save-status');
     const serverId = document.getElementById('lbl-server-id').textContent.trim(); // Use textContent as innerText relies on visibility
     const token = getCookie("auth_token");
 
     if (!serverId || serverId === "Loading...") return;
 
-    btn.disabled = true;
-    btn.innerText = "Saving...";
+    // Disable both buttons
+    if (sidebarBtn) {
+        sidebarBtn.disabled = true;
+        sidebarBtn.innerText = "Saving...";
+    }
+    if (popupBtn) {
+        popupBtn.disabled = true;
+        popupBtn.innerText = "Saving...";
+    }
+
     status.innerText = "Collecting data...";
     status.style.color = "#aaa";
 
@@ -1491,6 +1535,7 @@ async function saveChanges() {
             Object.assign(GLOBAL_SETTINGS, payload);
             PENDING_CHATBOTS = {};
             refreshChatbotGrid();
+            hideDirtyPopup(); // Cleanup popup on success
         } else {
             throw new Error("Worker rejected update");
         }
@@ -1499,8 +1544,14 @@ async function saveChanges() {
         status.innerText = "Save Failed: " + e.message;
         status.style.color = "#ed4245";
     } finally {
-        btn.disabled = false;
-        btn.innerText = "Save Changes";
+        if (sidebarBtn) {
+            sidebarBtn.disabled = false;
+            sidebarBtn.innerText = "Save Changes";
+        }
+        if (popupBtn) {
+            popupBtn.disabled = false;
+            popupBtn.innerText = "Save Changes";
+        }
     }
 }
 
@@ -1516,6 +1567,7 @@ function saveEmbedFromModal(key) {
             statusEl.style.color = hasEmbed ? '#3ba55c' : '#72767d';
         }
         closeEmbedMaker();
+        markDirty();
     }
 }
 
@@ -1532,6 +1584,7 @@ function clearEmbed(key) {
             const removeBtn = group.querySelector('.dict-remove-btn');
             if (removeBtn) removeBtn.remove();
         }
+        markDirty();
     }
 }
 
@@ -1624,12 +1677,14 @@ function saveChatbot(id, pending) {
     if (id) { if (pending) PENDING_CHATBOTS[id] = bot; else { if (!GLOBAL_SETTINGS.chatbots) GLOBAL_SETTINGS.chatbots = {}; GLOBAL_SETTINGS.chatbots[id] = bot; } }
     else { PENDING_CHATBOTS['new_' + Date.now()] = { ...bot, _pending: true }; }
     closeChatbotModal(); refreshChatbotGrid();
+    markDirty();
 }
 
 function deleteChatbot(id, pending) {
     if (!confirm(pending ? 'Remove pending chatbot?' : 'Delete chatbot?')) return;
     if (pending) delete PENDING_CHATBOTS[id]; else if (GLOBAL_SETTINGS.chatbots) delete GLOBAL_SETTINGS.chatbots[id];
     refreshChatbotGrid();
+    markDirty();
 }
 
 function refreshChatbotGrid() {
