@@ -61,6 +61,12 @@
     </div>
     <div id="logOutContainer" class="logOutContainer" onclick="closeLogout()"></div>
 
+    <!-- Unsaved Changes Popup (PC Only) -->
+    <div id="unsaved-popup" class="save-popup">
+        <span class="popup-text">Careful! You have unsaved changes!</span>
+        <button id="btn-popup-save" class="popup-save-btn" onclick="saveChanges()">Save Changes</button>
+    </div>
+
     <!-- Transition Overlay: Starts active (black) -->
     <div id="transition-overlay" class="page-transition-overlay active"></div>
 

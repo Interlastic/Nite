@@ -917,6 +917,11 @@ input:checked+.slider:before {
         padding: 0;
     }
 
+    /* Hide popup on mobile as we use the sidebar button */
+    .save-popup {
+        display: none !important;
+    }
+
     /* 5. ACCOUNT BUTTON (Fix overlapping) */
     .accountbtn {
         top: 10px;
@@ -1702,4 +1707,97 @@ details[open] .summary-inner::after {
         transform: scale(1);
         opacity: 1;
     }
+}
+
+/* --- SAVE POPUP (PC ONLY) --- */
+.save-popup {
+    position: fixed;
+    bottom: 15px;
+    left: 15px;
+    right: 15px;
+    height: 60px;
+    background: #18191c;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Changed from space-between to group them */
+    gap: 20px;
+    /* Gap between text and button */
+    padding: 0 25px;
+    z-index: 3000;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.5);
+    transform: translateY(100px);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+}
+
+.save-popup.show {
+    pointer-events: auto;
+    animation: popup 0.4s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.save-popup.hide {
+    pointer-events: none;
+    animation: popdown 0.4s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.popup-text {
+    font-weight: 600;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.popup-save-btn {
+    background: #3ba55c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: auto;
+    margin: 0;
+}
+
+.popup-save-btn:hover {
+    background: #2d8049;
+}
+
+@keyframes popup {
+    from {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes popdown {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+}
+
+/* --- PC ONLY HIDING --- */
+@media (min-width: 901px) {
+    .sidebar>div[style*="margin-top:auto"] {
+        display: none !important;
+    }
+
+    /* Keep the status message visible in the viewport but moved? 
+       Actually, user asked to remove the button. 
+    */
 }
