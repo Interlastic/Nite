@@ -435,7 +435,7 @@ function renderCommandList() {
 
     // 3. Render Top-Level One-Liners (Grid)
     if (topLevelLeaves.length > 0) {
-        html += `<div class="commands-grid">`;
+        html += `<div class="commands-grid" style="width:100%;">`;
         topLevelLeaves.forEach(cmd => {
             html += renderCommandCard(cmd);
         });
@@ -444,7 +444,7 @@ function renderCommandList() {
 
     // 4. Render Groups (Dropdowns)
     if (topLevelGroups.length > 0) {
-        html += `<div class="command-groups-container" style="display:flex; flex-direction:column; gap:8px; margin-top:20px;">`;
+        html += `<div class="command-groups-container" style="display:flex; flex-direction:column; gap:8px; margin-top:20px; width:100%;">`;
         topLevelGroups.forEach(({ key, node }) => {
             html += renderCommandGroup(key, node);
         });
@@ -458,7 +458,7 @@ function renderCommandCard(cmd) {
     const key = `${cmd.name}_enabled`;
     const isEnabled = GLOBAL_SETTINGS[key] === undefined || toBoolean(GLOBAL_SETTINGS[key]);
     return `
-    <div class="command-card" style="display:flex; flex-direction:column; align-items:flex-start; gap:8px;">
+    <div class="command-card" style="display:flex; flex-direction:column; align-items:flex-start; gap:8px; width:100%;">
         <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
             <span style="font-weight:bold; color:#fff; font-family:monospace; font-size:1.1rem;">/${escapeForHtml(cmd.name)}</span>
             <label class="switch">
@@ -507,7 +507,9 @@ function renderCommandGroup(groupName, node) {
     return `
     <details class="command-group" ${node.command ? '' : ''}> 
         <summary class="command-group-header">
-            <span>/${escapeForHtml(groupName)}</span>
+            <div class="summary-inner">
+                <span>/${escapeForHtml(groupName)}</span>
+            </div>
         </summary>
         <div class="command-group-content">
             ${innerHtml}

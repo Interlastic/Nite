@@ -963,6 +963,8 @@ input:checked+.slider:before {
         /* Reduce padding */
         padding-bottom: 80px;
         /* Space for scrolling */
+        text-align: left;
+        /* Force left alignment on mobile */
     }
 
     /* Adjust grid for mobile */
@@ -1571,36 +1573,38 @@ details.command-group {
 }
 
 summary.command-group-header {
-    padding: 12px 15px;
     cursor: pointer;
-    font-weight: 600;
-    color: #fff;
     list-style: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     background: #2f3136;
     transition: background 0.2s;
+    user-select: none;
 }
 
 summary.command-group-header:hover {
     background: #36393f;
 }
 
-/* Hide default marker for Chrome/Safari */
+/* Hide default marker */
 summary.command-group-header::-webkit-details-marker {
     display: none;
 }
 
-/* Custom indicator */
-summary.command-group-header::after {
+.summary-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    width: 100%;
+}
+
+.summary-inner::after {
     content: '▼';
     font-size: 0.7rem;
     color: #b9bbbe;
     transition: transform 0.2s;
 }
 
-details[open]>summary.command-group-header::after {
+details[open] .summary-inner::after {
     transform: rotate(180deg);
 }
 
