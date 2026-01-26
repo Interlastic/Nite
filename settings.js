@@ -8,6 +8,7 @@ let GLOBAL_CHANNELS = [];
 let GLOBAL_ROLES = [];
 let SETTINGS_CONFIG = [];
 let GLOBAL_EMOJIS = { custom: [], unicode: [] };
+window.GLOBAL_EMOJIS = GLOBAL_EMOJIS; // Expose for iframe access
 
 // Twemoji CDN helper - converts emoji to Twemoji image URL
 function getTwemojiUrl(emoji) {
@@ -86,6 +87,7 @@ const EMOJI_KEYWORDS = {
     "✅": "check mark yes done", "❌": "cross x no wrong", "❓": "question", "❗": "exclamation",
     "🎉": "party popper celebrate tada", "🎊": "confetti", "🎁": "gift present", "🎈": "balloon"
 };
+window.EMOJI_KEYWORDS = EMOJI_KEYWORDS; // Expose for iframe access
 
 
 // --- UTILS ---
@@ -393,24 +395,124 @@ function renderCommandList() {
     if (GLOBAL_COMMANDS.length === 0) {
         return `<p style="color:#72767d;">No commands found or bot failed to send list.</p>`;
     }
-    let html = `<div class="commands-grid">`;
+
+    // 1. Build Command Tree
+    const root = { children: {} };
+
     GLOBAL_COMMANDS.forEach(cmd => {
-        const key = `${cmd.name}_enabled`;
-        const isEnabled = GLOBAL_SETTINGS[key] === undefined || toBoolean(GLOBAL_SETTINGS[key]);
-        html += `
-        <div class="command-card" style="display:flex; flex-direction:column; align-items:flex-start; gap:8px;">
-            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                <span style="font-weight:bold; color:#fff; font-family:monospace; font-size:1.1rem;">/${cmd.name}</span>
-                <label class="switch">
-                    <input type="checkbox" id="${key}" ${isEnabled ? 'checked' : ''}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <span style="font-size:0.8rem; color:#b9bbbe; line-height:1.3;">${cmd.description}</span>
-        </div>`;
+        const parts = cmd.name.trim().split(/\s+/); // Split by space
+        let current = root;
+        parts.forEach((part, index) => {
+            if (!current.children[part]) {
+                current.children[part] = { children: {} };
+            }
+            current = current.children[part];
+            // If it's the last part, attach the command object
+            if (index === parts.length - 1) {
+                current.command = cmd;
+            }
+        });
     });
-    html += `</div>`;
+
+    // 2. Separate Top-Level Leaves from Groups
+    const topLevelLeaves = [];
+    const topLevelGroups = [];
+
+    Object.keys(root.children).sort().forEach(key => {
+        const node = root.children[key];
+        // If node has children, it's a group (even if it also has a command itself)
+        if (Object.keys(node.children).length > 0) {
+            topLevelGroups.push({ key, node });
+        } else {
+            // Strictly a leaf (one-liner)
+            if (node.command) {
+                topLevelLeaves.push(node.command);
+            }
+        }
+    });
+
+    let html = '';
+
+    // 3. Render Top-Level One-Liners (Grid)
+    if (topLevelLeaves.length > 0) {
+        html += `<div class="commands-grid">`;
+        topLevelLeaves.forEach(cmd => {
+            html += renderCommandCard(cmd);
+        });
+        html += `</div>`;
+    }
+
+    // 4. Render Groups (Dropdowns)
+    if (topLevelGroups.length > 0) {
+        html += `<div class="command-groups-container" style="display:flex; flex-direction:column; gap:8px; margin-top:20px;">`;
+        topLevelGroups.forEach(({ key, node }) => {
+            html += renderCommandGroup(key, node);
+        });
+        html += `</div>`;
+    }
+
     return html;
+}
+
+function renderCommandCard(cmd) {
+    const key = `${cmd.name}_enabled`;
+    const isEnabled = GLOBAL_SETTINGS[key] === undefined || toBoolean(GLOBAL_SETTINGS[key]);
+    return `
+    <div class="command-card" style="display:flex; flex-direction:column; align-items:flex-start; gap:8px;">
+        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+            <span style="font-weight:bold; color:#fff; font-family:monospace; font-size:1.1rem;">/${escapeForHtml(cmd.name)}</span>
+            <label class="switch">
+                <input type="checkbox" id="${key}" ${isEnabled ? 'checked' : ''}>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <span style="font-size:0.8rem; color:#b9bbbe; line-height:1.3;">${escapeForHtml(cmd.description)}</span>
+    </div>`;
+}
+
+function renderCommandGroup(groupName, node) {
+    // Check if the group node itself is also a command (e.g. /music vs /music play)
+    let innerHtml = '';
+
+    // If the group base name is a command, render it first
+    if (node.command) {
+        innerHtml += renderCommandCard(node.command);
+    }
+
+    // Render children
+    const childKeys = Object.keys(node.children).sort();
+    if (childKeys.length > 0) {
+        // If the parent was a command, add a separator or spacing
+        if (node.command) {
+            innerHtml += `<div style="height:10px;"></div>`;
+        }
+
+        childKeys.forEach(childKey => {
+            const childNode = node.children[childKey];
+            const hasGrandChildren = Object.keys(childNode.children).length > 0;
+
+            if (hasGrandChildren) {
+                // Recursive Group
+                innerHtml += renderCommandGroup(childKey, childNode);
+            } else if (childNode.command) {
+                // Leaf Card
+                innerHtml += renderCommandCard(childNode.command);
+            }
+        });
+    }
+
+    const count = (node.command ? 1 : 0) + Object.keys(node.children).length; // Crude count
+    // A better count might be recursive, but let's just show immediate children count or similar
+
+    return `
+    <details class="command-group" ${node.command ? '' : ''}> 
+        <summary class="command-group-header">
+            <span>/${escapeForHtml(groupName)}</span>
+        </summary>
+        <div class="command-group-content">
+            ${innerHtml}
+        </div>
+    </details>`;
 }
 
 function renderSupportChannelList(key) {
@@ -638,7 +740,6 @@ function removeDictRow(btn) {
 
 // --- NAMED CONTENT LIST TYPE ---
 function createNamedContentList(id, label, dataList, help) {
-    // Limit to 5
     const MAX_ITEMS = 5;
     const currentCount = Array.isArray(dataList) ? dataList.length : 0;
 
