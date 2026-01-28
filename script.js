@@ -1,14 +1,14 @@
 const CONFIG = {
     API_URL: "https://api.niteapiworker.workers.dev",
     DISCORD_CLIENT_ID: "1371513819104415804",
-    
+
     INVITE_URL: "https://discord.com/oauth2/authorize?client_id=1371513819104415804&permissions=2815042428980240&integration_type=0&scope=bot+applications.commands"
 };
 
 function setCookie(name, value, days = 7) {
     const d = new Date();
     d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-    
+
     document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()};Secure;SameSite=Lax`;
 }
 
@@ -36,7 +36,7 @@ function handleAuthClick() {
 }
 
 function openLogin() {
-    
+
     window.open(CONFIG.API_URL + "/auth", "Login", "width=500,height=800");
 }
 
@@ -67,7 +67,7 @@ window.closeLogout = function () {
 };
 
 window.addEventListener("message", (e) => {
-    
+
     if (e.origin !== CONFIG.API_URL) return;
 
     if (e.data.type === "LOGIN_SUCCESS") {
@@ -97,14 +97,14 @@ async function fetchServers() {
     const status = document.getElementById('status');
     const token = getCookie("auth_token");
 
-    if (!token) return; 
+    if (!token) return;
 
     btn.disabled = true;
     btn.innerText = "Collecting Servers...";
     document.getElementById('server-list').innerHTML = "";
 
     try {
-        
+
         await fetch(CONFIG.API_URL + "/trigger", {
             headers: { "Authorization": token }
         });
@@ -128,7 +128,7 @@ async function fetchServers() {
                 btn.innerText = "Refresh List";
                 btn.disabled = false;
                 status.innerText = "Select a server";
-                return; 
+                return;
             }
 
             await new Promise(r => setTimeout(r, 1000));
@@ -146,7 +146,7 @@ async function fetchServers() {
 
 function renderServers(list) {
     const container = document.getElementById('server-list');
-    const defaultIcon = "https:
+    const defaultIcon = "https://cdn.discordapp.com/embed/avatars/0.png";
 
     const addCardHtml = `
         <div class="server-card" onclick="window.location.href='${CONFIG.INVITE_URL}'">
@@ -220,9 +220,9 @@ function handleServerTransition(element) {
         height: `${rect.height}px`,
         margin: '0',
         zIndex: '3001',
-        pointerEvents: 'none' 
+        pointerEvents: 'none'
     });
-    
+
     flyer.style.zIndex = '6000';
 
     const innerImg = flyer.querySelector('img');
@@ -253,7 +253,7 @@ function init() {
     const savedToken = getCookie("auth_token");
 
     if (savedToken && savedUser) {
-        
+
         updateDashUI(savedUser);
 
         fetchServers();
