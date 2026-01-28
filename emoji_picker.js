@@ -1,4 +1,3 @@
-// --- SHARED EMOJI PICKER ---
 let currentEmojiTarget = null;
 let emojiModal = null;
 
@@ -7,14 +6,11 @@ function openEmojiPicker(btn) {
         console.error("openEmojiPicker: No button passed");
         return;
     }
-    // The target is usually the previous element (textarea or input)
-    // In embed_maker, it might be slightly different or passed explicitly.
-    // For dict rows: btn.previousElementSibling is the textarea.
+
     currentEmojiTarget = btn.previousElementSibling;
 
-    // If not found (e.g. nested in a wrapper), look for the closest relevant input
     if (!currentEmojiTarget || !(currentEmojiTarget.tagName === 'TEXTAREA' || currentEmojiTarget.tagName === 'INPUT')) {
-        // Try finding input inside the same wrapper first
+        
         if (btn.parentElement) {
             currentEmojiTarget = btn.parentElement.querySelector('textarea, input');
         }
@@ -48,7 +44,6 @@ function createEmojiModal() {
     `;
     document.body.appendChild(emojiModal);
 
-    // Search listener
     document.getElementById('emoji-search').addEventListener('input', (e) => {
         renderEmojiContent(e.target.value.toLowerCase());
     });
@@ -69,10 +64,8 @@ function renderEmojiContent(filter = "") {
     const container = document.getElementById('emoji-grid-container');
     if (!container) return;
 
-    // Get emojis from local global or parent if available
     let emojis = { custom: [], unicode: {} };
 
-    // Try finding GLOBAL_EMOJIS
     if (typeof window.GLOBAL_EMOJIS !== 'undefined') {
         emojis = window.GLOBAL_EMOJIS;
     } else if (typeof GLOBAL_EMOJIS !== 'undefined') {
@@ -85,7 +78,6 @@ function renderEmojiContent(filter = "") {
 
     let html = "";
 
-    // 1. Custom Emojis
     if (emojis.custom && emojis.custom.length > 0) {
         const customFiltered = emojis.custom.filter(e => e.name.toLowerCase().includes(filter));
         if (customFiltered.length > 0) {
@@ -100,15 +92,14 @@ function renderEmojiContent(filter = "") {
         }
     }
 
-    // 2. Unicode Emojis
     if (emojis.unicode) {
-        // Handle optional categories or flat list? Original was categories.
+        
         const categories = Object.keys(emojis.unicode);
         categories.forEach(cat => {
             const list = emojis.unicode[cat];
             const filtered = list.filter(e => {
                 if (!filter) return true;
-                // If we have keywords, search them
+                
                 if (typeof EMOJI_KEYWORDS !== 'undefined' && EMOJI_KEYWORDS[e]) {
                     return EMOJI_KEYWORDS[e].toLowerCase().includes(filter);
                 } else if (typeof parent !== 'undefined' && typeof parent.EMOJI_KEYWORDS !== 'undefined' && parent.EMOJI_KEYWORDS[e]) {
@@ -150,7 +141,6 @@ function insertEmoji(val) {
     closeEmojiModal();
 }
 
-// Explicitly attach to window
 window.openEmojiPicker = openEmojiPicker;
 window.closeEmojiPicker = closeEmojiModal;
 window.insertEmoji = insertEmoji;

@@ -1,20 +1,14 @@
-/**
- * CONFIGURATION
- */
 const CONFIG = {
     API_URL: "https://api.niteapiworker.workers.dev",
     DISCORD_CLIENT_ID: "1371513819104415804",
-    // Used for the "Add to Server" card
+    
     INVITE_URL: "https://discord.com/oauth2/authorize?client_id=1371513819104415804&permissions=2815042428980240&integration_type=0&scope=bot+applications.commands"
 };
 
-/**
- * UTILITIES & COOKIES
- */
 function setCookie(name, value, days = 7) {
     const d = new Date();
     d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-    // Security Fix: Added Secure and SameSite=Lax
+    
     document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()};Secure;SameSite=Lax`;
 }
 
@@ -33,9 +27,6 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
-/**
- * AUTHENTICATION LOGIC
- */
 function handleAuthClick() {
     if (!getCookie("auth_token")) {
         openLogin();
@@ -45,7 +36,7 @@ function handleAuthClick() {
 }
 
 function openLogin() {
-    // Opens the worker auth endpoint
+    
     window.open(CONFIG.API_URL + "/auth", "Login", "width=500,height=800");
 }
 
@@ -59,7 +50,6 @@ function toggleLogoutMenu() {
     const btn = document.getElementById('loginbtn');
     const container = document.getElementById('logOutContainer');
 
-    // Simple toggle logic
     if (container.classList.contains('active')) {
         btn.classList.remove('expanded');
         container.classList.remove('active');
@@ -69,7 +59,6 @@ function toggleLogoutMenu() {
     }
 }
 
-// Fix: Alias closeLogout for HTML onclick compatibility
 window.closeLogout = function () {
     const btn = document.getElementById('loginbtn');
     const container = document.getElementById('logOutContainer');
@@ -77,25 +66,19 @@ window.closeLogout = function () {
     if (container) container.classList.remove('active');
 };
 
-// SECURITY CRITICAL: Handle the postMessage from the popup
 window.addEventListener("message", (e) => {
-    // 1. Verify Origin
+    
     if (e.origin !== CONFIG.API_URL) return;
 
-    // 2. Handle Login
     if (e.data.type === "LOGIN_SUCCESS") {
         setCookie("auth_token", e.data.token);
         setCookie("auth_user", e.data.username);
 
-        // Update UI immediately without reloading page
         updateDashUI(e.data.username);
         fetchServers();
     }
 });
 
-/**
- * UI STATE MANAGEMENT
- */
 function updateDashUI(username) {
     const userLabel = document.getElementById('lbl-btn-username');
     const dashLabel = document.getElementById('lbl-user');
@@ -109,35 +92,30 @@ function updateDashUI(username) {
     if (dashView) dashView.classList.remove('hide');
 }
 
-/**
- * DATA FETCHING
- */
 async function fetchServers() {
     const btn = document.getElementById('btn-get');
     const status = document.getElementById('status');
     const token = getCookie("auth_token");
 
-    if (!token) return; // Safety check
+    if (!token) return; 
 
     btn.disabled = true;
     btn.innerText = "Collecting Servers...";
     document.getElementById('server-list').innerHTML = "";
 
     try {
-        // Trigger the backend process
+        
         await fetch(CONFIG.API_URL + "/trigger", {
             headers: { "Authorization": token }
         });
 
         btn.innerText = "Please wait...";
 
-        // Polling loop (max 30 seconds)
         let attempts = 0;
         while (attempts < 30) {
             attempts++;
             status.innerText = `Syncing... (${attempts}/30)`;
 
-            // Cache busting with timestamp
             const checkRes = await fetch(`${CONFIG.API_URL}/check?t=${Date.now()}`, {
                 headers: { "Authorization": token },
                 cache: "no-store"
@@ -150,10 +128,9 @@ async function fetchServers() {
                 btn.innerText = "Refresh List";
                 btn.disabled = false;
                 status.innerText = "Select a server";
-                return; // Success
+                return; 
             }
 
-            // Wait 1 second before next try
             await new Promise(r => setTimeout(r, 1000));
         }
 
@@ -169,9 +146,8 @@ async function fetchServers() {
 
 function renderServers(list) {
     const container = document.getElementById('server-list');
-    const defaultIcon = "https://cdn.discordapp.com/embed/avatars/0.png";
+    const defaultIcon = "https:
 
-    // Helper HTML for the "Add Bot" card
     const addCardHtml = `
         <div class="server-card" onclick="window.location.href='${CONFIG.INVITE_URL}'">
             <img src="plus.svg" class="server-avatar" alt="Add" style="background-color: #202225;">
@@ -183,13 +159,11 @@ function renderServers(list) {
         return;
     }
 
-    // Build Server Cards
     const cardsHtml = list.map((s, i) => {
         const safeName = escapeHtml(s.name);
         const iconUrl = s.picture_url || defaultIcon;
         const safeIcon = escapeHtml(iconUrl);
 
-        // Staggered animation delay
         const delay = i * 0.05;
 
         return `
@@ -210,36 +184,27 @@ function renderServers(list) {
     container.innerHTML = cardsHtml + addCardHtml;
 }
 
-/**
- * ANIMATION & NAVIGATION
- */
 function handleServerTransition(element) {
     const { id, name, icon } = element.dataset;
     const rect = element.getBoundingClientRect();
 
-    // 1. Create Dimming Overlay
     const overlay = document.createElement('div');
     overlay.className = 'page-transition-overlay';
     document.body.appendChild(overlay);
 
-    // Force Reflow
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             overlay.classList.add('active');
         });
     });
 
-    // 2. Create Flying Element
     const flyer = element.cloneNode(true);
 
-    // Set CSS Variables for animation
     flyer.style.setProperty('--start-top', `${rect.top}px`);
     flyer.style.setProperty('--start-left', `${rect.left}px`);
     flyer.style.setProperty('--start-width', `${rect.width}px`);
     flyer.style.setProperty('--start-height', `${rect.height}px`);
 
-    // Determine End Position (Responsive)
-    // Desktop: Top-Left (20px) | Mobile: Bottom-Left
     let endTop = '20px';
     if (window.innerWidth <= 768) {
         const scaledHeight = rect.height * 0.6;
@@ -247,7 +212,6 @@ function handleServerTransition(element) {
     }
     flyer.style.setProperty('--end-top', endTop);
 
-    // Initial Styles
     Object.assign(flyer.style, {
         position: 'fixed',
         left: `${rect.left}px`,
@@ -256,12 +220,11 @@ function handleServerTransition(element) {
         height: `${rect.height}px`,
         margin: '0',
         zIndex: '3001',
-        pointerEvents: 'none' // Prevent double clicks
+        pointerEvents: 'none' 
     });
-    // Explicitly set z-index style to override any potential specificity issues
+    
     flyer.style.zIndex = '6000';
 
-    // Reset internal filters
     const innerImg = flyer.querySelector('img');
     if (innerImg) innerImg.style.filter = 'none';
 
@@ -269,12 +232,10 @@ function handleServerTransition(element) {
     card.style.setProperty('z-index', '6000', 'important');
     element.style.visibility = 'hidden';
 
-    // 3. Trigger Animation
     requestAnimationFrame(() => {
         flyer.classList.add('flying-card');
     });
 
-    // 4. Navigate
     setTimeout(() => {
         const params = new URLSearchParams({
             id: id,
@@ -287,21 +248,16 @@ function handleServerTransition(element) {
     }, 600);
 }
 
-/**
- * INITIALIZATION
- */
 function init() {
     const savedUser = getCookie("auth_user");
     const savedToken = getCookie("auth_token");
 
     if (savedToken && savedUser) {
-        // 1. Update the UI to show the dashboard immediately
+        
         updateDashUI(savedUser);
 
-        // 2. Automatically start fetching servers
         fetchServers();
     }
 }
 
-// Correct event listener syntax
 document.addEventListener('DOMContentLoaded', init);
