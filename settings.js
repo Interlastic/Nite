@@ -682,7 +682,7 @@ function createDict(id, label, dictData, keyPlaceholder, valuePlaceholder, help,
         <div class="dict-rows" id="dict-rows-${id}">
             ${rowsHtml}
         </div>
-        <button type="button" class="dict-add-btn" onclick="addDictRow('${id}', '${escapeForHtml(keyPh)}', '${escapeForHtml(valPh)}', '${keyOnlyAttr}', '${valOnlyAttr}')">
+        <button type="button" class="dict-add-btn" style="clear:both;" onclick="addDictRow('${id}', '${escapeForHtml(keyPh)}', '${escapeForHtml(valPh)}', '${keyOnlyAttr}', '${valOnlyAttr}')">
             + Add
         </button>
     </div>`;

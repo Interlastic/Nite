@@ -664,6 +664,7 @@ button:disabled {
 
 .form-group {
     margin-bottom: 20px;
+    display: block;
 }
 
 .form-label {
@@ -1061,6 +1062,7 @@ input:checked+.slider:before {
 
 .dict-container {
     margin-bottom: 20px;
+    display: block;
 }
 
 .dict-rows {
@@ -1323,9 +1325,9 @@ input:checked+.slider:before {
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
-    transition: background 0.2s;
     width: 100%;
-    margin-top: 10px;
+    display: block;
+    margin-top: 15px;
 }
 
 .dict-add-btn:hover {
