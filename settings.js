@@ -2,21 +2,18 @@ const WORKER = "https://api.niteapiworker.workers.dev";
 let currentIndex = 0;
 let GLOBAL_COMMANDS = [];
 
-// Store global data to access across tabs
 let GLOBAL_SETTINGS = {};
 let GLOBAL_CHANNELS = [];
 let GLOBAL_ROLES = [];
 let SETTINGS_CONFIG = [];
 let GLOBAL_EMOJIS = { custom: [], unicode: [] };
-window.GLOBAL_EMOJIS = GLOBAL_EMOJIS; // Expose for iframe access
+window.GLOBAL_EMOJIS = GLOBAL_EMOJIS; 
 
-// Twemoji CDN helper - converts emoji to Twemoji image URL
 function getTwemojiUrl(emoji) {
     const codePoint = [...emoji].map(c => c.codePointAt(0).toString(16)).join('-');
     return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/${codePoint}.png`;
 }
 
-// Clean emoji list organized by category
 const UNICODE_EMOJIS = {
     "Smileys": ["😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "🙃", "😉", "😊", "😇", "🥰", "😍", "🤩", "😘", "😗", "😚", "😙", "🥲", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "🤥", "😌", "😔", "😪", "🤤", "😴", "😷", "🤒", "🤕", "🤢", "🤮", "🤧", "🥵", "🥶", "🥴", "😵", "🤯", "🤠", "🥳", "🥸", "😎", "🤓", "🧐"],
     "People": ["😕", "😟", "🙁", "😮", "😯", "😲", "😳", "🥺", "😦", "😧", "😨", "😰", "😥", "😢", "😭", "😱", "😖", "😣", "😞", "😓", "😩", "😫", "🥱", "😤", "😡", "😠", "🤬", "😈", "👿", "💀", "💩", "🤡", "👹", "👺", "👻", "👽", "👾", "🤖"],
@@ -31,7 +28,6 @@ const UNICODE_EMOJIS = {
     "Flags": ["🏳", "🏴", "🏴‍☠️", "🏁", "🚩", "🎌", "🏳️‍🌈", "🏳️‍⚧️"]
 };
 
-// Lightweight emoji keyword search (common emojis only - keeps bundle small)
 const EMOJI_KEYWORDS = {
     "😀": "grin smile happy", "😃": "smile happy joy", "😄": "smile happy laugh", "😁": "grin beam", "😆": "laugh lol xd",
     "😅": "sweat nervous awkward", "🤣": "rofl lmao rolling", "😂": "joy laugh cry tears lol", "🙂": "smile slight", "🙃": "upside down",
@@ -87,18 +83,15 @@ const EMOJI_KEYWORDS = {
     "✅": "check mark yes done", "❌": "cross x no wrong", "❓": "question", "❗": "exclamation",
     "🎉": "party popper celebrate tada", "🎊": "confetti", "🎁": "gift present", "🎈": "balloon"
 };
-window.EMOJI_KEYWORDS = EMOJI_KEYWORDS; // Expose for iframe access
+window.EMOJI_KEYWORDS = EMOJI_KEYWORDS; 
 
-
-// --- UTILS ---
 function setCookie(n, v) { document.cookie = n + "=" + v + ";path=/;max-age=604800"; }
 function getCookie(n) { return (document.cookie.match(new RegExp('(^| )' + n + '=([^;]+)')) || [])[2]; }
 
-// --- DIRTY STATE MANAGEMENT ---
 let isDirty = false;
 
 function markDirty() {
-    if (window.innerWidth > 900) { // Only for PC
+    if (window.innerWidth > 900) { 
         const popup = document.getElementById('unsaved-popup');
         if (popup && !popup.classList.contains('show')) {
             popup.classList.add('show');
@@ -118,18 +111,17 @@ function hideDirtyPopup() {
 }
 
 function cancelChanges() {
-    // Discard immediately without confirmation
+    
     renderInterface();
     hideDirtyPopup();
 }
 
-// --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Page Transition: Fade in from black
+    
     setTimeout(() => {
         const overlay = document.getElementById('transition-overlay');
         if (overlay) overlay.classList.remove('active');
-    }, 100); // Small delay to ensure render
+    }, 100); 
 
     const token = getCookie("auth_token");
     if (!token) { window.location.href = "index.html"; return; }
@@ -141,10 +133,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const serverId = urlParams.get('id');
     const serverName = urlParams.get('name');
     const serverIcon = urlParams.get('icon');
-    const serverWidth = urlParams.get('width'); // Get the width passed from previous page
-    const serverHeight = urlParams.get('height'); // Get height for position calc
+    const serverWidth = urlParams.get('width'); 
+    const serverHeight = urlParams.get('height'); 
 
-    // Render Static Card Header if data exists
     if (serverName && serverIcon) {
         renderStaticFloatingCard(serverName, serverIcon, serverWidth, serverHeight);
     }
@@ -159,35 +150,32 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function renderStaticFloatingCard(serverName, serverIcon, serverWidth, serverHeight) {
-    // --- CONTAINER ---
+    
     const switcherContainer = document.createElement('div');
     switcherContainer.className = 'switcher-container';
     switcherContainer.style.position = 'fixed';
-    switcherContainer.style.zIndex = '2000'; // Above everything
+    switcherContainer.style.zIndex = '2000'; 
 
-    // --- MAIN CARD ---
     const floatCard = document.createElement('div');
     floatCard.className = 'server-card';
-    // Reset styles for use inside container
+    
     floatCard.style.margin = '0';
-    floatCard.style.cursor = 'pointer'; // Now clickable
-    floatCard.style.pointerEvents = 'auto'; // Enable clicks
+    floatCard.style.cursor = 'pointer'; 
+    floatCard.style.pointerEvents = 'auto'; 
     floatCard.style.animation = 'none';
     floatCard.style.filter = 'none';
     floatCard.style.webkitFilter = 'none';
 
-    // Apply width/scale to the CARD, but position applies to CONTAINER
     floatCard.style.width = serverWidth ? (serverWidth + 'px') : '120px';
     floatCard.style.transform = 'scale(0.6)';
-    floatCard.style.transformOrigin = 'top left'; // Important for scale to position correctly
-    if (window.innerWidth <= 768) floatCard.style.transformOrigin = 'bottom left'; // Mobile
+    floatCard.style.transformOrigin = 'top left'; 
+    if (window.innerWidth <= 768) floatCard.style.transformOrigin = 'bottom left'; 
 
     floatCard.innerHTML = `
         <img src="${decodeURIComponent(serverIcon)}" class="server-avatar" style="filter:blur(0); animation:none;">
         <span>${decodeURIComponent(serverName)}</span>
     `;
 
-    // --- SWITCHER GRID (Hidden by default) ---
     const grid = document.createElement('div');
     grid.className = 'switcher-grid';
     grid.innerHTML = '<p style="color:#aaa; font-size:0.8rem; text-align:center;">Loading servers...</p>';
@@ -195,45 +183,41 @@ function renderStaticFloatingCard(serverName, serverIcon, serverWidth, serverHei
     switcherContainer.appendChild(floatCard);
     switcherContainer.appendChild(grid);
 
-    // --- POSITIONING ---
     switcherContainer.style.left = '20px';
     if (window.innerWidth <= 768) {
-        // Mobile: Bottom Left
+        
         const h = serverHeight ? parseFloat(serverHeight) : 80;
         const topPos = window.innerHeight - 20 - (h * 0.6);
         switcherContainer.style.top = topPos + 'px';
     } else {
-        // Desktop: Top Left
+        
         switcherContainer.style.top = '20px';
     }
 
-    // --- INTERACTIONS ---
     let isMobile = window.innerWidth <= 768;
 
     floatCard.addEventListener('click', (e) => {
         e.stopPropagation();
         if (isMobile) {
-            // Mobile: Tap 1 -> Open, Tap 2 -> Home
+            
             if (switcherContainer.classList.contains('active')) {
                 window.location.href = "index.html";
             } else {
                 switcherContainer.classList.add('active');
-                fetchServersForGrid(grid); // Load servers on open
+                fetchServersForGrid(grid); 
             }
         } else {
-            // Desktop: Click -> Home
+            
             window.location.href = "index.html";
         }
     });
 
-    // Desktop Hover Logic
     if (!isMobile) {
         switcherContainer.addEventListener('mouseenter', () => {
             fetchServersForGrid(grid);
         });
     }
 
-    // Close on outside click (Mobile)
     document.addEventListener('click', (e) => {
         if (!switcherContainer.contains(e.target)) {
             switcherContainer.classList.remove('active');
@@ -242,23 +226,19 @@ function renderStaticFloatingCard(serverName, serverIcon, serverWidth, serverHei
 
     document.body.appendChild(switcherContainer);
 
-    // Hide Sidebar Header Text provided by template logic
     const headerDiv = document.querySelector('.sidebar-header');
     if (headerDiv) headerDiv.style.visibility = 'hidden';
 }
 
-// --- API FLOW ---
 async function initSettingsFlow(serverId, token) {
     try {
-        // 1. Fetch Config
+        
         const configRes = await fetch('settings_config.json');
         if (!configRes.ok) throw new Error("Failed to load settings configuration.");
         SETTINGS_CONFIG = await configRes.json();
 
-        // 2. Trigger Bot
         await fetch(`${WORKER}/trigger-settings?serverid=${serverId}`, { headers: { "Authorization": token } });
 
-        // 3. Poll for Data
         let attempts = 0;
         while (attempts < 30) {
             attempts++;
@@ -271,7 +251,7 @@ async function initSettingsFlow(serverId, token) {
                 GLOBAL_SETTINGS = data.settings || {};
                 GLOBAL_SETTINGS = data.settings || {};
                 GLOBAL_COMMANDS = data.commands || [];
-                // Parse Emojis
+                
                 if (data.emojis) {
                     GLOBAL_EMOJIS.custom = data.emojis.custom || [];
                 }
@@ -279,10 +259,6 @@ async function initSettingsFlow(serverId, token) {
 
                 document.getElementById('loading-text').classList.add('hide');
 
-                // Sync enabled bools from actual message arrays (bot uses messages !== false for enabled state)
-                // This ensures website matches Discord dashboard behavior
-                // Sync enabled bools from actual message arrays (bot uses messages !== false for enabled state)
-                // This ensures website matches Discord dashboard behavior (Legacy Support)
                 if (GLOBAL_SETTINGS.welcome_enabled_bool === undefined) {
                     GLOBAL_SETTINGS.welcome_enabled_bool = GLOBAL_SETTINGS.welcome_messages !== false;
                 }
@@ -290,7 +266,6 @@ async function initSettingsFlow(serverId, token) {
                     GLOBAL_SETTINGS.goodbye_enabled_bool = GLOBAL_SETTINGS.goodbye_messages !== false;
                 }
 
-                // 4. Render Interface
                 renderInterface();
                 return;
             }
@@ -302,13 +277,10 @@ async function initSettingsFlow(serverId, token) {
     }
 }
 
-// --- RENDER LOGIC ---
-
 function renderInterface() {
     renderTabs();
-    initInputRestrictions(); // Apply restrictions to all inputs with data-only
+    initInputRestrictions(); 
 
-    // Add global change listeners for dirty state
     const viewport = document.querySelector('.content-viewport');
     if (viewport) {
         viewport.addEventListener('input', markDirty);
@@ -317,7 +289,7 @@ function renderInterface() {
 
     const firstTab = SETTINGS_CONFIG[0];
     if (firstTab) {
-        // Set first tab as active
+        
         const btn = document.querySelector(`.nav-item[data-target="${firstTab.id}"]`);
         if (btn) {
             btn.classList.add('active');
@@ -327,7 +299,6 @@ function renderInterface() {
     }
 }
 
-// Initialize input restrictions on all elements with data-only attribute
 function initInputRestrictions() {
     document.querySelectorAll('[data-only]').forEach(el => {
         applyInputRestriction(el, el.dataset.only);
@@ -338,21 +309,14 @@ function renderTabs() {
     const navContainer = document.querySelector('.nav-menu');
     const contentViewport = document.querySelector('.content-viewport');
 
-    // Clear existing placeholders (except glider)
-    // Keep sidebar header, etc? standard structure in HTML is:
-    // .nav-menu > glider, btn, btn
-
-    // We will rebuild the nav items.
     const glider = document.getElementById('nav-glider');
     navContainer.innerHTML = '';
     navContainer.appendChild(glider);
 
-    // Clear content viewport (except loading text if we want to keep it generic, but easier to wipe)
-    // Actually, save the loading text if needed, but it should be hidden by now.
     contentViewport.innerHTML = '<p id="loading-text" style="text-align:center; margin-top:50px; color:#aaa; display:none;">Loading Configuration...</p>';
 
     SETTINGS_CONFIG.forEach((tab, index) => {
-        // 1. Create Nav Button
+        
         const btn = document.createElement('button');
         btn.className = 'nav-item';
         btn.innerText = tab.name;
@@ -360,11 +324,10 @@ function renderTabs() {
         btn.onclick = function () { switchTab(this, tab.id); };
         navContainer.appendChild(btn);
 
-        // 2. Create Tab Pane
         const pane = document.createElement('div');
         pane.id = tab.id;
         pane.className = 'tab-pane';
-        // Render settings inside pane
+        
         pane.innerHTML = renderSettingsList(tab.settings);
         contentViewport.appendChild(pane);
     });
@@ -426,42 +389,38 @@ function renderSettingsList(settingsList) {
     return html;
 }
 
-// --- SPECIAL RENDERERS ---
-
 function renderCommandList() {
     if (GLOBAL_COMMANDS.length === 0) {
         return `<p style="color:#72767d;">No commands found or bot failed to send list.</p>`;
     }
 
-    // 1. Build Command Tree
     const root = { children: {} };
 
     GLOBAL_COMMANDS.forEach(cmd => {
-        const parts = cmd.name.trim().split(/\s+/); // Split by space
+        const parts = cmd.name.trim().split(/\s+/); 
         let current = root;
         parts.forEach((part, index) => {
             if (!current.children[part]) {
                 current.children[part] = { children: {} };
             }
             current = current.children[part];
-            // If it's the last part, attach the command object
+            
             if (index === parts.length - 1) {
                 current.command = cmd;
             }
         });
     });
 
-    // 2. Separate Top-Level Leaves from Groups
     const topLevelLeaves = [];
     const topLevelGroups = [];
 
     Object.keys(root.children).sort().forEach(key => {
         const node = root.children[key];
-        // If node has children, it's a group (even if it also has a command itself)
+        
         if (Object.keys(node.children).length > 0) {
             topLevelGroups.push({ key, node });
         } else {
-            // Strictly a leaf (one-liner)
+            
             if (node.command) {
                 topLevelLeaves.push(node.command);
             }
@@ -470,7 +429,6 @@ function renderCommandList() {
 
     let html = '';
 
-    // 3. Render Top-Level One-Liners (Grid)
     if (topLevelLeaves.length > 0) {
         html += `<div class="commands-grid" style="width:100%;">`;
         topLevelLeaves.forEach(cmd => {
@@ -479,7 +437,6 @@ function renderCommandList() {
         html += `</div>`;
     }
 
-    // 4. Render Groups (Dropdowns)
     if (topLevelGroups.length > 0) {
         html += `<div class="command-groups-container" style="display:flex; flex-direction:column; gap:8px; margin-top:20px; width:100%;">`;
         topLevelGroups.forEach(({ key, node }) => {
@@ -508,18 +465,16 @@ function renderCommandCard(cmd) {
 }
 
 function renderCommandGroup(groupName, node) {
-    // Check if the group node itself is also a command (e.g. /music vs /music play)
+    
     let innerHtml = '';
 
-    // If the group base name is a command, render it first
     if (node.command) {
         innerHtml += renderCommandCard(node.command);
     }
 
-    // Render children
     const childKeys = Object.keys(node.children).sort();
     if (childKeys.length > 0) {
-        // If the parent was a command, add a separator or spacing
+        
         if (node.command) {
             innerHtml += `<div style="height:10px;"></div>`;
         }
@@ -529,17 +484,16 @@ function renderCommandGroup(groupName, node) {
             const hasGrandChildren = Object.keys(childNode.children).length > 0;
 
             if (hasGrandChildren) {
-                // Recursive Group
+                
                 innerHtml += renderCommandGroup(childKey, childNode);
             } else if (childNode.command) {
-                // Leaf Card
+                
                 innerHtml += renderCommandCard(childNode.command);
             }
         });
     }
 
-    const count = (node.command ? 1 : 0) + Object.keys(node.children).length; // Crude count
-    // A better count might be recursive, but let's just show immediate children count or similar
+    const count = (node.command ? 1 : 0) + Object.keys(node.children).length; 
 
     return `
     <details class="command-group" ${node.command ? '' : ''}> 
@@ -576,9 +530,6 @@ function renderSupportChannelList(key) {
     return html;
 }
 
-// --- HELPER COMPONENT GENERATORS ---
-
-// Normalize value to boolean (handles Python "True"/"False" strings)
 function toBoolean(val) {
     if (typeof val === 'boolean') return val;
     if (typeof val === 'string') {
@@ -588,7 +539,6 @@ function toBoolean(val) {
     return Boolean(val);
 }
 
-// Escape special characters for HTML attributes
 function escapeForHtml(str) {
     if (!str) return '';
     return String(str)
@@ -598,7 +548,6 @@ function escapeForHtml(str) {
         .replace(/>/g, '&gt;');
 }
 
-// Input restriction patterns
 const INPUT_RESTRICTIONS = {
     emoji: {
         pattern: /^[\p{Emoji}\p{Emoji_Component}\s]*$/u,
@@ -614,7 +563,6 @@ const INPUT_RESTRICTIONS = {
     }
 };
 
-// Apply input restriction on an element
 function applyInputRestriction(inputEl, restrictionType) {
     if (!restrictionType || !INPUT_RESTRICTIONS[restrictionType]) return;
 
@@ -627,15 +575,14 @@ function applyInputRestriction(inputEl, restrictionType) {
     });
 }
 
-// Help Icon Generator - creates actual HTML tooltip for clickable links
 function createHelpIcon(helpText) {
     if (!helpText) return '';
-    // Convert URLs to clickable links
+    
     const linkifiedText = escapeForHtml(helpText).replace(
         /(https?:\/\/[^\s<]+)/g,
         '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
     );
-    // Convert \n to actual line breaks
+    
     const formattedText = linkifiedText.replace(/\\n/g, '<br>');
     return `<span class="help-icon-wrapper"><span class="help-icon">?</span><span class="help-tooltip">${formattedText}</span></span>`;
 }
@@ -668,7 +615,6 @@ function createTextarea(id, label, placeholder, value, help, only, maxLength) {
     const maxLenAttr = maxLength ? `maxlength="${maxLength}"` : '';
     const charCount = maxLength ? `<div class="char-count" style="text-align:right; font-size:0.8rem; color:#aaa; margin-top:4px;"><span id="${id}-count">${value ? value.length : 0}</span>/${maxLength}</div>` : '';
 
-    // Add event listener for character count update if maxLength is present
     setTimeout(() => {
         if (maxLength) {
             const el = document.getElementById(id);
@@ -718,7 +664,6 @@ function createChannelSelect(id, label, selectedId, help) {
     </div>`;
 }
 
-// --- DICT TYPE ---
 function createDict(id, label, dictData, keyPlaceholder, valuePlaceholder, help, keyOnly, valueOnly) {
     const keyPh = keyPlaceholder || 'Key';
     const valPh = valuePlaceholder || 'Value';
@@ -755,7 +700,7 @@ function createDictRow(dictId, idx, keyVal, valueVal, keyPh, valPh, keyOnly, val
         <div class="dict-value-wrapper">
             <textarea class="styled-textarea dict-value" placeholder="${escapeForHtml(valPh)}" ${valOnlyAttr}>${escapeForHtml(valueVal)}</textarea>
             <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                <svg xmlns="http:
             </button>
         </div>
     </div>`;
@@ -766,7 +711,7 @@ function addDictRow(dictId, keyPh, valPh, keyOnly, valueOnly) {
     const idx = container.querySelectorAll('.dict-row').length;
     const rowHtml = createDictRow(dictId, idx, '', '', keyPh, valPh, keyOnly, valueOnly);
     container.insertAdjacentHTML('beforeend', rowHtml);
-    // Apply restrictions to new inputs
+    
     const newRow = container.lastElementChild;
     if (keyOnly) applyInputRestriction(newRow.querySelector('.dict-key'), keyOnly);
     if (valueOnly) applyInputRestriction(newRow.querySelector('.dict-value'), valueOnly);
@@ -779,7 +724,6 @@ function removeDictRow(btn) {
     markDirty();
 }
 
-// --- NAMED CONTENT LIST TYPE ---
 function createNamedContentList(id, label, dataList, help) {
     const MAX_ITEMS = 5;
     const currentCount = Array.isArray(dataList) ? dataList.length : 0;
@@ -839,7 +783,6 @@ function addNamedContentListRow(id) {
     const rowHtml = createNamedContentListRow(rows.length, '', '', '');
     container.insertAdjacentHTML('beforeend', rowHtml);
 
-    // Update button state
     checkNamedContentListLimit(id);
     markDirty();
 }
@@ -870,7 +813,6 @@ function checkNamedContentListLimit(id) {
     }
 }
 
-// --- EMBED MAKER ---
 function createEmbedMakerButton(key, label, buttonText, help) {
     const hasEmbed = GLOBAL_SETTINGS[key] && Object.keys(GLOBAL_SETTINGS[key]).length > 0;
     const statusText = hasEmbed ? '✓ Embed configured' : 'No embed set';
@@ -922,11 +864,10 @@ function openEmbedMaker(key) {
         }
     });
 
-    // Legacy Fallback: If no interactive definitions found, load from the legacy key
     if (loadedDefinitions.length === 0 && GLOBAL_SETTINGS[key]) {
         const legacy = GLOBAL_SETTINGS[key];
         if (legacy.content || (legacy.embeds && legacy.embeds.length > 0)) {
-            // Migrated to interaction 1 (or next available)
+            
             const allIds = Object.keys(allDefs).map(id => parseInt(id)).filter(id => !isNaN(id));
             const nextId = allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
 
@@ -939,7 +880,6 @@ function openEmbedMaker(key) {
                 interactions: isWelcome ? ['member_joined'] : ['member_left']
             });
 
-            // Sync to Global to ensure saveChanges sees it even if not edited
             GLOBAL_SETTINGS.welcome_goodbye_definitions = GLOBAL_SETTINGS.welcome_goodbye_definitions || {};
             GLOBAL_SETTINGS.welcome_goodbye_interactions = GLOBAL_SETTINGS.welcome_goodbye_interactions || {};
             GLOBAL_SETTINGS.welcome_goodbye_definitions[String(nextId)] = loadedDefinitions[0];
@@ -1235,7 +1175,6 @@ function saveEmbedFromModal(key) {
         const embedData = iframe.contentWindow.getEmbedData();
         GLOBAL_SETTINGS[key] = embedData;
 
-        // Update status display
         const statusEl = document.getElementById(`embed-status-${key}`);
         if (statusEl) {
             const hasEmbed = embedData && Object.keys(embedData).length > 0;
@@ -1252,7 +1191,7 @@ function saveEmbedFromModal(key) {
 function clearEmbed(key) {
     if (confirm('Remove this embed?')) {
         GLOBAL_SETTINGS[key] = null;
-        // Re-render the embed maker group
+        
         const group = document.querySelector(`.embed-maker-group[data-embed-key="${key}"]`);
         if (group) {
             const statusEl = group.querySelector('.embed-status');
@@ -1260,14 +1199,13 @@ function clearEmbed(key) {
                 statusEl.textContent = 'No embed set';
                 statusEl.style.color = '#72767d';
             }
-            // Remove the remove button
+            
             const removeBtn = group.querySelector('.dict-remove-btn');
             if (removeBtn) removeBtn.remove();
         }
     }
 }
 
-// --- NAVIGATION ---
 function switchTab(btn, targetId) {
     const allBtns = Array.from(document.querySelectorAll('.nav-item'));
     const newIndex = allBtns.indexOf(btn);
@@ -1307,17 +1245,15 @@ function animateContent(oldTab, newTab, oldIdx, newIdx) {
     }, 400);
 }
 
-// --- SAVE FUNCTION ---
 async function saveChanges() {
     const sidebarBtn = document.getElementById('btn-save-changes');
     const popupBtn = document.getElementById('btn-popup-save');
     const status = document.getElementById('save-status');
-    const serverId = document.getElementById('lbl-server-id').textContent.trim(); // Use textContent as innerText relies on visibility
+    const serverId = document.getElementById('lbl-server-id').textContent.trim(); 
     const token = getCookie("auth_token");
 
     if (!serverId || serverId === "Loading...") return;
 
-    // Disable both buttons
     if (sidebarBtn) {
         sidebarBtn.disabled = true;
         sidebarBtn.innerText = "Saving...";
@@ -1333,7 +1269,6 @@ async function saveChanges() {
     try {
         let payload = {};
 
-        // 1. Iterate through Config to Collect Data
         SETTINGS_CONFIG.forEach(tab => {
             tab.settings.forEach(item => {
                 if (item.type === 'header' || item.type === 'text' || item.type === 'title') return;
@@ -1345,15 +1280,6 @@ async function saveChanges() {
                 }
                 else if (item.type === 'select') {
                     if (el) {
-                        // Some logic for integers vs strings? 
-                        // Original code used parseInt for specific fields. 
-                        // Let's try to detect if options val is int-like or string.
-                        // For now, save as string, unless we want to map back to int.
-                        // But for generic, string is safer unless we specify "valuetype".
-                        // Original: regenerate_mode (int), ping_state (int).
-                        // We can guess: if value is numeric string, maybe save as int? 
-                        // Or just save as is, Python backend probably handles type coercion or expected logic.
-                        // Let's emulate original behavior: specific keys = int.
 
                         const val = el.value;
                         if (['regenerate_mode', 'ping_state'].includes(item.key)) {
@@ -1367,7 +1293,7 @@ async function saveChanges() {
                     if (el) {
                         const val = el.value;
                         if (item.join) {
-                            // Split and clean
+                            
                             payload[item.key] = val.split(item.join.trim()).map(s => s.trim()).filter(s => s.length > 0);
                         } else {
                             payload[item.key] = val;
@@ -1381,7 +1307,7 @@ async function saveChanges() {
                     }
                 }
                 else if (item.type === 'commandList') {
-                    // Iterate commands
+                    
                     GLOBAL_COMMANDS.forEach(cmd => {
                         const k = `${cmd.name}_enabled`;
                         const cBox = document.getElementById(k);
@@ -1419,8 +1345,6 @@ async function saveChanges() {
                             const desc = row.querySelector('.ncl-desc').value;
                             const content = row.querySelector('.ncl-content').value;
 
-                            // Only add if at least name is present? Or allow empty? 
-                            // Let's allow partials, but ideally name is key.
                             if (name || desc || content) {
                                 list.push({
                                     name: name,
@@ -1433,16 +1357,15 @@ async function saveChanges() {
                     }
                 }
                 else if (item.type === 'embedMaker') {
-                    // Standard single embedMaker or Welcome/Goodbye Interaction system
+                    
                     if (GLOBAL_SETTINGS[item.key]) {
                         payload[item.key] = GLOBAL_SETTINGS[item.key];
                     }
                 }
                 else if (item.type === 'chatbotList') {
-                    // Collect existing chatbots from GLOBAL_SETTINGS
+                    
                     const existingChatbots = GLOBAL_SETTINGS[item.key] || {};
 
-                    // Merge with pending chatbots (marked for role creation)
                     const allChatbots = { ...existingChatbots };
                     Object.entries(PENDING_CHATBOTS).forEach(([tempId, botData]) => {
                         allChatbots[tempId] = { ...botData, _pending: true };
@@ -1450,7 +1373,6 @@ async function saveChanges() {
 
                     payload[item.key] = allChatbots;
 
-                    // Also store chatbot config settings
                     const sharedMemoryEl = document.getElementById('chatbot_shared_memory');
                     const autoReplyEl = document.getElementById('chatbot_auto_reply_on_name');
                     const historyModeEl = document.getElementById('chatbot_history_mode');
@@ -1476,7 +1398,6 @@ async function saveChanges() {
             });
         });
 
-        // 2. Aggregate Welcome/Goodbye Interaction Master Lists
         if (GLOBAL_SETTINGS.welcome_goodbye_definitions) {
             payload.welcome_goodbye_definitions = GLOBAL_SETTINGS.welcome_goodbye_definitions;
         }
@@ -1487,8 +1408,6 @@ async function saveChanges() {
             payload.member_history_retention_days = GLOBAL_SETTINGS.member_history_retention_days;
         }
 
-        // 3. Backend expects 'welcome_messages' to be an Array or False
-        // Maintain legacy compatibility while respecting the UI toggles
         const welcomeEnabled = payload.welcome_enabled_bool !== undefined ? payload.welcome_enabled_bool : GLOBAL_SETTINGS.welcome_enabled_bool;
         const goodbyeEnabled = payload.goodbye_enabled_bool !== undefined ? payload.goodbye_enabled_bool : GLOBAL_SETTINGS.goodbye_enabled_bool;
 
@@ -1541,7 +1460,7 @@ async function saveChanges() {
             Object.assign(GLOBAL_SETTINGS, payload);
             PENDING_CHATBOTS = {};
             refreshChatbotGrid();
-            hideDirtyPopup(); // Cleanup popup on success
+            hideDirtyPopup(); 
         } else {
             throw new Error("Worker rejected update");
         }
@@ -1664,7 +1583,7 @@ function openChatbotModal(roleId = null, isPending = false) {
     const data = editing ? (isPending ? PENDING_CHATBOTS[roleId] : (GLOBAL_SETTINGS.chatbots || {})[roleId]) : {};
     const overlay = document.createElement('div');
     overlay.id = 'chatbot-modal'; overlay.className = 'modal show';
-    overlay.innerHTML = `<div class="modal-content" style="max-width: 500px;"><span class="close-btn" onclick="closeChatbotModal()">&times;</span><h3>${editing ? 'Edit' : 'Create'} Chatbot</h3><div class="form-group"><label class="form-label">Bot Name</label><input type="text" id="chatbot-name" class="styled-input" value="${escapeForHtml(data.name || '')}" maxlength="50"></div><div class="form-group"><label class="form-label">System Prompt</label><textarea id="chatbot-prompt" class="styled-textarea" style="min-height:120px;" maxlength="2000">${escapeForHtml(data.system_prompt || '')}</textarea><div class="char-count"><span id="chatbot-prompt-count">${(data.system_prompt || '').length}</span>/2000</div></div><div class="form-group"><label class="form-label">Avatar URL (optional)</label><input type="text" id="chatbot-avatar" class="styled-input" value="${escapeForHtml(data.avatar_url || '')}"></div><div class="toggle-wrapper"><div class="toggle-label-group"><span class="form-label">NSFW Mode</span><span class="form-sublabel">Bypass restrictions (18+ channels only)</span></div><label class="switch"><input type="checkbox" id="chatbot-nsfw" ${data.nsfw ? 'checked' : ''}><span class="slider"></span></label></div><div style="display:flex; gap:10px; justify-content:flex-end;"><button type="button" class="dict-add-btn" style="background:#4f545c;" onclick="closeChatbotModal()">Cancel</button><button type="button" class="dict-add-btn" style="background:#3ba55c;" onclick="saveChatbot('${roleId || ''}', ${isPending})">${editing ? 'Save' : 'Create'}</button></div></div>`;
+    overlay.innerHTML = `<div class="modal-content" style="max-width: 500px;"><span class="close-btn" onclick="closeChatbotModal()">&times;</span><h3>${editing ? 'Edit' : 'Create'} Chatbot</h3><div class="form-group"><label class="form-label">Bot Name</label><input type="text" id="chatbot-name" class="styled-input" value="${escapeForHtml(data.name || '')}" maxlength="50"></div><div class="form-group"><label class="form-label">System Prompt</label><textarea id="chatbot-prompt" class="styled-textarea" style="min-height:120px;" maxlength="4000">${escapeForHtml(data.system_prompt || '')}</textarea><div class="char-count"><span id="chatbot-prompt-count">${(data.system_prompt || '').length}</span>/4000</div></div><div class="form-group"><label class="form-label">Avatar URL (optional)</label><input type="text" id="chatbot-avatar" class="styled-input" value="${escapeForHtml(data.avatar_url || '')}"></div><div class="toggle-wrapper"><div class="toggle-label-group"><span class="form-label">NSFW Mode</span><span class="form-sublabel">Bypass restrictions (18+ channels only)</span></div><label class="switch"><input type="checkbox" id="chatbot-nsfw" ${data.nsfw ? 'checked' : ''}><span class="slider"></span></label></div><div style="display:flex; gap:10px; justify-content:flex-end;"><button type="button" class="dict-add-btn" style="background:#4f545c;" onclick="closeChatbotModal()">Cancel</button><button type="button" class="dict-add-btn" style="background:#3ba55c;" onclick="saveChatbot('${roleId || ''}', ${isPending})">${editing ? 'Save' : 'Create'}</button></div></div>`;
     document.body.appendChild(overlay);
     document.getElementById('chatbot-prompt').oninput = function () { document.getElementById('chatbot-prompt-count').textContent = this.value.length; };
     overlay.onclick = (e) => { if (e.target === overlay) closeChatbotModal(); };
@@ -1739,7 +1658,6 @@ function insertEmoji(val) {
     closeEmojiModal();
 }
 
-// Fixed navigation functions
 function switchTab(btn, targetId) {
     const allBtns = Array.from(document.querySelectorAll('.nav-item'));
     const newIndex = allBtns.indexOf(btn);

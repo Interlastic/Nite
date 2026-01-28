@@ -152,7 +152,6 @@
             display: inline-block;
         }
 
-        /* Embed Tabs */
         .embed-tabs {
             display: flex;
             gap: 4px;
@@ -211,7 +210,6 @@
             margin-bottom: 12px;
         }
 
-        /* Fields Section */
         .fields-container {
             border: 1px solid #40444b;
             border-radius: 4px;
@@ -284,7 +282,6 @@
             color: #ed4245;
         }
 
-        /* Discord Message Preview */
         .discord-message {
             display: flex;
             padding: 4px 0;
@@ -370,7 +367,6 @@
             color: #ffffff;
         }
 
-        /* Discord Markdown Styles */
         .md-codeblock {
             background: #2b2d31;
             border-radius: 4px;
@@ -454,7 +450,6 @@
             margin-top: 4px;
         }
 
-        /* Discord Embed Preview */
         .embed-preview {
             background: #2f3136;
             border-radius: 4px;
@@ -685,8 +680,8 @@
                 </div>
                 <div class="form-group">
                     <label>App Icon URL</label>
-                    <input type="text" id="app-icon" placeholder="https://..."
-                        value="https://em-content.zobj.net/source/twitter/86/waving-hand-sign_1f44b.png">
+                    <input type="text" id="app-icon" placeholder="https:
+                        value="https:
                 </div>
             </div>
 
@@ -700,7 +695,7 @@
                         maxlength="2000"></textarea>
                     <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji"
                         style="margin-top: 5px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        <svg xmlns="http:
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
@@ -748,7 +743,7 @@
             </div>
 
             <div id="embed-editor">
-                <!-- Embed fields will be populated here -->
+                
             </div>
 
             <div class="output-section">
@@ -778,7 +773,7 @@
     </div>
 
     <script>
-        // Discord API Limits
+        
         const LIMITS = {
             message: 2000,
             title: 256,
@@ -792,7 +787,6 @@
         const MAX_FIELDS = 25;
         const MAX_EMBEDS = 10;
 
-        // State
         let embeds = [createEmptyEmbed()];
         let currentEmbedIndex = 0;
 
@@ -814,14 +808,13 @@
             };
         }
 
-        // Placeholder definitions (for preview only)
         const PLACEHOLDERS = {
             '{mention}': '@username',
             '{channellink}': '#general',
             '{username}': 'username',
             '{displayname}': 'User 1',
-            '{profileurl}': 'https://cdn.discordapp.com/embed/avatars/0.png',
-            '{profileopenurl}': 'https://discord.com/users/123456789012345678',
+            '{profileurl}': 'https:
+            '{profileopenurl}': 'https:
             '{server}': 'My Server',
             '{servername}': 'My Server',
             '{membercount}': '1,234',
@@ -831,7 +824,7 @@
             '{userid}': '123456789012345678',
             '{serverid}': '987654321098765432',
             '{join_method}': 'Invite Link',
-            '{invite_link}': 'https://discord.gg/example',
+            '{invite_link}': 'https:
             '{time_to_return}': '15 days'
         };
 
@@ -848,22 +841,21 @@
             return result;
         }
 
-        // For fields where mention/channellink don't work (like embed author name)
         function escapeAndReplacePlaceholdersNoMention(text) {
             if (!text) return '';
             let escaped = escapeHtml(text);
-            // Handle escape sequences
+            
             const ESCAPE_OPEN = '___ESCAPED_OPEN_BRACE___';
             const ESCAPE_CLOSE = '___ESCAPED_CLOSE_BRACE___';
             escaped = escaped.split('\\{').join(ESCAPE_OPEN);
             escaped = escaped.split('\\}').join(ESCAPE_CLOSE);
-            // Replace placeholders (skip mention and channellink - they don't work in author)
+            
             for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
                 if (placeholder !== '{mention}' && placeholder !== '{channellink}') {
                     escaped = escaped.split(placeholder).join(escapeHtml(value));
                 }
             }
-            // Restore escaped braces
+            
             escaped = escaped.split(ESCAPE_OPEN).join('{');
             escaped = escaped.split(ESCAPE_CLOSE).join('}');
             return escaped;
@@ -871,33 +863,31 @@
 
         function escapeAndReplacePlaceholders(text) {
             if (!text) return '';
-            // First escape HTML
+            
             let escaped = escapeHtml(text);
-            // Handle escape sequences for braces: \{ -> { and \} -> }
+            
             const ESCAPE_OPEN = '___ESCAPED_OPEN_BRACE___';
             const ESCAPE_CLOSE = '___ESCAPED_CLOSE_BRACE___';
             escaped = escaped.split('\\{').join(ESCAPE_OPEN);
             escaped = escaped.split('\\}').join(ESCAPE_CLOSE);
-            // Replace styled placeholders (mention and channellink)
+            
             escaped = escaped.split('{mention}').join('<span class="discord-mention">@username</span>');
             escaped = escaped.split('{channellink}').join('<span class="discord-mention">#general</span>');
-            // Replace other placeholders
+            
             for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
                 if (placeholder !== '{mention}' && placeholder !== '{channellink}') {
                     escaped = escaped.split(placeholder).join(escapeHtml(value));
                 }
             }
-            // Restore escaped braces
+            
             escaped = escaped.split(ESCAPE_OPEN).join('{');
             escaped = escaped.split(ESCAPE_CLOSE).join('}');
 
-            // Custom Emoji Parsing <a:name:id> or <:name:id>
             escaped = escaped.replace(/&lt;(a?):(\w+):(\d+)&gt;/g, (match, animated, name, id) => {
                 const ext = animated ? 'gif' : 'png';
-                return `<img src="https://cdn.discordapp.com/emojis/${id}.${ext}" alt=":${name}:" title=":${name}:" class="emoji" style="width:20px;height:20px;vertical-align:middle;">`;
+                return `<img src="https:
             });
 
-            // Apply Discord markdown
             escaped = parseDiscordMarkdown(escaped);
             return escaped;
         }
@@ -906,12 +896,10 @@
             if (!text) return '';
             let result = text;
 
-            // Code blocks (must be first to protect content)
             result = result.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
                 return `<pre class="md-codeblock${lang ? ' lang-' + lang : ''}"><code>${code.trim()}</code></pre>`;
             });
 
-            // Inline code (protect from other formatting)
             const inlineCodePlaceholders = [];
             result = result.replace(/`([^`]+)`/g, (match, code) => {
                 const placeholder = `ICODE${inlineCodePlaceholders.length}EDOCI`;
@@ -919,64 +907,46 @@
                 return placeholder;
             });
 
-            // Multi-line quote (>>>)
             result = result.replace(/^&gt;&gt;&gt;\s?([\s\S]+)$/gm, '<blockquote class="md-blockquote md-blockquote-multi">$1</blockquote>');
 
-            // Single line quote (>)
             result = result.replace(/^&gt;\s?(.+)$/gm, '<div class="md-blockquote">$1</div>');
 
-            // Headers (# ## ###)
             result = result.replace(/^###\s+(.+)$/gm, '<h3 class="md-header md-h3">$1</h3>');
             result = result.replace(/^##\s+(.+)$/gm, '<h2 class="md-header md-h2">$1</h2>');
             result = result.replace(/^#\s+(.+)$/gm, '<h1 class="md-header md-h1">$1</h1>');
 
-            // Lists (- or * or numbered)
             result = result.replace(/^[\-\*]\s+(.+)$/gm, '<li class="md-list-item">$1</li>');
             result = result.replace(/^\d+\.\s+(.+)$/gm, '<li class="md-list-item md-ol">$1</li>');
 
-            // Links [text](url)
             result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="md-link" target="_blank">$1</a>');
 
-            // Auto-linked URLs <https://...>
             result = result.replace(/&lt;(https?:\/\/[^&]+)&gt;/g, '<a href="$1" class="md-link" target="_blank">$1</a>');
 
-            // Spoiler ||text||
             result = result.replace(/\|\|([^|]+)\|\|/g, '<span class="md-spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
 
-            // Bold italic underline (***__text__***)
             result = result.replace(/\*\*\*__(.+?)__\*\*\*/g, '<strong><em><u>$1</u></em></strong>');
 
-            // Bold italic (***text***)
             result = result.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
 
-            // Bold underline (**__text__**)
             result = result.replace(/\*\*__(.+?)__\*\*/g, '<strong><u>$1</u></strong>');
 
-            // Bold strikethrough (~~**text**~~)
             result = result.replace(/~~\*\*(.+?)\*\*~~/g, '<del><strong>$1</strong></del>');
 
-            // Bold (** or __)
             result = result.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
-            // Underline (__)
             result = result.replace(/__(.+?)__/g, '<u>$1</u>');
 
-            // Italic (* or _) - be careful not to match already processed
             result = result.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
             result = result.replace(/(?<!_)_([^_]+)_(?!_)/g, '<em>$1</em>');
 
-            // Strikethrough (~~)
             result = result.replace(/~~(.+?)~~/g, '<del>$1</del>');
 
-            // Restore inline code
             inlineCodePlaceholders.forEach((code, i) => {
                 result = result.replace(`ICODE${i}EDOCI`, code);
             });
 
             return result;
         }
-
-
 
         function renderTabs() {
             const tabsContainer = document.getElementById('embed-tabs');
@@ -1039,7 +1009,6 @@
             embed.footerIcon = document.getElementById('embed-footer-icon')?.value || '';
             embed.timestamp = document.getElementById('embed-timestamp')?.value || '';
 
-            // Save fields
             embed.fields = [];
             document.querySelectorAll('#fields-container .field-item').forEach(item => {
                 const name = item.querySelector('.field-name')?.value || '';
@@ -1066,7 +1035,6 @@
             document.getElementById('embed-footer-icon').value = embed.footerIcon;
             document.getElementById('embed-timestamp').value = embed.timestamp;
 
-            // Load fields
             const fieldsContainer = document.getElementById('fields-container');
             fieldsContainer.innerHTML = embed.fields.length === 0 ? '<span class="empty-state">No fields added</span>' : '';
             embed.fields.forEach((field, i) => {
@@ -1084,18 +1052,18 @@
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <input type="text" id="embed-author-name" placeholder="Author name" maxlength="256" oninput="updatePreview()">
                             <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="width: 32px; height: 32px; min-width: 32px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                                <svg xmlns="http:
                             </button>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Author Icon URL</label>
-                            <input type="text" id="embed-author-icon" placeholder="https://..." oninput="updatePreview()">
+                            <input type="text" id="embed-author-icon" placeholder="https:
                         </div>
                         <div class="form-group">
                             <label>Author URL</label>
-                            <input type="text" id="embed-author-url" placeholder="https://..." oninput="updatePreview()">
+                            <input type="text" id="embed-author-url" placeholder="https:
                         </div>
                     </div>
                 </div>
@@ -1108,13 +1076,13 @@
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <input type="text" id="embed-title" placeholder="Embed title" maxlength="256" oninput="updatePreview()">
                                 <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="width: 32px; height: 32px; min-width: 32px;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                                    <svg xmlns="http:
                                 </button>
                             </div>
                         </div>
                         <div class="form-group">
                             <label>Title URL</label>
-                            <input type="text" id="embed-title-url" placeholder="https://..." oninput="updatePreview()">
+                            <input type="text" id="embed-title-url" placeholder="https:
                         </div>
                     </div>
                     <div class="form-group">
@@ -1122,7 +1090,7 @@
                         <div style="display: flex; gap: 8px; align-items: flex-start;">
                             <textarea id="embed-description" placeholder="Embed description" maxlength="4096" oninput="updatePreview()"></textarea>
                             <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="margin-top: 5px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                                <svg xmlns="http:
                             </button>
                         </div>
                     </div>
@@ -1136,11 +1104,11 @@
                     <h3 style="margin-top:0">Images</h3>
                     <div class="form-group">
                         <label>Thumbnail URL</label>
-                        <input type="text" id="embed-thumbnail" placeholder="https://..." oninput="updatePreview()">
+                        <input type="text" id="embed-thumbnail" placeholder="https:
                     </div>
                     <div class="form-group">
                         <label>Image URL</label>
-                        <input type="text" id="embed-image" placeholder="https://..." oninput="updatePreview()">
+                        <input type="text" id="embed-image" placeholder="https:
                     </div>
                 </div>
 
@@ -1161,13 +1129,13 @@
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <input type="text" id="embed-footer" placeholder="Footer text" maxlength="2048" oninput="updatePreview()">
                                 <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="width: 32px; height: 32px; min-width: 32px;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                                    <svg xmlns="http:
                                 </button>
                             </div>
                         </div>
                         <div class="form-group">
                             <label>Footer Icon URL</label>
-                            <input type="text" id="embed-footer-icon" placeholder="https://..." oninput="updatePreview()">
+                            <input type="text" id="embed-footer-icon" placeholder="https:
                         </div>
                     </div>
                     <div class="form-group">
@@ -1210,14 +1178,14 @@
                     <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
                         <input type="text" placeholder="Field name" class="field-name" maxlength="256" value="${escapeHtml(name === '\u200b' ? '' : name)}" oninput="updatePreview()">
                         <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="width: 32px; height: 32px; min-width: 32px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                            <svg xmlns="http:
                         </button>
                     </div>
                     <label style="font-size: 11px; margin-top: 4px;">Value <span class="char-count">0 / 1024</span></label>
                     <div style="display: flex; gap: 8px; align-items: flex-start;">
                         <textarea placeholder="Field value" class="field-value" maxlength="1024" oninput="updatePreview()">${escapeHtml(value === '\u200b' ? '' : value)}</textarea>
                         <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="margin-top: 5px; width: 32px; height: 32px; min-width: 32px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                            <svg xmlns="http:
                         </button>
                     </div>
                     <label class="checkbox-label">
@@ -1239,7 +1207,7 @@
                 if (fieldsContainer.querySelectorAll('.field-item').length === 0) {
                     fieldsContainer.innerHTML = '<span class="empty-state">No fields added</span>';
                 }
-                // Renumber fields
+                
                 fieldsContainer.querySelectorAll('.field-item').forEach((item, i) => {
                     item.querySelector('.field-header span').textContent = `Field ${i + 1}`;
                 });
@@ -1267,9 +1235,8 @@
         function updatePreview() {
             saveCurrentEmbed();
 
-            // App header
             const rawAppName = document.getElementById('app-name').value || 'Bot';
-            // Replace all placeholders except mention for app name
+            
             let appName = rawAppName;
             for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
                 if (placeholder !== '{mention}') {
@@ -1286,14 +1253,11 @@
                 avatarEl.textContent = appName.charAt(0).toUpperCase();
             }
 
-            // Timestamp
             const now = new Date();
             document.getElementById('preview-msg-timestamp').textContent = `Today at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
-            // Message
             document.getElementById('preview-message').innerHTML = escapeAndReplacePlaceholders(document.getElementById('embed-message').value);
 
-            // Render all embeds
             const container = document.getElementById('embeds-container');
             container.innerHTML = '';
             embeds.forEach((embed, i) => {
@@ -1301,7 +1265,6 @@
                 container.appendChild(renderEmbedPreview(embed));
             });
 
-            // Update char counts
             updateCharCounts();
             renderTabs();
         }
@@ -1313,12 +1276,10 @@
 
             let html = '';
 
-            // Thumbnail
             if (embed.thumbnail) {
                 html += `<img class="embed-thumbnail" src="${escapeHtml(replacePlaceholders(embed.thumbnail))}" onerror="this.style.display='none'">`;
             }
 
-            // Author
             if (embed.authorName) {
                 html += '<div class="embed-author">';
                 if (embed.authorIcon) {
@@ -1332,7 +1293,6 @@
                 html += '</div>';
             }
 
-            // Title
             if (embed.title) {
                 html += '<div class="embed-title">';
                 if (embed.titleUrl) {
@@ -1343,12 +1303,10 @@
                 html += '</div>';
             }
 
-            // Description
             if (embed.description) {
                 html += `<div class="embed-description">${escapeAndReplacePlaceholders(embed.description)}</div>`;
             }
 
-            // Fields
             if (embed.fields.length > 0) {
                 html += '<div class="embed-fields">';
                 embed.fields.forEach(field => {
@@ -1361,12 +1319,10 @@
                 html += '</div>';
             }
 
-            // Image
             if (embed.image) {
                 html += `<img class="embed-image" src="${escapeHtml(replacePlaceholders(embed.image))}" onerror="this.style.display='none'">`;
             }
 
-            // Footer
             if (embed.footerText || embed.timestamp) {
                 html += '<div class="embed-footer">';
                 if (embed.footerIcon && embed.footerText) {
@@ -1401,17 +1357,13 @@
             countEl('footer-count', document.getElementById('embed-footer')?.value.length || 0, LIMITS.footer);
             countEl('author-name-count', document.getElementById('embed-author-name')?.value.length || 0, LIMITS.authorName);
 
-            // Total Limit Update
             const totalLen = calculateTotalLength();
             countEl('total-char-count', totalLen, LIMITS.total);
         }
 
         function calculateTotalLength() {
-            // Discord Limit: Sum of all Embed (Title + Description + AuthorName + FooterText + FieldNames + FieldValues)
-            // Note: Does NOT include App Name, URLs/Images, or the Message Content (which has its own 2000 limit)
 
             let total = 0;
-            // Removed: document.getElementById('embed-message').value.length;
 
             embeds.forEach(embed => {
                 total += (embed.title || '').length;
@@ -1421,7 +1373,7 @@
 
                 if (embed.fields) {
                     embed.fields.forEach(f => {
-                        // Ignore the zero-width space we add for empty fields
+                        
                         const name = f.name === '\u200b' ? '' : (f.name || '');
                         const value = f.value === '\u200b' ? '' : (f.value || '');
                         total += name.length;
@@ -1484,8 +1436,6 @@
             if (output) navigator.clipboard.writeText(output);
         }
 
-        // --- IFRAME API (for use when embedded in manage.html) ---
-        // Get embed data for external use (returns the full payload)
         function getEmbedData() {
             saveCurrentEmbed();
             const content = document.getElementById('embed-message').value;
@@ -1527,11 +1477,9 @@
             };
         }
 
-        // Load embed data from external source (when editing existing embed)
         function loadEmbedData(data) {
             if (!data) return;
 
-            // Load app name and icon
             if (data.username) {
                 document.getElementById('app-name').value = data.username;
             }
@@ -1539,12 +1487,10 @@
                 document.getElementById('app-icon').value = data.avatar_url;
             }
 
-            // Load message content
             if (data.content) {
                 document.getElementById('embed-message').value = data.content;
             }
 
-            // Load embeds
             if (data.embeds && Array.isArray(data.embeds)) {
                 embeds = data.embeds.map(e => ({
                     authorName: e.author?.name || '',
@@ -1578,29 +1524,25 @@
             updatePreview();
         }
 
-        // Expose functions globally for iframe access
         window.getEmbedData = getEmbedData;
         window.loadEmbedData = loadEmbedData;
 
-        // Init
         document.getElementById('embed-message').addEventListener('input', updatePreview);
         document.getElementById('app-name').addEventListener('input', updatePreview);
         document.getElementById('app-icon').addEventListener('input', updatePreview);
 
-        // Global input blocking for 6000 char limit (Embeds Only)
         document.addEventListener('keydown', (e) => {
             if (e.target.matches('input[type="text"], textarea')) {
-                // If it's the message content, ignore this global embed limit check
+                
                 if (e.target.id === 'embed-message') return;
 
-                // Allow deletion and navigation
                 const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End', 'Control', 'Meta', 'Alt', 'Shift'];
                 if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
 
                 const currentTotal = calculateTotalLength();
                 if (currentTotal >= LIMITS.total) {
                     e.preventDefault();
-                    // Optional: Visual shake or flash interaction to indicate block
+                    
                     const totalEl = document.getElementById('total-char-count');
                     if (totalEl) {
                         totalEl.style.transform = "scale(1.1)";
@@ -1611,7 +1553,6 @@
             }
         });
 
-        // Block paste if it would exceed limit
         document.addEventListener('paste', (e) => {
             if (e.target.matches('input[type="text"], textarea')) {
                 if (e.target.id === 'embed-message') return;
@@ -1626,7 +1567,7 @@
         });
 
         function showCustomAlert(msg) {
-            // Reuse generic modal styles from emoji_picker.css
+            
             const modalId = 'custom-alert-modal';
             let modal = document.getElementById(modalId);
 

@@ -7,7 +7,7 @@
     <title>Welcome to Nite</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Introduction page specific styles */
+        
         .intro-box {
             max-width: 550px;
             width: 95%;
@@ -31,7 +31,6 @@
             line-height: 1.4;
         }
 
-        /* Server Selection UI */
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -90,7 +89,6 @@
             background: #202225;
         }
 
-        /* Interests Selection UI */
         .interests-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -147,7 +145,6 @@
             margin-top: 25px;
         }
 
-        /* Gray Button Style (Back/Skip) */
         .btn-gray {
             background: transparent;
             color: #dcddde;
@@ -159,13 +156,11 @@
             color: #fff;
         }
 
-        /* Green Button Style (Next Selected) */
         .btn-green {
             background: #3ba55c;
             color: #fff;
         }
 
-        /* Step Indicator */
         .step-indicator {
             display: flex;
             justify-content: center;
@@ -224,7 +219,6 @@
     </div>
     <div id="logOutContainer" class="logOutContainer" onclick="closeLogout()"></div>
 
-    <!-- Login View -->
     <div id="view-login" class="box intro-box">
         <div class="intro-header">
             <h1 class="intro-title">Welcome to Nite</h1>
@@ -233,7 +227,6 @@
         <button class="btn-login" onclick="openLogin()">Login with Discord</button>
     </div>
 
-    <!-- Step 1: Server Selection -->
     <div id="view-setup" class="box intro-box hide">
         <div class="intro-header">
             <h1 class="intro-title">Choose a Server</h1>
@@ -262,7 +255,6 @@
         <p id="status" style="color:#aaa; font-size:0.8rem; margin-top:15px; text-align:center;"></p>
     </div>
 
-    <!-- Step 2: Interests -->
     <div id="view-interests" class="box intro-box hide">
         <div class="intro-header">
             <h1 class="intro-title">What do you want to do?</h1>
@@ -303,14 +295,13 @@
 
     <script>
         const CONFIG = {
-            API_URL: "https://api.niteapiworker.workers.dev",
-            INVITE_URL: "https://discord.com/oauth2/authorize?client_id=1371513819104415804&permissions=2815042428980240&integration_type=0&scope=bot+applications.commands"
+            API_URL: "https:
+            INVITE_URL: "https:
         };
 
         let selectedServer = null;
         let selectedInterests = new Set();
 
-        // --- AUTH ---
         function getCookie(name) {
             const m = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
             return m ? m[2] : null;
@@ -340,7 +331,6 @@
             document.getElementById('logOutContainer').classList.remove('active');
         };
 
-        // --- UI & DATA ---
         function updateUI(username) {
             if (!username) return;
             document.getElementById('lbl-btn-username').innerText = username;
@@ -389,13 +379,12 @@
             if (!list || list.length === 0) { container.innerHTML = addCard; return; }
             const html = list.map(s => `
                 <div class="server-card" onclick="moveToInterests('${s.id}', '${s.name.replace(/'/g, "\\'")}', '${s.picture_url}')">
-                    <img src="${s.picture_url || 'https://cdn.discordapp.com/embed/avatars/0.png'}" class="server-avatar" alt="">
+                    <img src="${s.picture_url || 'https:
                     <span>${s.name}</span>
                 </div>`).join('');
             container.innerHTML = html + addCard;
         }
 
-        // --- NAVIGATION ---
         function moveToInterests(id, name, icon) {
             selectedServer = { id, name, icon };
             document.getElementById('selected-server-name').innerText = name;
@@ -413,7 +402,6 @@
             if (selectedInterests.has(interest)) selectedInterests.delete(interest);
             else selectedInterests.add(interest);
 
-            // Update button label and color
             const nextBtn = document.getElementById('btn-next');
             if (selectedInterests.size > 0) {
                 nextBtn.innerText = "Next";
@@ -439,7 +427,6 @@
 
         function refreshServers() { fetchServers(); }
 
-        // --- INIT ---
         window.addEventListener("message", (e) => {
             if (e.origin !== CONFIG.API_URL) return;
             if (e.data.type === "LOGIN_SUCCESS") {

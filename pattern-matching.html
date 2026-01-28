@@ -1299,10 +1299,8 @@
 
         <a href="#top" class="back-to-top">↑</a>
 
-        <!-- Ask AI Button -->
         <button class="ask-ai-btn" onclick="openAiModal()">Ask AI</button>
 
-        <!-- AI Modal -->
         <div class="ai-modal-overlay" id="aiModal" onclick="closeAiModal(event)">
                 <div class="ai-modal" onclick="event.stopPropagation()">
                         <div class="ai-modal-header">
@@ -1322,7 +1320,7 @@
         </div>
 
         <style>
-                /* Ask AI Button */
+                
                 .ask-ai-btn {
                         position: fixed;
                         bottom: 30px;
@@ -1345,7 +1343,6 @@
                         box-shadow: 0 6px 20px rgba(16, 163, 127, 0.5);
                 }
 
-                /* Modal Overlay */
                 .ai-modal-overlay {
                         position: fixed;
                         top: 0;
@@ -1368,7 +1365,6 @@
                         visibility: visible;
                 }
 
-                /* Modal Box */
                 .ai-modal {
                         background: var(--card);
                         border-radius: 12px;
@@ -1494,7 +1490,6 @@
                         document.getElementById('aiModal').classList.remove('active');
                 }
 
-                // Close on Escape key
                 document.addEventListener('keydown', function (e) {
                         if (e.key === 'Escape') {
                                 document.getElementById('aiModal').classList.remove('active');
@@ -1536,7 +1531,7 @@ TASK: Generate a regex pattern for the user's request.
 USER'S REQUEST: ${userRequest}`;
 
                         const encodedPrompt = encodeURIComponent(regexDocs);
-                        const chatGPTUrl = `https://chat.openai.com/?q=${encodedPrompt}`;
+                        const chatGPTUrl = `https:
 
                         window.open(chatGPTUrl, '_blank');
                         closeAiModal();
