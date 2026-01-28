@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Server Manager</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <div id="loginbtn" class="accountbtn">
-        
+
         <div id="user-view" class="btn-content-normal" onclick="handleAuthClick()">
-            <img src="Discord_Logo.png" alt="Discord Logo" width="20" height="20" style="vertical-align:middle; margin-right:8px;">
+            <img src="Discord_Logo.png" alt="Discord Logo" width="20" height="20"
+                style="vertical-align:middle; margin-right:8px;">
             <span id="lbl-btn-username">Login with Discord</span>
         </div>
 
@@ -35,13 +38,14 @@
     <div id="view-dash" class="box hide" style="max-width: 600px; width: 90%;">
         <h2>Dashboard</h2>
         <p>User: <span id="lbl-user" style="color:var(--btn)"></span></p>
-        <button id="btn-get" class="btn-fetch" onclick="startFlow()">Load Servers</button>
-        
+        <button id="btn-get" class="btn-fetch" onclick="fetchServers()">Load Servers</button>
+
         <div id="server-list" class="server-grid"></div>
-        
+
         <p id="status" style="color:#aaa; font-size:0.9rem; margin-top:10px;"></p>
     </div>
 
     <script src="script.js"></script>
 </body>
+
 </html>
