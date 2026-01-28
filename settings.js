@@ -7,7 +7,7 @@ let GLOBAL_CHANNELS = [];
 let GLOBAL_ROLES = [];
 let SETTINGS_CONFIG = [];
 let GLOBAL_EMOJIS = { custom: [], unicode: [] };
-window.GLOBAL_EMOJIS = GLOBAL_EMOJIS; 
+window.GLOBAL_EMOJIS = GLOBAL_EMOJIS;
 
 function getTwemojiUrl(emoji) {
     const codePoint = [...emoji].map(c => c.codePointAt(0).toString(16)).join('-');
@@ -83,7 +83,7 @@ const EMOJI_KEYWORDS = {
     "✅": "check mark yes done", "❌": "cross x no wrong", "❓": "question", "❗": "exclamation",
     "🎉": "party popper celebrate tada", "🎊": "confetti", "🎁": "gift present", "🎈": "balloon"
 };
-window.EMOJI_KEYWORDS = EMOJI_KEYWORDS; 
+window.EMOJI_KEYWORDS = EMOJI_KEYWORDS;
 
 function setCookie(n, v) { document.cookie = n + "=" + v + ";path=/;max-age=604800"; }
 function getCookie(n) { return (document.cookie.match(new RegExp('(^| )' + n + '=([^;]+)')) || [])[2]; }
@@ -91,7 +91,7 @@ function getCookie(n) { return (document.cookie.match(new RegExp('(^| )' + n + '
 let isDirty = false;
 
 function markDirty() {
-    if (window.innerWidth > 900) { 
+    if (window.innerWidth > 900) {
         const popup = document.getElementById('unsaved-popup');
         if (popup && !popup.classList.contains('show')) {
             popup.classList.add('show');
@@ -111,17 +111,17 @@ function hideDirtyPopup() {
 }
 
 function cancelChanges() {
-    
+
     renderInterface();
     hideDirtyPopup();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    
+
     setTimeout(() => {
         const overlay = document.getElementById('transition-overlay');
         if (overlay) overlay.classList.remove('active');
-    }, 100); 
+    }, 100);
 
     const token = getCookie("auth_token");
     if (!token) { window.location.href = "index.html"; return; }
@@ -133,8 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const serverId = urlParams.get('id');
     const serverName = urlParams.get('name');
     const serverIcon = urlParams.get('icon');
-    const serverWidth = urlParams.get('width'); 
-    const serverHeight = urlParams.get('height'); 
+    const serverWidth = urlParams.get('width');
+    const serverHeight = urlParams.get('height');
 
     if (serverName && serverIcon) {
         renderStaticFloatingCard(serverName, serverIcon, serverWidth, serverHeight);
@@ -150,26 +150,26 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function renderStaticFloatingCard(serverName, serverIcon, serverWidth, serverHeight) {
-    
+
     const switcherContainer = document.createElement('div');
     switcherContainer.className = 'switcher-container';
     switcherContainer.style.position = 'fixed';
-    switcherContainer.style.zIndex = '2000'; 
+    switcherContainer.style.zIndex = '2000';
 
     const floatCard = document.createElement('div');
     floatCard.className = 'server-card';
-    
+
     floatCard.style.margin = '0';
-    floatCard.style.cursor = 'pointer'; 
-    floatCard.style.pointerEvents = 'auto'; 
+    floatCard.style.cursor = 'pointer';
+    floatCard.style.pointerEvents = 'auto';
     floatCard.style.animation = 'none';
     floatCard.style.filter = 'none';
     floatCard.style.webkitFilter = 'none';
 
     floatCard.style.width = serverWidth ? (serverWidth + 'px') : '120px';
     floatCard.style.transform = 'scale(0.6)';
-    floatCard.style.transformOrigin = 'top left'; 
-    if (window.innerWidth <= 768) floatCard.style.transformOrigin = 'bottom left'; 
+    floatCard.style.transformOrigin = 'top left';
+    if (window.innerWidth <= 768) floatCard.style.transformOrigin = 'bottom left';
 
     floatCard.innerHTML = `
         <img src="${decodeURIComponent(serverIcon)}" class="server-avatar" style="filter:blur(0); animation:none;">
@@ -185,12 +185,12 @@ function renderStaticFloatingCard(serverName, serverIcon, serverWidth, serverHei
 
     switcherContainer.style.left = '20px';
     if (window.innerWidth <= 768) {
-        
+
         const h = serverHeight ? parseFloat(serverHeight) : 80;
         const topPos = window.innerHeight - 20 - (h * 0.6);
         switcherContainer.style.top = topPos + 'px';
     } else {
-        
+
         switcherContainer.style.top = '20px';
     }
 
@@ -199,15 +199,15 @@ function renderStaticFloatingCard(serverName, serverIcon, serverWidth, serverHei
     floatCard.addEventListener('click', (e) => {
         e.stopPropagation();
         if (isMobile) {
-            
+
             if (switcherContainer.classList.contains('active')) {
                 window.location.href = "index.html";
             } else {
                 switcherContainer.classList.add('active');
-                fetchServersForGrid(grid); 
+                fetchServersForGrid(grid);
             }
         } else {
-            
+
             window.location.href = "index.html";
         }
     });
@@ -232,7 +232,7 @@ function renderStaticFloatingCard(serverName, serverIcon, serverWidth, serverHei
 
 async function initSettingsFlow(serverId, token) {
     try {
-        
+
         const configRes = await fetch('settings_config.json');
         if (!configRes.ok) throw new Error("Failed to load settings configuration.");
         SETTINGS_CONFIG = await configRes.json();
@@ -251,7 +251,7 @@ async function initSettingsFlow(serverId, token) {
                 GLOBAL_SETTINGS = data.settings || {};
                 GLOBAL_SETTINGS = data.settings || {};
                 GLOBAL_COMMANDS = data.commands || [];
-                
+
                 if (data.emojis) {
                     GLOBAL_EMOJIS.custom = data.emojis.custom || [];
                 }
@@ -279,7 +279,7 @@ async function initSettingsFlow(serverId, token) {
 
 function renderInterface() {
     renderTabs();
-    initInputRestrictions(); 
+    initInputRestrictions();
 
     const viewport = document.querySelector('.content-viewport');
     if (viewport) {
@@ -289,7 +289,7 @@ function renderInterface() {
 
     const firstTab = SETTINGS_CONFIG[0];
     if (firstTab) {
-        
+
         const btn = document.querySelector(`.nav-item[data-target="${firstTab.id}"]`);
         if (btn) {
             btn.classList.add('active');
@@ -316,7 +316,7 @@ function renderTabs() {
     contentViewport.innerHTML = '<p id="loading-text" style="text-align:center; margin-top:50px; color:#aaa; display:none;">Loading Configuration...</p>';
 
     SETTINGS_CONFIG.forEach((tab, index) => {
-        
+
         const btn = document.createElement('button');
         btn.className = 'nav-item';
         btn.innerText = tab.name;
@@ -327,7 +327,7 @@ function renderTabs() {
         const pane = document.createElement('div');
         pane.id = tab.id;
         pane.className = 'tab-pane';
-        
+
         pane.innerHTML = renderSettingsList(tab.settings);
         contentViewport.appendChild(pane);
     });
@@ -397,14 +397,14 @@ function renderCommandList() {
     const root = { children: {} };
 
     GLOBAL_COMMANDS.forEach(cmd => {
-        const parts = cmd.name.trim().split(/\s+/); 
+        const parts = cmd.name.trim().split(/\s+/);
         let current = root;
         parts.forEach((part, index) => {
             if (!current.children[part]) {
                 current.children[part] = { children: {} };
             }
             current = current.children[part];
-            
+
             if (index === parts.length - 1) {
                 current.command = cmd;
             }
@@ -416,11 +416,11 @@ function renderCommandList() {
 
     Object.keys(root.children).sort().forEach(key => {
         const node = root.children[key];
-        
+
         if (Object.keys(node.children).length > 0) {
             topLevelGroups.push({ key, node });
         } else {
-            
+
             if (node.command) {
                 topLevelLeaves.push(node.command);
             }
@@ -465,7 +465,7 @@ function renderCommandCard(cmd) {
 }
 
 function renderCommandGroup(groupName, node) {
-    
+
     let innerHtml = '';
 
     if (node.command) {
@@ -474,7 +474,7 @@ function renderCommandGroup(groupName, node) {
 
     const childKeys = Object.keys(node.children).sort();
     if (childKeys.length > 0) {
-        
+
         if (node.command) {
             innerHtml += `<div style="height:10px;"></div>`;
         }
@@ -484,16 +484,16 @@ function renderCommandGroup(groupName, node) {
             const hasGrandChildren = Object.keys(childNode.children).length > 0;
 
             if (hasGrandChildren) {
-                
+
                 innerHtml += renderCommandGroup(childKey, childNode);
             } else if (childNode.command) {
-                
+
                 innerHtml += renderCommandCard(childNode.command);
             }
         });
     }
 
-    const count = (node.command ? 1 : 0) + Object.keys(node.children).length; 
+    const count = (node.command ? 1 : 0) + Object.keys(node.children).length;
 
     return `
     <details class="command-group" ${node.command ? '' : ''}> 
@@ -577,12 +577,12 @@ function applyInputRestriction(inputEl, restrictionType) {
 
 function createHelpIcon(helpText) {
     if (!helpText) return '';
-    
+
     const linkifiedText = escapeForHtml(helpText).replace(
         /(https?:\/\/[^\s<]+)/g,
         '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
     );
-    
+
     const formattedText = linkifiedText.replace(/\\n/g, '<br>');
     return `<span class="help-icon-wrapper"><span class="help-icon">?</span><span class="help-tooltip">${formattedText}</span></span>`;
 }
@@ -711,7 +711,7 @@ function addDictRow(dictId, keyPh, valPh, keyOnly, valueOnly) {
     const idx = container.querySelectorAll('.dict-row').length;
     const rowHtml = createDictRow(dictId, idx, '', '', keyPh, valPh, keyOnly, valueOnly);
     container.insertAdjacentHTML('beforeend', rowHtml);
-    
+
     const newRow = container.lastElementChild;
     if (keyOnly) applyInputRestriction(newRow.querySelector('.dict-key'), keyOnly);
     if (valueOnly) applyInputRestriction(newRow.querySelector('.dict-value'), valueOnly);
@@ -867,7 +867,7 @@ function openEmbedMaker(key) {
     if (loadedDefinitions.length === 0 && GLOBAL_SETTINGS[key]) {
         const legacy = GLOBAL_SETTINGS[key];
         if (legacy.content || (legacy.embeds && legacy.embeds.length > 0)) {
-            
+
             const allIds = Object.keys(allDefs).map(id => parseInt(id)).filter(id => !isNaN(id));
             const nextId = allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
 
@@ -1191,7 +1191,7 @@ function saveEmbedFromModal(key) {
 function clearEmbed(key) {
     if (confirm('Remove this embed?')) {
         GLOBAL_SETTINGS[key] = null;
-        
+
         const group = document.querySelector(`.embed-maker-group[data-embed-key="${key}"]`);
         if (group) {
             const statusEl = group.querySelector('.embed-status');
@@ -1199,7 +1199,7 @@ function clearEmbed(key) {
                 statusEl.textContent = 'No embed set';
                 statusEl.style.color = '#72767d';
             }
-            
+
             const removeBtn = group.querySelector('.dict-remove-btn');
             if (removeBtn) removeBtn.remove();
         }
@@ -1249,7 +1249,7 @@ async function saveChanges() {
     const sidebarBtn = document.getElementById('btn-save-changes');
     const popupBtn = document.getElementById('btn-popup-save');
     const status = document.getElementById('save-status');
-    const serverId = document.getElementById('lbl-server-id').textContent.trim(); 
+    const serverId = document.getElementById('lbl-server-id').textContent.trim();
     const token = getCookie("auth_token");
 
     if (!serverId || serverId === "Loading...") return;
@@ -1293,7 +1293,7 @@ async function saveChanges() {
                     if (el) {
                         const val = el.value;
                         if (item.join) {
-                            
+
                             payload[item.key] = val.split(item.join.trim()).map(s => s.trim()).filter(s => s.length > 0);
                         } else {
                             payload[item.key] = val;
@@ -1307,7 +1307,7 @@ async function saveChanges() {
                     }
                 }
                 else if (item.type === 'commandList') {
-                    
+
                     GLOBAL_COMMANDS.forEach(cmd => {
                         const k = `${cmd.name}_enabled`;
                         const cBox = document.getElementById(k);
@@ -1357,13 +1357,13 @@ async function saveChanges() {
                     }
                 }
                 else if (item.type === 'embedMaker') {
-                    
+
                     if (GLOBAL_SETTINGS[item.key]) {
                         payload[item.key] = GLOBAL_SETTINGS[item.key];
                     }
                 }
                 else if (item.type === 'chatbotList') {
-                    
+
                     const existingChatbots = GLOBAL_SETTINGS[item.key] || {};
 
                     const allChatbots = { ...existingChatbots };
@@ -1460,7 +1460,7 @@ async function saveChanges() {
             Object.assign(GLOBAL_SETTINGS, payload);
             PENDING_CHATBOTS = {};
             refreshChatbotGrid();
-            hideDirtyPopup(); 
+            hideDirtyPopup();
         } else {
             throw new Error("Worker rejected update");
         }
@@ -1583,7 +1583,7 @@ function openChatbotModal(roleId = null, isPending = false) {
     const data = editing ? (isPending ? PENDING_CHATBOTS[roleId] : (GLOBAL_SETTINGS.chatbots || {})[roleId]) : {};
     const overlay = document.createElement('div');
     overlay.id = 'chatbot-modal'; overlay.className = 'modal show';
-    overlay.innerHTML = `<div class="modal-content" style="max-width: 500px;"><span class="close-btn" onclick="closeChatbotModal()">&times;</span><h3>${editing ? 'Edit' : 'Create'} Chatbot</h3><div class="form-group"><label class="form-label">Bot Name</label><input type="text" id="chatbot-name" class="styled-input" value="${escapeForHtml(data.name || '')}" maxlength="50"></div><div class="form-group"><label class="form-label">System Prompt</label><textarea id="chatbot-prompt" class="styled-textarea" style="min-height:120px;" maxlength="4000">${escapeForHtml(data.system_prompt || '')}</textarea><div class="char-count"><span id="chatbot-prompt-count">${(data.system_prompt || '').length}</span>/4000</div></div><div class="form-group"><label class="form-label">Avatar URL (optional)</label><input type="text" id="chatbot-avatar" class="styled-input" value="${escapeForHtml(data.avatar_url || '')}"></div><div class="toggle-wrapper"><div class="toggle-label-group"><span class="form-label">NSFW Mode</span><span class="form-sublabel">Bypass restrictions (18+ channels only)</span></div><label class="switch"><input type="checkbox" id="chatbot-nsfw" ${data.nsfw ? 'checked' : ''}><span class="slider"></span></label></div><div style="display:flex; gap:10px; justify-content:flex-end;"><button type="button" class="dict-add-btn" style="background:#4f545c;" onclick="closeChatbotModal()">Cancel</button><button type="button" class="dict-add-btn" style="background:#3ba55c;" onclick="saveChatbot('${roleId || ''}', ${isPending})">${editing ? 'Save' : 'Create'}</button></div></div>`;
+    overlay.innerHTML = `<div class="modal-content" style="max-width: 500px;"><span class="close-btn" onclick="closeChatbotModal()">&times;</span><h3>${editing ? 'Edit' : 'Create'} Chatbot</h3><div class="form-group"><label class="form-label">Bot Name</label><input type="text" id="chatbot-name" class="styled-input" value="${escapeForHtml(data.name || '')}" maxlength="50"></div><div class="form-group"><label class="form-label">System Prompt</label><textarea id="chatbot-prompt" class="styled-textarea" style="min-height:120px;" maxlength="4000">${escapeForHtml(data.system_prompt || '')}</textarea><div class="char-count"><span id="chatbot-prompt-count">${(data.system_prompt || '').length}</span>/4000</div></div><div class="form-group"><label class="form-label">Avatar URL (optional)</label><input type="text" id="chatbot-avatar" class="styled-input" value="${escapeForHtml(data.avatar_url || '')}"></div><div class="toggle-wrapper"><div class="toggle-label-group"><span class="form-label">NSFW Mode</span><span class="form-sublabel">Bypass restrictions (18+ channels only)</span></div><label class="switch"><input type="checkbox" id="chatbot-nsfw" ${data.nsfw ? 'checked' : ''}><span class="slider"></span></label></div><div style="display:flex; gap:10px; justify-content:flex-end;"><button type="button" class="dict-add-btn" style="background:#4f545c; width:auto;" onclick="closeChatbotModal()">Cancel</button><button type="button" class="dict-add-btn" style="background:#3ba55c; width:auto;" onclick="saveChatbot('${roleId || ''}', ${isPending})">${editing ? 'Save' : 'Create'}</button></div></div>`;
     document.body.appendChild(overlay);
     document.getElementById('chatbot-prompt').oninput = function () { document.getElementById('chatbot-prompt-count').textContent = this.value.length; };
     overlay.onclick = (e) => { if (e.target === overlay) closeChatbotModal(); };
