@@ -791,6 +791,32 @@ input:checked+.slider:before {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
+}
+
+.command-settings-btn {
+    background: transparent;
+    color: #72767d;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    transition: color 0.2s;
+    width: auto;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.command-settings-btn:hover {
+    color: #dcddde;
+    filter: none;
+}
+
+.command-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 @media (max-width: 900px) {
