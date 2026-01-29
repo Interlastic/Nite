@@ -14,6 +14,16 @@ function getTwemojiUrl(emoji) {
     return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/${codePoint}.png`;
 }
 
+function getCommandKey(name) {
+    if (!name) return "";
+    let k = name.trim().replace(/\s+/g, '.');
+    // Special case observed in the data: dashboard test xxx -> test.xxx
+    if (k.startsWith('dashboard.test.')) {
+        k = k.replace('dashboard.', '');
+    }
+    return k;
+}
+
 const UNICODE_EMOJIS = {
     "Smileys": ["😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "🙃", "😉", "😊", "😇", "🥰", "😍", "🤩", "😘", "😗", "😚", "😙", "🥲", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "🤥", "😌", "😔", "😪", "🤤", "😴", "😷", "🤒", "🤕", "🤢", "🤮", "🤧", "🥵", "🥶", "🥴", "😵", "🤯", "🤠", "🥳", "🥸", "😎", "🤓", "🧐"],
     "People": ["😕", "😟", "🙁", "😮", "😯", "😲", "😳", "🥺", "😦", "😧", "😨", "😰", "😥", "😢", "😭", "😱", "😖", "😣", "😞", "😓", "😩", "😫", "🥱", "😤", "😡", "😠", "🤬", "😈", "👿", "💀", "💩", "🤡", "👹", "👺", "👻", "👽", "👾", "🤖"],
@@ -249,7 +259,8 @@ async function initSettingsFlow(serverId, token) {
                 GLOBAL_CHANNELS = data.channels || [];
                 GLOBAL_ROLES = data.roles || [];
                 GLOBAL_SETTINGS = data.settings || {};
-                GLOBAL_SETTINGS = data.settings || {};
+                const permissions = data.permissions || {};
+                Object.assign(GLOBAL_SETTINGS, permissions);
                 GLOBAL_COMMANDS = data.commands || [];
 
                 if (data.emojis) {
@@ -449,23 +460,129 @@ function renderCommandList() {
 }
 
 function renderCommandCard(cmd) {
-    const key = `${cmd.name}_enabled`;
-    const isEnabled = GLOBAL_SETTINGS[key] === undefined || toBoolean(GLOBAL_SETTINGS[key]);
+    const permKey = `${cmd.name}_permissions`;
+    const oldKey = `${cmd.name}_enabled`;
+
+    let isEnabled = true;
+    if (GLOBAL_SETTINGS[permKey] !== undefined) {
+        isEnabled = toBoolean(GLOBAL_SETTINGS[permKey].enabled);
+    } else if (GLOBAL_SETTINGS[oldKey] !== undefined) {
+        isEnabled = toBoolean(GLOBAL_SETTINGS[oldKey]);
+    }
+
     return `
     <div class="command-card" style="display:flex; flex-direction:column; align-items:flex-start; gap:8px; width:100%;">
         <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
             <span style="font-weight:bold; color:#fff; font-family:monospace; font-size:1.1rem;">/${escapeForHtml(cmd.name)}</span>
-            <label class="switch">
-                <input type="checkbox" id="${key}" ${isEnabled ? 'checked' : ''}>
-                <span class="slider"></span>
-            </label>
+            <div class="command-controls">
+                <button class="command-settings-btn" onclick="openCommandSettings('${cmd.name}')" title="Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+                <label class="switch">
+                    <input type="checkbox" id="${oldKey}" ${isEnabled ? 'checked' : ''}>
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
         <span style="font-size:0.8rem; color:#b9bbbe; line-height:1.3;">${escapeForHtml(cmd.description)}</span>
     </div>`;
 }
 
-function renderCommandGroup(groupName, node) {
+function openCommandSettings(cmdName) {
+    const baseKey = getCommandKey(cmdName);
+    const permKey = `${baseKey}_permissions`;
+    const settings = GLOBAL_SETTINGS[permKey] || { roles: [], permissions: [], enabled: true };
 
+    const validPermissions = [
+        "administrator", "manage_guild", "manage_roles", "manage_channels",
+        "manage_messages", "manage_webhooks", "manage_nicknames",
+        "send_messages", "create_polls", "mention_everyone",
+        "view_audit_log", "kick_members", "ban_members"
+    ];
+
+    const overlay = document.createElement('div');
+    overlay.id = 'command-settings-modal';
+    overlay.className = 'modal show';
+    overlay.style.zIndex = '10001';
+
+    let rolesHtml = GLOBAL_ROLES.map(role => `
+        <label class="checkbox-item" style="display:flex; align-items:center; gap:8px; margin-bottom:5px; cursor:pointer;">
+            <input type="checkbox" class="role-chk" value="${role.id}" ${settings.roles.includes(role.id) ? 'checked' : ''}>
+            <span style="color:${role.color ? '#' + role.color.toString(16).padStart(6, '0') : '#fff'}">${escapeForHtml(role.name)}</span>
+        </label>
+    `).join('');
+
+    let permsHtml = validPermissions.map(perm => `
+        <label class="checkbox-item" style="display:flex; align-items:center; gap:8px; margin-bottom:5px; cursor:pointer;">
+            <input type="checkbox" class="perm-chk" value="${perm}" ${settings.permissions.includes(perm) ? 'checked' : ''}>
+            <span>${perm.replace(/_/g, ' ')}</span>
+        </label>
+    `).join('');
+
+    overlay.innerHTML = `
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-btn" onclick="closeCommandSettings()">&times;</span>
+            <h3>Settings for /${cmdName}</h3>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                <div>
+                    <label class="form-label">Required Roles</label>
+                    <div style="max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;">
+                        ${rolesHtml || '<p style="color:#72767d; font-size:0.8rem;">No roles available.</p>'}
+                    </div>
+                    <p style="font-size: 0.75rem; color: #72767d; margin-top:5px;">User must have AT LEAST ONE role (if any selected).</p>
+                </div>
+                <div>
+                    <label class="form-label">Required Permissions</label>
+                    <div style="max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;">
+                        ${permsHtml}
+                    </div>
+                    <p style="font-size: 0.75rem; color: #72767d; margin-top:5px;">User must have ALL selected permissions.</p>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+                <button type="button" class="dict-add-btn" style="background:#4f545c; width:auto;" onclick="closeCommandSettings()">Cancel</button>
+                <button type="button" class="dict-add-btn" style="background:#3ba55c; width:auto;" onclick="saveCommandSettings('${cmdName}')">Save</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    overlay.onclick = (e) => { if (e.target === overlay) closeCommandSettings(); };
+}
+
+function closeCommandSettings() {
+    const modal = document.getElementById('command-settings-modal');
+    if (modal) modal.remove();
+}
+
+function saveCommandSettings(cmdName) {
+    const modal = document.getElementById('command-settings-modal');
+    if (!modal) return;
+
+    const roleChks = modal.querySelectorAll('.role-chk:checked');
+    const permChks = modal.querySelectorAll('.perm-chk:checked');
+
+    const baseKey = getCommandKey(cmdName);
+    const toggle = document.getElementById(`${baseKey}_enabled`);
+
+    const permKey = `${baseKey}_permissions`;
+    GLOBAL_SETTINGS[permKey] = {
+        roles: Array.from(roleChks).map(c => c.value),
+        permissions: Array.from(permChks).map(c => c.value),
+        enabled: toggle ? toggle.checked : true
+    };
+
+    closeCommandSettings();
+    markDirty();
+}
+
+function renderCommandGroup(groupName, node, prefix = "") {
+    const fullPath = prefix ? prefix + " " + groupName : groupName;
     let innerHtml = '';
 
     if (node.command) {
@@ -485,7 +602,7 @@ function renderCommandGroup(groupName, node) {
 
             if (hasGrandChildren) {
 
-                innerHtml += renderCommandGroup(childKey, childNode);
+                innerHtml += renderCommandGroup(childKey, childNode, fullPath);
             } else if (childNode.command) {
 
                 innerHtml += renderCommandCard(childNode.command);
@@ -499,13 +616,121 @@ function renderCommandGroup(groupName, node) {
     <details class="command-group" ${node.command ? '' : ''}> 
         <summary class="command-group-header">
             <div class="summary-inner">
-                <span>/${escapeForHtml(groupName)}</span>
+                <span style="flex-grow: 1;">/${escapeForHtml(groupName)}</span>
+                <button type="button" class="command-settings-btn" onclick="event.preventDefault(); openGroupSettings('${fullPath}')" title="Group Settings" style="margin-right: 10px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
             </div>
         </summary>
         <div class="command-group-content">
             ${innerHtml}
         </div>
     </details>`;
+}
+
+function openGroupSettings(fullPath) {
+    // Find all commands that fall under this path
+    const relatedCommands = GLOBAL_COMMANDS.filter(cmd => cmd.name === fullPath || cmd.name.startsWith(fullPath + ' '));
+    const sampleCmd = relatedCommands[0];
+    const baseKey = sampleCmd ? getCommandKey(sampleCmd.name) : '';
+    const permKey = baseKey ? `${baseKey}_permissions` : '';
+    const settings = (sampleCmd && GLOBAL_SETTINGS[permKey]) ? GLOBAL_SETTINGS[permKey] : { roles: [], permissions: [], enabled: true };
+
+    const validPermissions = [
+        "administrator", "manage_guild", "manage_roles", "manage_channels",
+        "manage_messages", "manage_webhooks", "manage_nicknames",
+        "send_messages", "create_polls", "mention_everyone",
+        "view_audit_log", "kick_members", "ban_members"
+    ];
+
+    const overlay = document.createElement('div');
+    overlay.id = 'group-settings-modal';
+    overlay.className = 'modal show';
+    overlay.style.zIndex = '10001';
+
+    let rolesHtml = GLOBAL_ROLES.map(role => `
+        <label class="checkbox-item" style="display:flex; align-items:center; gap:8px; margin-bottom:5px; cursor:pointer;">
+            <input type="checkbox" class="role-chk" value="${role.id}" ${settings.roles.includes(role.id) ? 'checked' : ''}>
+            <span style="color:${role.color ? '#' + role.color.toString(16).padStart(6, '0') : '#fff'}">${escapeForHtml(role.name)}</span>
+        </label>
+    `).join('');
+
+    let permsHtml = validPermissions.map(perm => `
+        <label class="checkbox-item" style="display:flex; align-items:center; gap:8px; margin-bottom:5px; cursor:pointer;">
+            <input type="checkbox" class="perm-chk" value="${perm}" ${settings.permissions.includes(perm) ? 'checked' : ''}>
+            <span>${perm.replace(/_/g, ' ')}</span>
+        </label>
+    `).join('');
+
+    overlay.innerHTML = `
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-btn" onclick="closeGroupSettings()">&times;</span>
+            <div style="margin-bottom: 25px;">
+                <h2 style="margin: 0 0 5px 0; font-size: 1.6rem; font-weight: 800; text-transform: uppercase;">Bulk Update</h2>
+                <p style="color: #ccc; margin: 0; font-size: 1.1rem;">This will apply to EVERY command under <span style="font-family: monospace; background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px;">/${fullPath}</span></p>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                <div>
+                    <label class="form-label">Required Roles</label>
+                    <div style="max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;">
+                        ${rolesHtml || '<p style="color:#72767d; font-size:0.8rem;">No roles available.</p>'}
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Required Permissions</label>
+                    <div style="max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;">
+                        ${permsHtml}
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+                <button type="button" class="dict-add-btn" style="background:#4f545c; width:auto;" onclick="closeGroupSettings()">Cancel</button>
+                <button type="button" class="dict-add-btn" style="background:#ed4245; width:auto;" onclick="saveGroupSettings('${fullPath}')">Apply to All</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    overlay.onclick = (e) => { if (e.target === overlay) closeGroupSettings(); };
+}
+
+function closeGroupSettings() {
+    const modal = document.getElementById('group-settings-modal');
+    if (modal) modal.remove();
+}
+
+function saveGroupSettings(groupName) {
+    const modal = document.getElementById('group-settings-modal');
+    if (!modal) return;
+
+    const roleChks = modal.querySelectorAll('.role-chk:checked');
+    const permChks = modal.querySelectorAll('.perm-chk:checked');
+
+    const roles = Array.from(roleChks).map(c => c.value);
+    const perms = Array.from(permChks).map(c => c.value);
+
+    // Apply to all commands starting with this group name
+    GLOBAL_COMMANDS.forEach(cmd => {
+        if (cmd.name === groupName || cmd.name.startsWith(groupName + ' ')) {
+            const permKey = `${cmd.name}_permissions`;
+            const oldKey = `${cmd.name}_enabled`;
+            const cBox = document.getElementById(oldKey);
+
+            GLOBAL_SETTINGS[permKey] = {
+                roles: [...roles],
+                permissions: [...perms],
+                enabled: cBox ? cBox.checked : true
+            };
+        }
+    });
+
+    closeGroupSettings();
+    markDirty();
 }
 
 function renderSupportChannelList(key) {
@@ -1267,25 +1492,27 @@ async function saveChanges() {
     status.style.color = "#aaa";
 
     try {
-        let payload = {};
+        let settingsPayload = {};
+        let permissionsPayload = {};
 
         SETTINGS_CONFIG.forEach(tab => {
             tab.settings.forEach(item => {
+                const targetPayload = (item.type === 'commandList') ? permissionsPayload : settingsPayload;
+
                 if (item.type === 'header' || item.type === 'text' || item.type === 'title') return;
 
                 const el = document.getElementById(item.key);
 
                 if (item.type === 'switch') {
-                    if (el) payload[item.key] = el.checked;
+                    if (el) targetPayload[item.key] = el.checked;
                 }
                 else if (item.type === 'select') {
                     if (el) {
-
                         const val = el.value;
                         if (['regenerate_mode', 'ping_state'].includes(item.key)) {
-                            payload[item.key] = parseInt(val);
+                            targetPayload[item.key] = parseInt(val);
                         } else {
-                            payload[item.key] = val;
+                            targetPayload[item.key] = val;
                         }
                     }
                 }
@@ -1293,32 +1520,38 @@ async function saveChanges() {
                     if (el) {
                         const val = el.value;
                         if (item.join) {
-
-                            payload[item.key] = val.split(item.join.trim()).map(s => s.trim()).filter(s => s.length > 0);
+                            targetPayload[item.key] = val.split(item.join.trim()).map(s => s.trim()).filter(s => s.length > 0);
                         } else {
-                            payload[item.key] = val;
+                            targetPayload[item.key] = val;
                         }
                     }
                 }
                 else if (item.type === 'channelPick') {
                     if (el) {
                         const val = el.value;
-                        payload[item.key] = val ? val : null;
+                        targetPayload[item.key] = val ? val : null;
                     }
                 }
                 else if (item.type === 'commandList') {
-
                     GLOBAL_COMMANDS.forEach(cmd => {
-                        const k = `${cmd.name}_enabled`;
-                        const cBox = document.getElementById(k);
+                        const permKey = `${cmd.name}_permissions`;
+                        const oldKey = `${cmd.name}_enabled`;
+                        const cBox = document.getElementById(oldKey);
+
                         if (cBox) {
-                            payload[k] = cBox.checked;
+                            const existingPerms = GLOBAL_SETTINGS[permKey] || { roles: [], permissions: [] };
+
+                            permissionsPayload[permKey] = {
+                                roles: existingPerms.roles || [],
+                                permissions: existingPerms.permissions || [],
+                                enabled: cBox.checked
+                            };
                         }
                     });
                 }
                 else if (item.type === 'supportChannelList') {
                     const chks = document.querySelectorAll(`.support-channel-chk[data-setting-key="${item.key}"]:checked`);
-                    payload[item.key] = Array.from(chks).map(cb => cb.value);
+                    targetPayload[item.key] = Array.from(chks).map(cb => cb.value);
                 }
                 else if (item.type === 'dict') {
                     const container = document.querySelector(`.dict-container[data-dict-id="${item.key}"]`);
@@ -1332,7 +1565,7 @@ async function saveChanges() {
                                 dictObj[keyInput.value.trim()] = valInput.value;
                             }
                         });
-                        payload[item.key] = dictObj;
+                        targetPayload[item.key] = dictObj;
                     }
                 }
                 else if (item.type === 'namedContentList') {
@@ -1353,31 +1586,27 @@ async function saveChanges() {
                                 });
                             }
                         });
-                        payload[item.key] = list;
+                        targetPayload[item.key] = list;
                     }
                 }
                 else if (item.type === 'embedMaker') {
-
                     if (GLOBAL_SETTINGS[item.key]) {
-                        payload[item.key] = GLOBAL_SETTINGS[item.key];
+                        targetPayload[item.key] = GLOBAL_SETTINGS[item.key];
                     }
                 }
                 else if (item.type === 'chatbotList') {
-
                     const existingChatbots = GLOBAL_SETTINGS[item.key] || {};
-
                     const allChatbots = { ...existingChatbots };
                     Object.entries(PENDING_CHATBOTS).forEach(([tempId, botData]) => {
                         allChatbots[tempId] = { ...botData, _pending: true };
                     });
-
-                    payload[item.key] = allChatbots;
+                    targetPayload[item.key] = allChatbots;
 
                     const sharedMemoryEl = document.getElementById('chatbot_shared_memory');
                     const autoReplyEl = document.getElementById('chatbot_auto_reply_on_name');
                     const historyModeEl = document.getElementById('chatbot_history_mode');
 
-                    payload.chatbot_config = {
+                    targetPayload.chatbot_config = {
                         shared_memory: sharedMemoryEl ? sharedMemoryEl.checked : false,
                         auto_reply_on_name: autoReplyEl ? autoReplyEl.checked : false,
                         history_mode: historyModeEl ? historyModeEl.value : 'ai_only'
@@ -1386,68 +1615,68 @@ async function saveChanges() {
                 else if (item.type === 'slider') {
                     const el = document.getElementById(item.key);
                     if (el) {
-                        payload[item.key] = parseInt(el.value);
+                        targetPayload[item.key] = parseInt(el.value);
                     }
                 }
                 else if (item.type === 'interactionDefinitions') {
                     const defKey = item.key;
                     const intKey = item.interactionsKey;
-                    if (GLOBAL_SETTINGS[defKey]) payload[defKey] = GLOBAL_SETTINGS[defKey];
-                    if (GLOBAL_SETTINGS[intKey]) payload[intKey] = GLOBAL_SETTINGS[intKey];
+                    if (GLOBAL_SETTINGS[defKey]) targetPayload[defKey] = GLOBAL_SETTINGS[defKey];
+                    if (GLOBAL_SETTINGS[intKey]) targetPayload[intKey] = GLOBAL_SETTINGS[intKey];
                 }
             });
         });
 
         if (GLOBAL_SETTINGS.welcome_goodbye_definitions) {
-            payload.welcome_goodbye_definitions = GLOBAL_SETTINGS.welcome_goodbye_definitions;
+            settingsPayload.welcome_goodbye_definitions = GLOBAL_SETTINGS.welcome_goodbye_definitions;
         }
         if (GLOBAL_SETTINGS.welcome_goodbye_interactions) {
-            payload.welcome_goodbye_interactions = GLOBAL_SETTINGS.welcome_goodbye_interactions;
+            settingsPayload.welcome_goodbye_interactions = GLOBAL_SETTINGS.welcome_goodbye_interactions;
         }
         if (GLOBAL_SETTINGS.member_history_retention_days) {
-            payload.member_history_retention_days = GLOBAL_SETTINGS.member_history_retention_days;
+            settingsPayload.member_history_retention_days = GLOBAL_SETTINGS.member_history_retention_days;
         }
 
-        const welcomeEnabled = payload.welcome_enabled_bool !== undefined ? payload.welcome_enabled_bool : GLOBAL_SETTINGS.welcome_enabled_bool;
-        const goodbyeEnabled = payload.goodbye_enabled_bool !== undefined ? payload.goodbye_enabled_bool : GLOBAL_SETTINGS.goodbye_enabled_bool;
+        const welcomeEnabled = settingsPayload.welcome_enabled_bool !== undefined ? settingsPayload.welcome_enabled_bool : GLOBAL_SETTINGS.welcome_enabled_bool;
+        const goodbyeEnabled = settingsPayload.goodbye_enabled_bool !== undefined ? settingsPayload.goodbye_enabled_bool : GLOBAL_SETTINGS.goodbye_enabled_bool;
 
         if (welcomeEnabled === false) {
-            payload.welcome_messages = false;
-            payload.welcome_enabled = false;
+            settingsPayload.welcome_messages = false;
+            settingsPayload.welcome_enabled = false;
         } else {
-            payload.welcome_enabled = true;
+            settingsPayload.welcome_enabled = true;
             if (GLOBAL_SETTINGS.welcome_messages === false) {
-                payload.welcome_messages = [];
+                settingsPayload.welcome_messages = [];
             } else if (GLOBAL_SETTINGS.welcome_messages) {
-                payload.welcome_messages = GLOBAL_SETTINGS.welcome_messages;
+                settingsPayload.welcome_messages = GLOBAL_SETTINGS.welcome_messages;
             }
         }
 
         if (goodbyeEnabled === false) {
-            payload.goodbye_messages = false;
-            payload.goodbye_enabled = false;
+            settingsPayload.goodbye_messages = false;
+            settingsPayload.goodbye_enabled = false;
         } else {
-            payload.goodbye_enabled = true;
+            settingsPayload.goodbye_enabled = true;
             if (GLOBAL_SETTINGS.goodbye_messages === false) {
-                payload.goodbye_messages = [];
+                settingsPayload.goodbye_messages = [];
             } else if (GLOBAL_SETTINGS.goodbye_messages) {
-                payload.goodbye_messages = GLOBAL_SETTINGS.goodbye_messages;
+                settingsPayload.goodbye_messages = GLOBAL_SETTINGS.goodbye_messages;
             }
         }
 
-        if (payload.welcome_messages && !Array.isArray(payload.welcome_messages)) {
-            if (typeof payload.welcome_messages === 'string') {
-                payload.welcome_messages = payload.welcome_messages.split('|').map(s => s.trim()).filter(s => s.length > 0);
+        if (settingsPayload.welcome_messages && !Array.isArray(settingsPayload.welcome_messages)) {
+            if (typeof settingsPayload.welcome_messages === 'string') {
+                settingsPayload.welcome_messages = settingsPayload.welcome_messages.split('|').map(s => s.trim()).filter(s => s.length > 0);
             }
         }
-        if (payload.goodbye_messages && !Array.isArray(payload.goodbye_messages)) {
-            if (typeof payload.goodbye_messages === 'string') {
-                payload.goodbye_messages = payload.goodbye_messages.split('|').map(s => s.trim()).filter(s => s.length > 0);
+        if (settingsPayload.goodbye_messages && !Array.isArray(settingsPayload.goodbye_messages)) {
+            if (typeof settingsPayload.goodbye_messages === 'string') {
+                settingsPayload.goodbye_messages = settingsPayload.goodbye_messages.split('|').map(s => s.trim()).filter(s => s.length > 0);
             }
         }
 
         status.innerText = "Sending to Bot...";
-        const bodyData = { serverid: serverId, settings: payload };
+        const bodyData = { serverid: serverId, settings: settingsPayload, permissions: permissionsPayload };
         const response = await fetch(`${WORKER}/update-settings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': token },
@@ -1457,7 +1686,7 @@ async function saveChanges() {
         if (response.ok) {
             status.innerText = "Saved Successfully!";
             status.style.color = "#4fdc7b";
-            Object.assign(GLOBAL_SETTINGS, payload);
+            Object.assign(GLOBAL_SETTINGS, settingsPayload, permissionsPayload);
             PENDING_CHATBOTS = {};
             refreshChatbotGrid();
             hideDirtyPopup();

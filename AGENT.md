@@ -37,7 +37,13 @@ The project uses a **Discord-inspired Dark Mode**.
 ### 1. Dynamic Settings Generation
 Instead of hardcoding every input, we use `settings_config.json`.
 - **To add a setting:** Add an entry to the `settings` array in `settings_config.json`.
-- **Types supported:** `switch`, `select`, `textarea`, `channelPick`, `dict` (for key-value pairs), `embedMaker`, `chatbotList`.
+- **Types supported:** `switch`, `select`, `textarea`, `channelPick`, `dict` (for key-value pairs), `embedMaker`, `chatbotList`, `commandList`.
+
+### 2. Command Permission System
+Commands now use a `{command}_permissions` object instead of `{command}_enabled`.
+- **Structure:** `{ roles: [], permissions: [], enabled: true }`.
+- **Bulk Update:** Groups (like `/chatbot`) have a settings gear that can apply permissions to all sub-commands at once.
+- **Saving:** During save, command permissions are sent in a separate `permissions` object in the POST body.
 
 ### 2. Welcome/Goodbye System
 There are two systems. **Always ensure backward compatibility.**
