@@ -460,8 +460,9 @@ function renderCommandList() {
 }
 
 function renderCommandCard(cmd) {
-    const permKey = `${cmd.name}_permissions`;
-    const oldKey = `${cmd.name}_enabled`;
+    const baseKey = getCommandKey(cmd.name);
+    const permKey = `${baseKey}_permissions`;
+    const oldKey = `${baseKey}_enabled`;
 
     let isEnabled = true;
     if (GLOBAL_SETTINGS[permKey] !== undefined) {
@@ -717,8 +718,9 @@ function saveGroupSettings(groupName) {
     // Apply to all commands starting with this group name
     GLOBAL_COMMANDS.forEach(cmd => {
         if (cmd.name === groupName || cmd.name.startsWith(groupName + ' ')) {
-            const permKey = `${cmd.name}_permissions`;
-            const oldKey = `${cmd.name}_enabled`;
+            const baseKey = getCommandKey(cmd.name);
+            const permKey = `${baseKey}_permissions`;
+            const oldKey = `${baseKey}_enabled`;
             const cBox = document.getElementById(oldKey);
 
             GLOBAL_SETTINGS[permKey] = {
@@ -1534,8 +1536,9 @@ async function saveChanges() {
                 }
                 else if (item.type === 'commandList') {
                     GLOBAL_COMMANDS.forEach(cmd => {
-                        const permKey = `${cmd.name}_permissions`;
-                        const oldKey = `${cmd.name}_enabled`;
+                        const baseKey = getCommandKey(cmd.name);
+                        const permKey = `${baseKey}_permissions`;
+                        const oldKey = `${baseKey}_enabled`;
                         const cBox = document.getElementById(oldKey);
 
                         if (cBox) {
