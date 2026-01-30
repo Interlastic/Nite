@@ -17,10 +17,6 @@ function getTwemojiUrl(emoji) {
 function getCommandKey(name) {
     if (!name) return "";
     let k = name.trim().replace(/\s+/g, '.');
-    // Special case observed in the data: dashboard test xxx -> test.xxx
-    if (k.startsWith('dashboard.test.')) {
-        k = k.replace('dashboard.', '');
-    }
     return k;
 }
 
@@ -483,7 +479,7 @@ function renderCommandCard(cmd) {
                     </svg>
                 </button>
                 <label class="switch">
-                    <input type="checkbox" id="${oldKey}" ${isEnabled ? 'checked' : ''}>
+                    <input type="checkbox" id="${oldKey}" ${isEnabled ? 'checked' : ''} onchange="markDirty()">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -495,7 +491,20 @@ function renderCommandCard(cmd) {
 function openCommandSettings(cmdName) {
     const baseKey = getCommandKey(cmdName);
     const permKey = `${baseKey}_permissions`;
-    const settings = GLOBAL_SETTINGS[permKey] || { roles: [], permissions: [], enabled: true };
+
+    // Robustly retrieve settings from either GLOBAL_SETTINGS or a potential string fallback
+    let rawSettings = GLOBAL_SETTINGS[permKey];
+    if (typeof rawSettings === 'string') {
+        try { rawSettings = JSON.parse(rawSettings); } catch (e) { rawSettings = {}; }
+    }
+    rawSettings = rawSettings || {};
+
+    const toggle = document.getElementById(`${baseKey}_enabled`);
+    const settings = {
+        roles: Array.isArray(rawSettings.roles) ? rawSettings.roles : [],
+        permissions: Array.isArray(rawSettings.permissions) ? rawSettings.permissions : [],
+        enabled: toggle ? toggle.checked : (rawSettings.enabled !== undefined ? toBoolean(rawSettings.enabled) : true)
+    };
 
     const validPermissions = [
         "administrator", "manage_guild", "manage_roles", "manage_channels",
@@ -1542,13 +1551,20 @@ async function saveChanges() {
                         const cBox = document.getElementById(oldKey);
 
                         if (cBox) {
-                            const existingPerms = GLOBAL_SETTINGS[permKey] || { roles: [], permissions: [] };
+                            let rawPerms = GLOBAL_SETTINGS[permKey] || { roles: [], permissions: [], enabled: true };
+                            if (typeof rawPerms === 'string') {
+                                try { rawPerms = JSON.parse(rawPerms); } catch (e) { rawPerms = { roles: [], permissions: [], enabled: true }; }
+                            }
 
-                            permissionsPayload[permKey] = {
-                                roles: existingPerms.roles || [],
-                                permissions: existingPerms.permissions || [],
+                            const newPermData = {
+                                roles: Array.isArray(rawPerms.roles) ? rawPerms.roles : [],
+                                permissions: Array.isArray(rawPerms.permissions) ? rawPerms.permissions : [],
                                 enabled: cBox.checked
                             };
+
+                            permissionsPayload[permKey] = newPermData;
+                            // Also update the old key in settingsPayload for backward compatibility/redundancy
+                            settingsPayload[oldKey] = cBox.checked;
                         }
                     });
                 }
@@ -1679,7 +1695,10 @@ async function saveChanges() {
         }
 
         status.innerText = "Sending to Bot...";
-        const bodyData = { serverid: serverId, settings: settingsPayload, permissions: permissionsPayload };
+        // Merge permissions into settings for better bot compatibility, while keeping the separate key as well
+        const mergedSettings = { ...settingsPayload, ...permissionsPayload };
+        const bodyData = { serverid: serverId, settings: mergedSettings, permissions: permissionsPayload };
+
         const response = await fetch(`${WORKER}/update-settings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': token },
