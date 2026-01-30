@@ -457,12 +457,16 @@ function renderCommandList() {
 
 function renderCommandCard(cmd) {
     const baseKey = getCommandKey(cmd.name);
-    const permKey = `${baseKey}_permissions`;
+    const permKey = `${cmd.name.trim()}_permissions`;
     const oldKey = `${baseKey}_enabled`;
 
     let isEnabled = true;
-    if (GLOBAL_SETTINGS[permKey] !== undefined) {
-        isEnabled = toBoolean(GLOBAL_SETTINGS[permKey].enabled);
+    let rawPerms = (GLOBAL_SETTINGS.permissions && GLOBAL_SETTINGS.permissions[permKey])
+        ? GLOBAL_SETTINGS.permissions[permKey]
+        : GLOBAL_SETTINGS[permKey];
+
+    if (rawPerms !== undefined) {
+        isEnabled = toBoolean(rawPerms.enabled);
     } else if (GLOBAL_SETTINGS[oldKey] !== undefined) {
         isEnabled = toBoolean(GLOBAL_SETTINGS[oldKey]);
     }
@@ -489,17 +493,22 @@ function renderCommandCard(cmd) {
 }
 
 function openCommandSettings(cmdName) {
+    const permKey = `${cmdName.trim()}_permissions`;
     const baseKey = getCommandKey(cmdName);
-    const permKey = `${baseKey}_permissions`;
+    const oldKey = `${baseKey}_enabled`;
 
-    // Robustly retrieve settings from either GLOBAL_SETTINGS or a potential string fallback
-    let rawSettings = GLOBAL_SETTINGS[permKey];
+    // Robustly retrieve settings. Bots use spaces for permissions keys and dots for enabled keys.
+    // Also, permissions are often nested under a 'permissions' object in settings.
+    let rawSettings = (GLOBAL_SETTINGS.permissions && GLOBAL_SETTINGS.permissions[permKey])
+        ? GLOBAL_SETTINGS.permissions[permKey]
+        : GLOBAL_SETTINGS[permKey];
+
     if (typeof rawSettings === 'string') {
         try { rawSettings = JSON.parse(rawSettings); } catch (e) { rawSettings = {}; }
     }
     rawSettings = rawSettings || {};
 
-    const toggle = document.getElementById(`${baseKey}_enabled`);
+    const toggle = document.getElementById(oldKey);
     const settings = {
         roles: Array.isArray(rawSettings.roles) ? rawSettings.roles : [],
         permissions: Array.isArray(rawSettings.permissions) ? rawSettings.permissions : [],
@@ -577,15 +586,20 @@ function saveCommandSettings(cmdName) {
     const roleChks = modal.querySelectorAll('.role-chk:checked');
     const permChks = modal.querySelectorAll('.perm-chk:checked');
 
+    const permKey = `${cmdName.trim()}_permissions`;
     const baseKey = getCommandKey(cmdName);
     const toggle = document.getElementById(`${baseKey}_enabled`);
 
-    const permKey = `${baseKey}_permissions`;
-    GLOBAL_SETTINGS[permKey] = {
+    const newPermData = {
         roles: Array.from(roleChks).map(c => c.value),
         permissions: Array.from(permChks).map(c => c.value),
         enabled: toggle ? toggle.checked : true
     };
+
+    // Store in both places to satisfy all possible lookup logic
+    if (!GLOBAL_SETTINGS.permissions) GLOBAL_SETTINGS.permissions = {};
+    GLOBAL_SETTINGS.permissions[permKey] = newPermData;
+    GLOBAL_SETTINGS[permKey] = newPermData;
 
     closeCommandSettings();
     markDirty();
@@ -645,9 +659,23 @@ function openGroupSettings(fullPath) {
     // Find all commands that fall under this path
     const relatedCommands = GLOBAL_COMMANDS.filter(cmd => cmd.name === fullPath || cmd.name.startsWith(fullPath + ' '));
     const sampleCmd = relatedCommands[0];
+    const permKey = sampleCmd ? `${sampleCmd.name.trim()}_permissions` : '';
     const baseKey = sampleCmd ? getCommandKey(sampleCmd.name) : '';
-    const permKey = baseKey ? `${baseKey}_permissions` : '';
-    const settings = (sampleCmd && GLOBAL_SETTINGS[permKey]) ? GLOBAL_SETTINGS[permKey] : { roles: [], permissions: [], enabled: true };
+
+    let rawSettings = (sampleCmd && GLOBAL_SETTINGS.permissions && GLOBAL_SETTINGS.permissions[permKey])
+        ? GLOBAL_SETTINGS.permissions[permKey]
+        : ((sampleCmd && GLOBAL_SETTINGS[permKey]) ? GLOBAL_SETTINGS[permKey] : { roles: [], permissions: [], enabled: true });
+
+    if (typeof rawSettings === 'string') {
+        try { rawSettings = JSON.parse(rawSettings); } catch (e) { rawSettings = {}; }
+    }
+    rawSettings = rawSettings || {};
+
+    const settings = {
+        roles: Array.isArray(rawSettings.roles) ? rawSettings.roles : [],
+        permissions: Array.isArray(rawSettings.permissions) ? rawSettings.permissions : [],
+        enabled: rawSettings.enabled !== undefined ? toBoolean(rawSettings.enabled) : true
+    };
 
     const validPermissions = [
         "administrator", "manage_guild", "manage_roles", "manage_channels",
@@ -727,16 +755,20 @@ function saveGroupSettings(groupName) {
     // Apply to all commands starting with this group name
     GLOBAL_COMMANDS.forEach(cmd => {
         if (cmd.name === groupName || cmd.name.startsWith(groupName + ' ')) {
+            const permKey = `${cmd.name.trim()}_permissions`;
             const baseKey = getCommandKey(cmd.name);
-            const permKey = `${baseKey}_permissions`;
             const oldKey = `${baseKey}_enabled`;
             const cBox = document.getElementById(oldKey);
 
-            GLOBAL_SETTINGS[permKey] = {
+            const newPermData = {
                 roles: [...roles],
                 permissions: [...perms],
                 enabled: cBox ? cBox.checked : true
             };
+
+            if (!GLOBAL_SETTINGS.permissions) GLOBAL_SETTINGS.permissions = {};
+            GLOBAL_SETTINGS.permissions[permKey] = newPermData;
+            GLOBAL_SETTINGS[permKey] = newPermData; // Duplicate for backup
         }
     });
 
@@ -1545,13 +1577,15 @@ async function saveChanges() {
                 }
                 else if (item.type === 'commandList') {
                     GLOBAL_COMMANDS.forEach(cmd => {
+                        const permKey = `${cmd.name.trim()}_permissions`;
                         const baseKey = getCommandKey(cmd.name);
-                        const permKey = `${baseKey}_permissions`;
                         const oldKey = `${baseKey}_enabled`;
                         const cBox = document.getElementById(oldKey);
 
                         if (cBox) {
-                            let rawPerms = GLOBAL_SETTINGS[permKey] || { roles: [], permissions: [], enabled: true };
+                            let rawPerms = (GLOBAL_SETTINGS.permissions && GLOBAL_SETTINGS.permissions[permKey])
+                                ? GLOBAL_SETTINGS.permissions[permKey]
+                                : (GLOBAL_SETTINGS[permKey] || { roles: [], permissions: [], enabled: true });
                             if (typeof rawPerms === 'string') {
                                 try { rawPerms = JSON.parse(rawPerms); } catch (e) { rawPerms = { roles: [], permissions: [], enabled: true }; }
                             }
