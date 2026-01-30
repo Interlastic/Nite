@@ -45,18 +45,18 @@ Commands now use a `{command}_permissions` object instead of `{command}_enabled`
 - **Bulk Update:** Groups (like `/chatbot`) have a settings gear that can apply permissions to all sub-commands at once.
 - **Saving:** During save, command permissions are sent in a separate `permissions` object in the POST body.
 
-### 2. Welcome/Goodbye System
+### 3. Welcome/Goodbye System
 There are two systems. **Always ensure backward compatibility.**
 - **Legacy:** `welcome_messages` (Array).
 - **Advanced:** `welcome_goodbye_interactions` (Object).
 - The dashboard should handle both appropriately (see `UPDATE.md` for migration logic).
 
-### 3. Pattern Matching
+### 4. Pattern Matching
 Used in "Auto Reactions" and "Auto Replies".
 - Supports Regex-like patterns (e.g., `(?i)text` for case-insensitivity).
 - Includes special helpers like `\p{Extended_Pictographic}` for matching all emojis.
 
-### 4. AI & Chatbots
+### 5. AI & Chatbots
 - **Context:** AI picks up "Additional Context" for its personality.
 - **Shared Memory:** Chatbots can be configured to "see" each other's messages.
 - **Knowledge Base:** Custom entries (max 5) for bot-specific facts.
