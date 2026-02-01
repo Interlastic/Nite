@@ -457,13 +457,19 @@ function renderCommandList() {
 
 function renderCommandCard(cmd) {
     const baseKey = getCommandKey(cmd.name);
-    const permKey = `${cmd.name.trim()}_permissions`;
+    const spaceKey = `${cmd.name.trim()}_permissions`;
+    const dotKey = `${baseKey}_permissions`;
     const oldKey = `${baseKey}_enabled`;
 
     let isEnabled = true;
-    let rawPerms = (GLOBAL_SETTINGS.permissions && GLOBAL_SETTINGS.permissions[permKey])
-        ? GLOBAL_SETTINGS.permissions[permKey]
-        : GLOBAL_SETTINGS[permKey];
+    let rawPerms;
+
+    if (GLOBAL_SETTINGS.permissions) {
+        rawPerms = GLOBAL_SETTINGS.permissions[spaceKey] || GLOBAL_SETTINGS.permissions[dotKey];
+    }
+    if (rawPerms === undefined) {
+        rawPerms = GLOBAL_SETTINGS[spaceKey] || GLOBAL_SETTINGS[dotKey];
+    }
 
     if (rawPerms !== undefined) {
         isEnabled = toBoolean(rawPerms.enabled);
@@ -493,15 +499,21 @@ function renderCommandCard(cmd) {
 }
 
 function openCommandSettings(cmdName) {
-    const permKey = `${cmdName.trim()}_permissions`;
+    const spaceKey = `${cmdName.trim()}_permissions`;
     const baseKey = getCommandKey(cmdName);
+    const dotKey = `${baseKey}_permissions`;
     const oldKey = `${baseKey}_enabled`;
 
     // Robustly retrieve settings. Bots use spaces for permissions keys and dots for enabled keys.
     // Also, permissions are often nested under a 'permissions' object in settings.
-    let rawSettings = (GLOBAL_SETTINGS.permissions && GLOBAL_SETTINGS.permissions[permKey])
-        ? GLOBAL_SETTINGS.permissions[permKey]
-        : GLOBAL_SETTINGS[permKey];
+    let rawSettings;
+
+    if (GLOBAL_SETTINGS.permissions) {
+        rawSettings = GLOBAL_SETTINGS.permissions[spaceKey] || GLOBAL_SETTINGS.permissions[dotKey];
+    }
+    if (rawSettings === undefined) {
+        rawSettings = GLOBAL_SETTINGS[spaceKey] || GLOBAL_SETTINGS[dotKey];
+    }
 
     if (typeof rawSettings === 'string') {
         try { rawSettings = JSON.parse(rawSettings); } catch (e) { rawSettings = {}; }
@@ -659,12 +671,27 @@ function openGroupSettings(fullPath) {
     // Find all commands that fall under this path
     const relatedCommands = GLOBAL_COMMANDS.filter(cmd => cmd.name === fullPath || cmd.name.startsWith(fullPath + ' '));
     const sampleCmd = relatedCommands[0];
-    const permKey = sampleCmd ? `${sampleCmd.name.trim()}_permissions` : '';
+    const spaceKey = sampleCmd ? `${sampleCmd.name.trim()}_permissions` : '';
     const baseKey = sampleCmd ? getCommandKey(sampleCmd.name) : '';
+    const dotKey = baseKey ? `${baseKey}_permissions` : '';
 
-    let rawSettings = (sampleCmd && GLOBAL_SETTINGS.permissions && GLOBAL_SETTINGS.permissions[permKey])
-        ? GLOBAL_SETTINGS.permissions[permKey]
-        : ((sampleCmd && GLOBAL_SETTINGS[permKey]) ? GLOBAL_SETTINGS[permKey] : { roles: [], permissions: [], enabled: true });
+    let rawSettings;
+
+    if (sampleCmd) {
+        if (GLOBAL_SETTINGS.permissions) {
+            rawSettings = GLOBAL_SETTINGS.permissions[spaceKey] || GLOBAL_SETTINGS.permissions[dotKey];
+        }
+        if (rawSettings === undefined) {
+            rawSettings = GLOBAL_SETTINGS[spaceKey] || GLOBAL_SETTINGS[dotKey];
+        }
+
+        // Fallback to default if nothing found
+        if (rawSettings === undefined) {
+            rawSettings = { roles: [], permissions: [], enabled: true };
+        }
+    } else {
+        rawSettings = { roles: [], permissions: [], enabled: true };
+    }
 
     if (typeof rawSettings === 'string') {
         try { rawSettings = JSON.parse(rawSettings); } catch (e) { rawSettings = {}; }
