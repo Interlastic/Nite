@@ -20,6 +20,28 @@ function getCommandKey(name) {
     return k;
 }
 
+function findPermissionData(cmdName) {
+    if (!cmdName) return null;
+    const spaceKey = `${cmdName.trim()}_permissions`;
+    const baseKey = getCommandKey(cmdName);
+    const dotKey = `${baseKey}_permissions`;
+
+    let data;
+    // 1. Try nested permissions (preferred)
+    if (GLOBAL_SETTINGS.permissions) {
+        data = GLOBAL_SETTINGS.permissions[spaceKey] || GLOBAL_SETTINGS.permissions[dotKey];
+    }
+    // 2. Try top-level
+    if (data === undefined) {
+        data = GLOBAL_SETTINGS[spaceKey] || GLOBAL_SETTINGS[dotKey];
+    }
+
+    if (typeof data === 'string') {
+        try { data = JSON.parse(data); } catch (e) { return null; }
+    }
+    return data;
+}
+
 const UNICODE_EMOJIS = {
     "Smileys": ["😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "🙃", "😉", "😊", "😇", "🥰", "😍", "🤩", "😘", "😗", "😚", "😙", "🥲", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "🤥", "😌", "😔", "😪", "🤤", "😴", "😷", "🤒", "🤕", "🤢", "🤮", "🤧", "🥵", "🥶", "🥴", "😵", "🤯", "🤠", "🥳", "🥸", "😎", "🤓", "🧐"],
     "People": ["😕", "😟", "🙁", "😮", "😯", "😲", "😳", "🥺", "😦", "😧", "😨", "😰", "😥", "😢", "😭", "😱", "😖", "😣", "😞", "😓", "😩", "😫", "🥱", "😤", "😡", "😠", "🤬", "😈", "👿", "💀", "💩", "🤡", "👹", "👺", "👻", "👽", "👾", "🤖"],
@@ -457,21 +479,12 @@ function renderCommandList() {
 
 function renderCommandCard(cmd) {
     const baseKey = getCommandKey(cmd.name);
-    const spaceKey = `${cmd.name.trim()}_permissions`;
-    const dotKey = `${baseKey}_permissions`;
     const oldKey = `${baseKey}_enabled`;
 
     let isEnabled = true;
-    let rawPerms;
+    let rawPerms = findPermissionData(cmd.name);
 
-    if (GLOBAL_SETTINGS.permissions) {
-        rawPerms = GLOBAL_SETTINGS.permissions[spaceKey] || GLOBAL_SETTINGS.permissions[dotKey];
-    }
-    if (rawPerms === undefined) {
-        rawPerms = GLOBAL_SETTINGS[spaceKey] || GLOBAL_SETTINGS[dotKey];
-    }
-
-    if (rawPerms !== undefined) {
+    if (rawPerms !== undefined && rawPerms !== null) {
         isEnabled = toBoolean(rawPerms.enabled);
     } else if (GLOBAL_SETTINGS[oldKey] !== undefined) {
         isEnabled = toBoolean(GLOBAL_SETTINGS[oldKey]);
@@ -499,26 +512,10 @@ function renderCommandCard(cmd) {
 }
 
 function openCommandSettings(cmdName) {
-    const spaceKey = `${cmdName.trim()}_permissions`;
     const baseKey = getCommandKey(cmdName);
-    const dotKey = `${baseKey}_permissions`;
     const oldKey = `${baseKey}_enabled`;
 
-    // Robustly retrieve settings. Bots use spaces for permissions keys and dots for enabled keys.
-    // Also, permissions are often nested under a 'permissions' object in settings.
-    let rawSettings;
-
-    if (GLOBAL_SETTINGS.permissions) {
-        rawSettings = GLOBAL_SETTINGS.permissions[spaceKey] || GLOBAL_SETTINGS.permissions[dotKey];
-    }
-    if (rawSettings === undefined) {
-        rawSettings = GLOBAL_SETTINGS[spaceKey] || GLOBAL_SETTINGS[dotKey];
-    }
-
-    if (typeof rawSettings === 'string') {
-        try { rawSettings = JSON.parse(rawSettings); } catch (e) { rawSettings = {}; }
-    }
-    rawSettings = rawSettings || {};
+    let rawSettings = findPermissionData(cmdName) || {};
 
     const toggle = document.getElementById(oldKey);
     const settings = {
@@ -656,7 +653,7 @@ function renderCommandGroup(groupName, node, prefix = "") {
                 <button type="button" class="command-settings-btn" onclick="event.preventDefault(); openGroupSettings('${fullPath}')" title="Group Settings" style="margin-right: 10px;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                     </svg>
                 </button>
             </div>
@@ -671,27 +668,7 @@ function openGroupSettings(fullPath) {
     // Find all commands that fall under this path
     const relatedCommands = GLOBAL_COMMANDS.filter(cmd => cmd.name === fullPath || cmd.name.startsWith(fullPath + ' '));
     const sampleCmd = relatedCommands[0];
-    const spaceKey = sampleCmd ? `${sampleCmd.name.trim()}_permissions` : '';
-    const baseKey = sampleCmd ? getCommandKey(sampleCmd.name) : '';
-    const dotKey = baseKey ? `${baseKey}_permissions` : '';
-
-    let rawSettings;
-
-    if (sampleCmd) {
-        if (GLOBAL_SETTINGS.permissions) {
-            rawSettings = GLOBAL_SETTINGS.permissions[spaceKey] || GLOBAL_SETTINGS.permissions[dotKey];
-        }
-        if (rawSettings === undefined) {
-            rawSettings = GLOBAL_SETTINGS[spaceKey] || GLOBAL_SETTINGS[dotKey];
-        }
-
-        // Fallback to default if nothing found
-        if (rawSettings === undefined) {
-            rawSettings = { roles: [], permissions: [], enabled: true };
-        }
-    } else {
-        rawSettings = { roles: [], permissions: [], enabled: true };
-    }
+    let rawSettings = (sampleCmd ? findPermissionData(sampleCmd.name) : null) || { roles: [], permissions: [], enabled: true };
 
     if (typeof rawSettings === 'string') {
         try { rawSettings = JSON.parse(rawSettings); } catch (e) { rawSettings = {}; }
@@ -1610,12 +1587,7 @@ async function saveChanges() {
                         const cBox = document.getElementById(oldKey);
 
                         if (cBox) {
-                            let rawPerms = (GLOBAL_SETTINGS.permissions && GLOBAL_SETTINGS.permissions[permKey])
-                                ? GLOBAL_SETTINGS.permissions[permKey]
-                                : (GLOBAL_SETTINGS[permKey] || { roles: [], permissions: [], enabled: true });
-                            if (typeof rawPerms === 'string') {
-                                try { rawPerms = JSON.parse(rawPerms); } catch (e) { rawPerms = { roles: [], permissions: [], enabled: true }; }
-                            }
+                            let rawPerms = findPermissionData(cmd.name) || { roles: [], permissions: [], enabled: true };
 
                             const newPermData = {
                                 roles: Array.isArray(rawPerms.roles) ? rawPerms.roles : [],
