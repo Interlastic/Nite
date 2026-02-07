@@ -1,0 +1,157 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0a0a0a;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    padding: 20px;
+}
+
+.clock-display {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.time-unit {
+    position: relative;
+    display: inline-flex;
+    margin: 0 15px;
+}
+
+.digit-container {
+    position: relative;
+    width: 60px;
+    height: 100px;
+    display: inline-block;
+    margin: 0 3px;
+}
+
+.pixel {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #00ff88;
+    border-radius: 1px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    box-shadow: 0 0 8px #00ff88, 0 0 15px #00ff88;
+}
+
+.pixel.moving-y {
+    transition: transform 0.25s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.pixel.moving-x {
+    transition: transform 0.25s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.25s;
+}
+
+.separator {
+    font-size: 60px;
+    color: #00ff88;
+    text-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88;
+    animation: blink 1s infinite;
+    margin: 0 5px;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+.controls {
+    display: flex;
+    gap: 30px;
+}
+
+.control-btn {
+    width: 70px;
+    height: 70px;
+    font-size: 40px;
+    font-weight: bold;
+    border: 2px solid #00ff88;
+    background: rgba(0, 255, 136, 0.1);
+    color: #00ff88;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
+.control-btn:hover {
+    background: rgba(0, 255, 136, 0.3);
+    transform: scale(1.1);
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 600px) {
+    .digit-container {
+        width: 40px;
+        height: 70px;
+    }
+    
+    .pixel {
+        width: 4px;
+        height: 4px;
+    }
+    
+    .separator {
+        font-size: 40px;
+    }
+    
+    .time-unit {
+        margin: 0 8px;
+    }
+    
+    .control-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 32px;
+    }
+    
+    .clock-display {
+        height: 150px;
+    }
+}
+
+@media (max-width: 400px) {
+    .digit-container {
+        width: 30px;
+        height: 55px;
+    }
+    
+    .pixel {
+        width: 3px;
+        height: 3px;
+    }
+    
+    .separator {
+        font-size: 30px;
+    }
+    
+    .time-unit {
+        margin: 0 5px;
+    }
+}
