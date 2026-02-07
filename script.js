@@ -98,6 +98,7 @@ async function fetchServers() {
     const token = getCookie("auth_token");
 
     if (!token) return;
+    if (!btn) return;
 
     btn.disabled = true;
     btn.innerText = "Collecting Servers...";

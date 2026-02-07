@@ -1,5 +1,5 @@
-let currentEmojiTarget = null;
-let emojiModal = null;
+var currentEmojiTarget = null;
+var emojiModal = null;
 
 function openEmojiPicker(btn) {
     if (!btn) {
@@ -10,7 +10,7 @@ function openEmojiPicker(btn) {
     currentEmojiTarget = btn.previousElementSibling;
 
     if (!currentEmojiTarget || !(currentEmojiTarget.tagName === 'TEXTAREA' || currentEmojiTarget.tagName === 'INPUT')) {
-        
+
         if (btn.parentElement) {
             currentEmojiTarget = btn.parentElement.querySelector('textarea, input');
         }
@@ -93,13 +93,13 @@ function renderEmojiContent(filter = "") {
     }
 
     if (emojis.unicode) {
-        
+
         const categories = Object.keys(emojis.unicode);
         categories.forEach(cat => {
             const list = emojis.unicode[cat];
             const filtered = list.filter(e => {
                 if (!filter) return true;
-                
+
                 if (typeof EMOJI_KEYWORDS !== 'undefined' && EMOJI_KEYWORDS[e]) {
                     return EMOJI_KEYWORDS[e].toLowerCase().includes(filter);
                 } else if (typeof parent !== 'undefined' && typeof parent.EMOJI_KEYWORDS !== 'undefined' && parent.EMOJI_KEYWORDS[e]) {
