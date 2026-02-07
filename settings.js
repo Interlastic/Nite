@@ -1136,26 +1136,47 @@ function openEmbedMaker(key) {
         }
     });
 
-    if (loadedDefinitions.length === 0 && GLOBAL_SETTINGS[key]) {
-        const legacy = GLOBAL_SETTINGS[key];
-        if (legacy.content || (legacy.embeds && legacy.embeds.length > 0)) {
+    if (loadedDefinitions.length === 0) {
+        let legacy = GLOBAL_SETTINGS[key];
 
-            const allIds = Object.keys(allDefs).map(id => parseInt(id)).filter(id => !isNaN(id));
-            const nextId = allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
+        // Fallback for array-style legacy messages (welcome_messages/goodbye_messages)
+        if (!legacy && isWelcome && GLOBAL_SETTINGS['welcome_messages']) legacy = GLOBAL_SETTINGS['welcome_messages'];
+        if (!legacy && !isWelcome && GLOBAL_SETTINGS['goodbye_messages']) legacy = GLOBAL_SETTINGS['goodbye_messages'];
 
-            loadedDefinitions.push({
-                id: String(nextId),
-                content: legacy.content || '',
-                embeds: legacy.embeds || [],
-                username: legacy.username,
-                avatar_url: legacy.avatar_url,
-                interactions: isWelcome ? ['member_joined'] : ['member_left']
-            });
+        if (legacy) {
+            let content = '';
+            let embeds = [];
+            let username = undefined;
+            let avatar = undefined;
 
-            GLOBAL_SETTINGS.welcome_goodbye_definitions = GLOBAL_SETTINGS.welcome_goodbye_definitions || {};
-            GLOBAL_SETTINGS.welcome_goodbye_interactions = GLOBAL_SETTINGS.welcome_goodbye_interactions || {};
-            GLOBAL_SETTINGS.welcome_goodbye_definitions[String(nextId)] = loadedDefinitions[0];
-            GLOBAL_SETTINGS.welcome_goodbye_interactions[String(nextId)] = loadedDefinitions[0].interactions;
+            if (Array.isArray(legacy)) {
+                // If it's an array of strings (old format), use the first one or join them 
+                content = legacy.length > 0 ? legacy[0] : '';
+            } else if (typeof legacy === 'object') {
+                content = legacy.content || '';
+                embeds = legacy.embeds || [];
+                username = legacy.username;
+                avatar = legacy.avatar_url;
+            }
+
+            if (content || embeds.length > 0) {
+                const allIds = Object.keys(allDefs).map(id => parseInt(id)).filter(id => !isNaN(id));
+                const nextId = allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
+
+                loadedDefinitions.push({
+                    id: String(nextId),
+                    content: content,
+                    embeds: embeds,
+                    username: username,
+                    avatar_url: avatar,
+                    interactions: isWelcome ? ['member_joined'] : ['member_left']
+                });
+
+                GLOBAL_SETTINGS.welcome_goodbye_definitions = GLOBAL_SETTINGS.welcome_goodbye_definitions || {};
+                GLOBAL_SETTINGS.welcome_goodbye_interactions = GLOBAL_SETTINGS.welcome_goodbye_interactions || {};
+                GLOBAL_SETTINGS.welcome_goodbye_definitions[String(nextId)] = loadedDefinitions[0];
+                GLOBAL_SETTINGS.welcome_goodbye_interactions[String(nextId)] = loadedDefinitions[0].interactions;
+            }
         }
     }
 
@@ -1433,6 +1454,7 @@ function saveAllDefinitions(key) {
         statusEl.textContent = data.definitions.length > 0 ? `✓ ${data.definitions.length} definition${data.definitions.length > 1 ? 's' : ''} configured` : 'No definitions set';
         statusEl.style.color = data.definitions.length > 0 ? '#3ba55c' : '#72767d';
     }
+    markDirty();
     closeMultiEmbedModal();
 }
 
@@ -1447,13 +1469,13 @@ function saveEmbedFromModal(key) {
         const embedData = iframe.contentWindow.getEmbedData();
         GLOBAL_SETTINGS[key] = embedData;
 
-        const statusEl = document.getElementById(`embed-status-${key}`);
         if (statusEl) {
             const hasEmbed = embedData && Object.keys(embedData).length > 0;
             statusEl.textContent = hasEmbed ? '✓ Embed configured' : 'No embed set';
             statusEl.style.color = hasEmbed ? '#3ba55c' : '#72767d';
         }
 
+        markDirty();
         closeEmbedMaker();
     } else {
         alert('Could not retrieve embed data. Please try again.');
@@ -1475,6 +1497,7 @@ function clearEmbed(key) {
             const removeBtn = group.querySelector('.dict-remove-btn');
             if (removeBtn) removeBtn.remove();
         }
+        markDirty();
     }
 }
 

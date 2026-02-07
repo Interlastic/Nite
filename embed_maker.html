@@ -680,9 +680,9 @@
                 </div>
                 <div class="form-group">
                     <label>App Icon URL</label>
-                    <input type="text" id="app-icon" placeholder="https:
-                        value="https:
+                    <input type="text" id="app-icon" placeholder="https://example.com/icon.png" value="">
                 </div>
+
             </div>
 
             <div class="form-group">
@@ -695,7 +695,7 @@
                         maxlength="2000"></textarea>
                     <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji"
                         style="margin-top: 5px;">
-                        <svg xmlns="http:
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
@@ -743,7 +743,7 @@
             </div>
 
             <div id="embed-editor">
-                
+
             </div>
 
             <div class="output-section">
@@ -773,7 +773,7 @@
     </div>
 
     <script>
-        
+
         const LIMITS = {
             message: 2000,
             title: 256,
@@ -813,8 +813,9 @@
             '{channellink}': '#general',
             '{username}': 'username',
             '{displayname}': 'User 1',
-            '{profileurl}': 'https:
-            '{profileopenurl}': 'https:
+            '{profileurl}': 'https://discord.com/users/123456789',
+            '{profileopenurl}': 'https://discord.com/users/123456789',
+
             '{server}': 'My Server',
             '{servername}': 'My Server',
             '{membercount}': '1,234',
@@ -824,7 +825,8 @@
             '{userid}': '123456789012345678',
             '{serverid}': '987654321098765432',
             '{join_method}': 'Invite Link',
-            '{invite_link}': 'https:
+            '{invite_link}': 'https://discord.gg/invite',
+
             '{time_to_return}': '15 days'
         };
 
@@ -844,18 +846,18 @@
         function escapeAndReplacePlaceholdersNoMention(text) {
             if (!text) return '';
             let escaped = escapeHtml(text);
-            
+
             const ESCAPE_OPEN = '___ESCAPED_OPEN_BRACE___';
             const ESCAPE_CLOSE = '___ESCAPED_CLOSE_BRACE___';
             escaped = escaped.split('\\{').join(ESCAPE_OPEN);
             escaped = escaped.split('\\}').join(ESCAPE_CLOSE);
-            
+
             for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
                 if (placeholder !== '{mention}' && placeholder !== '{channellink}') {
                     escaped = escaped.split(placeholder).join(escapeHtml(value));
                 }
             }
-            
+
             escaped = escaped.split(ESCAPE_OPEN).join('{');
             escaped = escaped.split(ESCAPE_CLOSE).join('}');
             return escaped;
@@ -863,29 +865,30 @@
 
         function escapeAndReplacePlaceholders(text) {
             if (!text) return '';
-            
+
             let escaped = escapeHtml(text);
-            
+
             const ESCAPE_OPEN = '___ESCAPED_OPEN_BRACE___';
             const ESCAPE_CLOSE = '___ESCAPED_CLOSE_BRACE___';
             escaped = escaped.split('\\{').join(ESCAPE_OPEN);
             escaped = escaped.split('\\}').join(ESCAPE_CLOSE);
-            
+
             escaped = escaped.split('{mention}').join('<span class="discord-mention">@username</span>');
             escaped = escaped.split('{channellink}').join('<span class="discord-mention">#general</span>');
-            
+
             for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
                 if (placeholder !== '{mention}' && placeholder !== '{channellink}') {
                     escaped = escaped.split(placeholder).join(escapeHtml(value));
                 }
             }
-            
+
             escaped = escaped.split(ESCAPE_OPEN).join('{');
             escaped = escaped.split(ESCAPE_CLOSE).join('}');
 
             escaped = escaped.replace(/&lt;(a?):(\w+):(\d+)&gt;/g, (match, animated, name, id) => {
                 const ext = animated ? 'gif' : 'png';
-                return `<img src="https:
+                return `<img src="https://cdn.discordapp.com/emojis/${id}.${ext}" alt=":${name}:" class="discord-emoji">`;
+
             });
 
             escaped = parseDiscordMarkdown(escaped);
@@ -1052,19 +1055,22 @@
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <input type="text" id="embed-author-name" placeholder="Author name" maxlength="256" oninput="updatePreview()">
                             <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="width: 32px; height: 32px; min-width: 32px;">
-                                <svg xmlns="http:
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+
                             </button>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Author Icon URL</label>
-                            <input type="text" id="embed-author-icon" placeholder="https:
+                            <input type="text" id="embed-author-icon" placeholder="https://example.com/icon.png">
                         </div>
+
                         <div class="form-group">
                             <label>Author URL</label>
-                            <input type="text" id="embed-author-url" placeholder="https:
+                            <input type="text" id="embed-author-url" placeholder="https://example.com">
                         </div>
+
                     </div>
                 </div>
 
@@ -1076,13 +1082,15 @@
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <input type="text" id="embed-title" placeholder="Embed title" maxlength="256" oninput="updatePreview()">
                                 <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="width: 32px; height: 32px; min-width: 32px;">
-                                    <svg xmlns="http:
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+
                                 </button>
                             </div>
                         </div>
                         <div class="form-group">
                             <label>Title URL</label>
-                            <input type="text" id="embed-title-url" placeholder="https:
+                            <input type="text" id="embed-title-url" placeholder="https://example.com">
+
                         </div>
                     </div>
                     <div class="form-group">
@@ -1090,7 +1098,8 @@
                         <div style="display: flex; gap: 8px; align-items: flex-start;">
                             <textarea id="embed-description" placeholder="Embed description" maxlength="4096" oninput="updatePreview()"></textarea>
                             <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="margin-top: 5px;">
-                                <svg xmlns="http:
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+
                             </button>
                         </div>
                     </div>
@@ -1104,11 +1113,13 @@
                     <h3 style="margin-top:0">Images</h3>
                     <div class="form-group">
                         <label>Thumbnail URL</label>
-                        <input type="text" id="embed-thumbnail" placeholder="https:
+                        <input type="text" id="embed-thumbnail" placeholder="https://example.com/image.png">
+
                     </div>
                     <div class="form-group">
                         <label>Image URL</label>
-                        <input type="text" id="embed-image" placeholder="https:
+                        <input type="text" id="embed-image" placeholder="https://example.com/image.png">
+
                     </div>
                 </div>
 
@@ -1129,13 +1140,15 @@
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <input type="text" id="embed-footer" placeholder="Footer text" maxlength="2048" oninput="updatePreview()">
                                 <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="width: 32px; height: 32px; min-width: 32px;">
-                                    <svg xmlns="http:
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+
                                 </button>
                             </div>
                         </div>
                         <div class="form-group">
                             <label>Footer Icon URL</label>
-                            <input type="text" id="embed-footer-icon" placeholder="https:
+                            <input type="text" id="embed-footer-icon" placeholder="https://example.com/icon.png">
+
                         </div>
                     </div>
                     <div class="form-group">
@@ -1178,14 +1191,16 @@
                     <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
                         <input type="text" placeholder="Field name" class="field-name" maxlength="256" value="${escapeHtml(name === '\u200b' ? '' : name)}" oninput="updatePreview()">
                         <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="width: 32px; height: 32px; min-width: 32px;">
-                            <svg xmlns="http:
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+
                         </button>
                     </div>
                     <label style="font-size: 11px; margin-top: 4px;">Value <span class="char-count">0 / 1024</span></label>
                     <div style="display: flex; gap: 8px; align-items: flex-start;">
                         <textarea placeholder="Field value" class="field-value" maxlength="1024" oninput="updatePreview()">${escapeHtml(value === '\u200b' ? '' : value)}</textarea>
                         <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="margin-top: 5px; width: 32px; height: 32px; min-width: 32px;">
-                            <svg xmlns="http:
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+
                         </button>
                     </div>
                     <label class="checkbox-label">
@@ -1207,7 +1222,7 @@
                 if (fieldsContainer.querySelectorAll('.field-item').length === 0) {
                     fieldsContainer.innerHTML = '<span class="empty-state">No fields added</span>';
                 }
-                
+
                 fieldsContainer.querySelectorAll('.field-item').forEach((item, i) => {
                     item.querySelector('.field-header span').textContent = `Field ${i + 1}`;
                 });
@@ -1236,7 +1251,7 @@
             saveCurrentEmbed();
 
             const rawAppName = document.getElementById('app-name').value || 'Bot';
-            
+
             let appName = rawAppName;
             for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
                 if (placeholder !== '{mention}') {
@@ -1373,7 +1388,7 @@
 
                 if (embed.fields) {
                     embed.fields.forEach(f => {
-                        
+
                         const name = f.name === '\u200b' ? '' : (f.name || '');
                         const value = f.value === '\u200b' ? '' : (f.value || '');
                         total += name.length;
@@ -1533,7 +1548,7 @@
 
         document.addEventListener('keydown', (e) => {
             if (e.target.matches('input[type="text"], textarea')) {
-                
+
                 if (e.target.id === 'embed-message') return;
 
                 const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End', 'Control', 'Meta', 'Alt', 'Shift'];
@@ -1542,7 +1557,7 @@
                 const currentTotal = calculateTotalLength();
                 if (currentTotal >= LIMITS.total) {
                     e.preventDefault();
-                    
+
                     const totalEl = document.getElementById('total-char-count');
                     if (totalEl) {
                         totalEl.style.transform = "scale(1.1)";
@@ -1567,7 +1582,7 @@
         });
 
         function showCustomAlert(msg) {
-            
+
             const modalId = 'custom-alert-modal';
             let modal = document.getElementById(modalId);
 
