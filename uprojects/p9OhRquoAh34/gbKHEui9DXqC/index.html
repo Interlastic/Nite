@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>67 Clicker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        /* Left Panel - Stats */
+        .left-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            color: #00d4ff;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px solid #00d4ff;
+            padding-bottom: 10px;
+        }
+
+        .stat-item {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #00d4ff;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.3em;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* Center Panel - Main Game */
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .score-display {
+            font-size: 3em;
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .score-subtext {
+            font-size: 1.2em;
+            color: #888;
+            margin-bottom: 40px;
+        }
+
+        .main-button {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+            border: 8px solid #ff8787;
+            cursor: pointer;
+            font-size: 4em;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4),
+                        inset 0 -5px 20px rgba(0, 0, 0, 0.2),
+                        inset 0 5px 20px rgba(255, 255, 255, 0.2);
+            transition: all 0.1s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(255, 107, 107, 0.6),
+                        inset 0 -5px 20px rgba(0, 0, 0, 0.2),
+                        inset 0 5px 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .main-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4),
+                        inset 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .main-button::before {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 20%;
+            width: 60%;
+            height: 40%;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: rotate(-30deg);
+        }
+
+        /* Floating numbers animation */
+        .floating-number {
+            position: absolute;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #00ff88;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+
+        .milk-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(to top, #fff, #f0f0f0);
+            border-top: 3px solid #ddd;
+            transition: height 0.3s ease;
+        }
+
+        /* Right Panel - Buildings/Upgrades */
+        .right-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #ff6b6b;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+            display: flex;
+            flex-direction: column;
+            max-height: 95vh;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 107, 107, 0.2);
+            border: 2px solid #ff6b6b;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .tab:hover, .tab.active {
+            background: rgba(255, 107, 107, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .building-item, .upgrade-item {
+            background: rgba(255, 107, 107, 0.1);
+            border: 2px solid #ff6b6b;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .building-item:hover, .upgrade-item:hover {
+            background: rgba(255, 107, 107, 0.2);
+            transform: translateX(5px);
+        }
+
+        .building-item.disabled, .upgrade-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .building-name {
+            font-size: 1.1em;
+            color: #ff6b6b;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .building-cost, .upgrade-cost {
+            font-size: 0.9em;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+
+        .building-production, .upgrade-effect {
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .building-count {
+            font-size: 1.5em;
+            color: #00ff88;
+            font-weight: bold;
+            text-align: right;
+            margin-top: -30px;
+        }
+
+        /* Achievements Section */
+        .achievements-container {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .achievement {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid #00d4ff;
+            border-radius: 5px;
+            padding: 8px;
+            margin-bottom: 5px;
+            font-size: 0.85em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .achievement.locked {
+            opacity: 0.3;
+        }
+
+        .achievement-icon {
+            font-size: 1.5em;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ff6b6b;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff8787;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 255, 136, 0.9);
+            color: #000;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+
+            .center-panel {
+                order: -1;
+            }
+        }
+
+        /* Title */
+        .game-title {
+            text-align: center;
+            font-size: 2em;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+            letter-spacing: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <h2 class="section-title">Stats</h2>
+            <div class="stat-item">
+                <div class="stat-label">Total 67s</div>
+                <div class="stat-value" id="total-67s">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">67s per Second</div>
+                <div class="stat-value" id="67-per-second">0.0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">67s per Click</div>
+                <div class="stat-value" id="67-per-click">1</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Hand Clicks</div>
+                <div class="stat-value" id="hand-clicks">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Milk</div>
+                <div class="stat-value" id="milk-percent">0%</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Achievements</div>
+                <div class="stat-value" id="achievement-count">0/0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Play Time</div>
+                <div class="stat-value" id="play-time">0:00:00</div>
+            </div>
+            
+            <h2 class="section-title" style="margin-top: 20px;">Achievements</h2>
+            <div class="achievements-container" id="achievements-list"></div>
+        </div>
+
+        <!-- Center Panel -->
+        <div class="center-panel">
+            <h1 class="game-title">67 CLICKER</h1>
+            <div class="score-display" id="score-display">0</div>
+            <div class="score-subtext">six-sevens</div>
+            <button class="main-button" id="main-button">67</button>
+            <div class="milk-container" id="milk-container"></div>
+        </div>
+
+        <!-- Audio Element -->
+        <audio id="clickSound" preload="auto">
+            <source src="https://www.myinstants.com/media/sounds/67_SQlv2Xv.mp3" type="audio/mpeg">
+        </audio>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <div class="tabs">
+                <div class="tab active" data-tab="buildings">Buildings</div>
+                <div class="tab" data-tab="upgrades">Upgrades</div>
+            </div>
+            
+            <div class="tab-content active" id="buildings-tab"></div>
+            <div class="tab-content" id="upgrades-tab"></div>
+        </div>
+    </div>
+
+    <script>
+        // Audio setup
+        const clickSound = document.getElementById('clickSound');
+        clickSound.volume = 0.15; // Reduced volume (15%)
+        
+        // Web Audio API setup for proper sound overlap
+        let audioContext = null;
+        let sixtySevenBuffer = null;
+        
+        // Initialize AudioContext and load the 67 sound
+        async function initAudio() {
+            if (audioContext) return; // Already initialized
+            
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Load the 67 sound file
+                const response = await fetch('https://www.myinstants.com/media/sounds/67_SQlv2Xv.mp3');
+                const arrayBuffer = await response.arrayBuffer();
+                sixtySevenBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            } catch (error) {
+                console.error('Error loading audio:', error);
+            }
+        }
+        
+        // Play the 67 sound using Web Audio API for true overlap
+        function playSixtySevenSound() {
+            if (!audioContext || !sixtySevenBuffer) {
+                // Fallback: try to init if not ready
+                initAudio();
+                return;
+            }
+            
+            // Resume context if suspended (browser autoplay policy)
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Create a new source for each play call (this enables true overlap)
+            const source = audioContext.createBufferSource();
+            source.buffer = sixtySevenBuffer;
+            
+            // Create a gain node for volume control (40% = 0.4)
+            const gainNode = audioContext.createGain();
+            gainNode.gain.value = 0.4;
+            
+            // Connect: source -> gain -> destination (speakers)
+            source.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Start playing immediately
+            source.start(0);
+            
+            // Clean up after sound finishes (approx 2 seconds)
+            setTimeout(() => {
+                try {
+                    source.stop();
+                    source.disconnect();
+                    gainNode.disconnect();
+                } catch (e) {
+                    // Ignore errors if already stopped
+                }
+            }, 2000);
+        }
+        
+        // Initialize audio on first user interaction (browser autoplay policy)
+        document.addEventListener('click', function initOnClick() {
+            initAudio();
+            document.removeEventListener('click', initOnClick);
+        }, { once: true });
+        
+        // Game State
+        const gameState = {
+            total67: 0,
+            lifetime67: 0,
+            perSecond: 0,
+            perClick: 1,
+            handClicks: 0,
+            milk: 0,
+            playTime: 0,
+            buildings: {},
+            upgrades: {},
+            achievements: []
+        };
+
+        // Buildings Data (scaled from Cookie Clicker)
+        const buildingsData = [
+            { id: 'cursor', name: 'Cursor', baseCost: 15, baseCPS: 0.1, icon: '👆' },
+            { id: 'grandma', name: 'Grandma', baseCost: 100, baseCPS: 1, icon: '👵' },
+            { id: 'farm', name: 'Farm', baseCost: 1100, baseCPS: 8, icon: '🌾' },
+            { id: 'mine', name: 'Mine', baseCost: 12000, baseCPS: 47, icon: '⛏️' },
+            { id: 'factory', name: 'Factory', baseCost: 130000, baseCPS: 260, icon: '🏭' },
+            { id: 'bank', name: 'Bank', baseCost: 1400000, baseCPS: 1400, icon: '🏦' },
+            { id: 'temple', name: 'Temple', baseCost: 20000000, baseCPS: 7800, icon: '🏛️' },
+            { id: 'wizard', name: 'Wizard Tower', baseCost: 330000000, baseCPS: 44000, icon: '🧙' },
+            { id: 'shipment', name: 'Shipment', baseCost: 5100000000, baseCPS: 260000, icon: '🚀' },
+            { id: 'alchemy', name: 'Alchemy Lab', baseCost: 75000000000, baseCPS: 1600000, icon: '⚗️' },
+            { id: 'portal', name: 'Portal', baseCost: 1000000000000, baseCPS: 10000000, icon: '🌀' },
+            { id: 'timemachine', name: 'Time Machine', baseCost: 14000000000000, baseCPS: 65000000, icon: '⏰' },
+            { id: 'antimatter', name: 'Antimatter Condenser', baseCost: 170000000000000, baseCPS: 430000000, icon: '☢️' },
+            { id: 'prism', name: 'Prism', baseCost: 2100000000000000, baseCPS: 2900000000, icon: '🔮' },
+            { id: 'chance', name: 'Chancemaker', baseCost: 26000000000000000, baseCPS: 21000000000, icon: '🎰' },
+            { id: 'fractal', name: 'Fractal Engine', baseCost: 310000000000000000, baseCPS: 150000000000, icon: '🔬' }
+        ];
+
+        // Upgrades Data
+        const upgradesData = [
+            // Clicking upgrades
+            { id: 'click1', name: 'Plastic Mouse', cost: 500, effect: 'click', multiplier: 2, icon: '🖱️', desc: 'Clicking is 2x more efficient' },
+            { id: 'click2', name: 'Iron Mouse', cost: 5000, effect: 'click', multiplier: 2, icon: '⚙️', desc: 'Clicking is 2x more efficient' },
+            { id: 'click3', name: 'Titanium Mouse', cost: 50000, effect: 'click', multiplier: 2, icon: '💎', desc: 'Clicking is 2x more efficient' },
+            { id: 'click4', name: 'Adamantium Mouse', cost: 5000000, effect: 'click', multiplier: 2, icon: '🔬', desc: 'Clicking is 2x more efficient' },
+            
+            // Building upgrades
+            { id: 'cursor1', name: 'Reinforced Index Finger', cost: 100, effect: 'cursor', multiplier: 2, icon: '👆', desc: 'Cursors are twice as efficient', buildingId: 'cursor' },
+            { id: 'cursor2', name: 'Carpal Tunnel Prevention Cream', cost: 500, effect: 'cursor', multiplier: 2, icon: '💊', desc: 'Cursors are twice as efficient', buildingId: 'cursor' },
+            { id: 'grandma1', name: 'Forwards from Grandma', cost: 1000, effect: 'grandma', multiplier: 2, icon: '📧', desc: 'Grandmas are twice as efficient', buildingId: 'grandma' },
+            { id: 'grandma2', name: 'Steel-plated Rolling Pins', cost: 5000, effect: 'grandma', multiplier: 2, icon: '🥖', desc: 'Grandmas are twice as efficient', buildingId: 'grandma' },
+            { id: 'farm1', name: 'Cheap Hoes', cost: 11000, effect: 'farm', multiplier: 2, icon: '🌱', desc: 'Farms are twice as efficient', buildingId: 'farm' },
+            { id: 'mine1', name: 'Sugar Gas', cost: 120000, effect: 'mine', multiplier: 2, icon: '💨', desc: 'Mines are twice as efficient', buildingId: 'mine' },
+            { id: 'factory1', name: 'Sturdier Conveyor Belts', cost: 1300000, effect: 'factory', multiplier: 2, icon: '🔧', desc: 'Factories are twice as efficient', buildingId: 'factory' },
+            
+            // Global multipliers
+            { id: 'global1', name: 'Six-Seven Synergy', cost: 10000, effect: 'global', multiplier: 1.1, icon: '67', desc: 'All production +10%' },
+            { id: 'global2', name: 'Brainrot Boost', cost: 100000, effect: 'global', multiplier: 1.1, icon: '🧠', desc: 'All production +10%' },
+            { id: 'global3', name: 'Maverick Magic', cost: 1000000, effect: 'global', multiplier: 1.1, icon: '🏀', desc: 'All production +10%' },
+            
+            // Kitten upgrades (milk-based)
+            { id: 'kitten1', name: 'Kitten Helpers', cost: 9000000, effect: 'milk', multiplier: 0.1, icon: '🐱', desc: '+1% CpS per 10% milk', milkRequired: 0.5 },
+            { id: 'kitten2', name: 'Kitten Workers', cost: 9000000000, effect: 'milk', multiplier: 0.125, icon: '😺', desc: '+1.25% CpS per 10% milk', milkRequired: 1.0 },
+            { id: 'kitten3', name: 'Kitten Engineers', cost: 9000000000000, effect: 'milk', multiplier: 0.15, icon: '😸', desc: '+1.5% CpS per 10% milk', milkRequired: 2.0 },
+            { id: 'kitten4', name: 'Kitten Overseers', cost: 9000000000000000, effect: 'milk', multiplier: 0.175, icon: '😻', desc: '+1.75% CpS per 10% milk', milkRequired: 3.0 }
+        ];
+
+        // Achievements Data
+        const achievementsData = [
+            { id: 'click100', name: 'Six-Seven Starter', desc: 'Click 100 times', condition: () => gameState.handClicks >= 100, icon: '👆' },
+            { id: 'click1000', name: 'Click Master', desc: 'Click 1,000 times', condition: () => gameState.handClicks >= 1000, icon: '🖱️' },
+            { id: 'click10000', name: 'Click God', desc: 'Click 10,000 times', condition: () => gameState.handClicks >= 10000, icon: '⚡' },
+            { id: 'score100', name: 'First Six-Seven', desc: 'Reach 100 67s', condition: () => gameState.lifetime67 >= 100, icon: '67' },
+            { id: 'score1000', name: 'Six-Seven Collector', desc: 'Reach 1,000 67s', condition: () => gameState.lifetime67 >= 1000, icon: '💯' },
+            { id: 'score10000', name: 'Six-Seven Hoarder', desc: 'Reach 10,000 67s', condition: () => gameState.lifetime67 >= 10000, icon: '💰' },
+            { id: 'score100000', name: 'Six-Seven Millionaire', desc: 'Reach 100,000 67s', condition: () => gameState.lifetime67 >= 100000, icon: '🤑' },
+            { id: 'score1000000', name: 'Six-Seven Billionaire', desc: 'Reach 1,000,000 67s', condition: () => gameState.lifetime67 >= 1000000, icon: '🏆' },
+            { id: 'cps1', name: 'Six-Seven per Second', desc: 'Reach 1 67/s', condition: () => gameState.perSecond >= 1, icon: '⏱️' },
+            { id: 'cps10', name: 'Production Line', desc: 'Reach 10 67/s', condition: () => gameState.perSecond >= 10, icon: '🏭' },
+            { id: 'cps100', name: 'Factory Farm', desc: 'Reach 100 67/s', condition: () => gameState.perSecond >= 100, icon: '🏭' },
+            { id: 'cps1000', name: 'Industrial Revolution', desc: 'Reach 1,000 67/s', condition: () => gameState.perSecond >= 1000, icon: '🔥' },
+            { id: 'cursor10', name: 'Finger Gymnastics', desc: 'Own 10 cursors', condition: () => (gameState.buildings.cursor || 0) >= 10, icon: '👆' },
+            { id: 'cursor50', name: 'The clicking never ends', desc: 'Own 50 cursors', condition: () => (gameState.buildings.cursor || 0) >= 50, icon: '✋' },
+            { id: 'grandma10', name: 'Grandma Squad', desc: 'Own 10 grandmas', condition: () => (gameState.buildings.grandma || 0) >= 10, icon: '👵' },
+            { id: 'grandma50', name: 'Grandma Army', desc: 'Own 50 grandmas', condition: () => (gameState.buildings.grandma || 0) >= 50, icon: '👴' },
+            { id: 'building100', name: 'Construction Crew', desc: 'Own 100 buildings total', condition: () => getTotalBuildings() >= 100, icon: '🏗️' },
+            { id: 'building500', name: 'City Builder', desc: 'Own 500 buildings total', condition: () => getTotalBuildings() >= 500, icon: '🏙️' },
+            { id: 'upgrade1', name: 'Enhancement', desc: 'Buy 1 upgrade', condition: () => Object.keys(gameState.upgrades).length >= 1, icon: '⬆️' },
+            { id: 'upgrade10', name: 'Upgrade Master', desc: 'Buy 10 upgrades', condition: () => Object.keys(gameState.upgrades).length >= 10, icon: '🔰' },
+            { id: 'play1h', name: 'Time Waster', desc: 'Play for 1 hour', condition: () => gameState.playTime >= 3600, icon: '⏰' },
+            { id: 'play24h', name: 'Addict', desc: 'Play for 24 hours', condition: () => gameState.playTime >= 86400, icon: '🎮' },
+            { id: 'milk25', name: 'Got Milk?', desc: 'Reach 25% milk', condition: () => gameState.milk >= 0.25, icon: '🥛' },
+            { id: 'milk50', name: 'Chocolate Milk', desc: 'Reach 50% milk', condition: () => gameState.milk >= 0.50, icon: '🍫' },
+            { id: 'milk100', name: 'Raspberry Milk', desc: 'Reach 100% milk', condition: () => gameState.milk >= 1.0, icon: '🍓' },
+            { id: 'shadow1', name: 'Hardcore Clicker', desc: 'Click 100,000 times', condition: () => gameState.handClicks >= 100000, icon: '💀', shadow: true }
+        ];
+
+        // Helper functions
+        function formatNumber(num) {
+            if (num < 1000) return Math.floor(num).toString();
+            if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
+            if (num < 1000000000) return (num / 1000000).toFixed(2) + 'M';
+            if (num < 1000000000000) return (num / 1000000000).toFixed(2) + 'B';
+            if (num < 1000000000000000) return (num / 1000000000000).toFixed(2) + 'T';
+            if (num < 1000000000000000000) return (num / 1000000000000000).toFixed(2) + 'Qa';
+            if (num < 1000000000000000000000) return (num / 1000000000000000000).toFixed(2) + 'Qi';
+            return num.toExponential(2);
+        }
+
+        function formatTime(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function getTotalBuildings() {
+            return Object.values(gameState.buildings).reduce((a, b) => a + b, 0);
+        }
+
+        function getBuildingCost(buildingId) {
+            const building = buildingsData.find(b => b.id === buildingId);
+            const owned = gameState.buildings[buildingId] || 0;
+            return Math.floor(building.baseCost * Math.pow(1.15, owned));
+        }
+
+        function calculateCPS() {
+            let cps = 0;
+            buildingsData.forEach(building => {
+                const owned = gameState.buildings[building.id] || 0;
+                cps += building.baseCPS * owned;
+            });
+            return cps;
+        }
+
+        function calculateMilkBonus(cps) {
+            let bonus = 1;
+            Object.values(gameState.upgrades).forEach(upgradeId => {
+                const upgrade = upgradesData.find(u => u.id === upgradeId);
+                if (upgrade && upgrade.effect === 'milk') {
+                    bonus += gameState.milk * upgrade.multiplier;
+                }
+            });
+            return bonus;
+        }
+
+        function calculateClickValue() {
+            let clickValue = 1;
+            Object.values(gameState.upgrades).forEach(upgradeId => {
+                const upgrade = upgradesData.find(u => u.id === upgradeId);
+                if (upgrade && upgrade.effect === 'click') {
+                    clickValue *= upgrade.multiplier;
+                }
+            });
+            // Add 1% of CPS as click bonus (like Cookie Clicker)
+            clickValue += calculateCPS() * 0.01;
+            return clickValue;
+        }
+
+        function calculateEffectiveCPS() {
+            let cps = calculateCPS();
+            // Apply global multipliers
+            Object.values(gameState.upgrades).forEach(upgradeId => {
+                const upgrade = upgradesData.find(u => u.id === upgradeId);
+                if (upgrade && upgrade.effect === 'global') {
+                    cps *= upgrade.multiplier;
+                }
+            });
+            // Apply building-specific multipliers
+            Object.values(gameState.upgrades).forEach(upgradeId => {
+                const upgrade = upgradesData.find(u => u.id === upgradeId);
+                if (upgrade && upgrade.effect && upgrade.buildingId) {
+                    const building = buildingsData.find(b => b.id === upgrade.buildingId);
+                    const owned = gameState.buildings[building.id] || 0;
+                    const buildingContribution = building.baseCPS * owned;
+                    cps = cps - buildingContribution + (buildingContribution * upgrade.multiplier);
+                }
+            });
+            // Apply milk bonus
+            cps *= calculateMilkBonus(cps);
+            return cps;
+        }
+
+        function calculateMilk() {
+            const normalAchievements = achievementsData.filter(a => !a.shadow && gameState.achievements.includes(a.id));
+            return normalAchievements.length * 0.04; // 4% milk per achievement
+        }
+
+        // UI Updates
+        function updateDisplay() {
+            document.getElementById('score-display').textContent = formatNumber(Math.floor(gameState.total67));
+            document.getElementById('total-67s').textContent = formatNumber(Math.floor(gameState.total67));
+            document.getElementById('67-per-second').textContent = formatNumber(gameState.perSecond) + '/s';
+            document.getElementById('67-per-click').textContent = formatNumber(gameState.perClick);
+            document.getElementById('hand-clicks').textContent = formatNumber(gameState.handClicks);
+            document.getElementById('milk-percent').textContent = (gameState.milk * 100).toFixed(1) + '%';
+            document.getElementById('play-time').textContent = formatTime(gameState.playTime);
+            
+            const normalAchievements = achievementsData.filter(a => !a.shadow);
+            document.getElementById('achievement-count').textContent = 
+                `${gameState.achievements.filter(id => !achievementsData.find(a => a.id === id).shadow).length}/${normalAchievements.length}`;
+            
+            // Update milk container
+            const milkHeight = Math.min(gameState.milk * 100, 100);
+            document.getElementById('milk-container').style.height = milkHeight + 'px';
+        }
+
+        function renderBuildings() {
+            const container = document.getElementById('buildings-tab');
+            container.innerHTML = '';
+            
+            buildingsData.forEach(building => {
+                const owned = gameState.buildings[building.id] || 0;
+                const cost = getBuildingCost(building.id);
+                const canAfford = gameState.total67 >= cost;
+                
+                const div = document.createElement('div');
+                div.className = `building-item ${canAfford ? '' : 'disabled'}`;
+                div.innerHTML = `
+                    <div class="building-name">${building.icon} ${building.name}</div>
+                    <div class="building-cost">${formatNumber(cost)} 67s</div>
+                    <div class="building-production">+${formatNumber(building.baseCPS)}/s each</div>
+                    <div class="building-count">${owned}</div>
+                `;
+                
+                div.onclick = () => {
+                    if (canAfford) {
+                        gameState.total67 -= cost;
+                        gameState.buildings[building.id] = owned + 1;
+                        gameState.lifetime67 += cost; // Track lifetime spending
+                        updateGame();
+                    }
+                };
+                
+                container.appendChild(div);
+            });
+        }
+
+        function renderUpgrades() {
+            const container = document.getElementById('upgrades-tab');
+            container.innerHTML = '';
+            
+            const availableUpgrades = upgradesData.filter(upgrade => {
+                if (gameState.upgrades[upgrade.id]) return false; // Already owned
+                if (gameState.total67 < upgrade.cost) return false; // Can't afford
+                if (upgrade.milkRequired && gameState.milk < upgrade.milkRequired) return false; // Milk requirement
+                return true;
+            });
+            
+            // Also show unavailable upgrades (dimmed)
+            const allRelevant = upgradesData.filter(upgrade => !gameState.upgrades[upgrade.id]);
+            
+            allRelevant.forEach(upgrade => {
+                const canAfford = gameState.total67 >= upgrade.cost;
+                const meetsMilk = !upgrade.milkRequired || gameState.milk >= upgrade.milkRequired;
+                const available = canAfford && meetsMilk;
+                
+                const div = document.createElement('div');
+                div.className = `upgrade-item ${available ? '' : 'disabled'}`;
+                div.innerHTML = `
+                    <div class="building-name">${upgrade.icon} ${upgrade.name}</div>
+                    <div class="upgrade-cost">${formatNumber(upgrade.cost)} 67s</div>
+                    <div class="upgrade-effect">${upgrade.desc}</div>
+                `;
+                
+                div.onclick = () => {
+                    if (available) {
+                        gameState.total67 -= upgrade.cost;
+                        gameState.upgrades[upgrade.id] = true;
+                        showNotification(`${upgrade.icon} ${upgrade.name} acquired!`);
+                        updateGame();
+                    }
+                };
+                
+                container.appendChild(div);
+            });
+        }
+
+        function renderAchievements() {
+            const container = document.getElementById('achievements-list');
+            container.innerHTML = '';
+            
+            achievementsData.forEach(achievement => {
+                const unlocked = gameState.achievements.includes(achievement.id);
+                const div = document.createElement('div');
+                div.className = `achievement ${unlocked ? '' : 'locked'}`;
+                div.innerHTML = `
+                    <div class="achievement-icon">${achievement.icon}</div>
+                    <div>
+                        <div style="font-weight: bold; color: ${unlocked ? '#00ff88' : '#888'};">${achievement.name}</div>
+                        <div style="font-size: 0.8em; color: #666;">${achievement.desc}</div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function showNotification(text) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = text;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        function createFloatingNumber(x, y, value) {
+            const div = document.createElement('div');
+            div.className = 'floating-number';
+            div.textContent = '+' + formatNumber(value);
+            div.style.left = x + 'px';
+            div.style.top = y + 'px';
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 1000);
+        }
+
+        function checkAchievements() {
+            achievementsData.forEach(achievement => {
+                if (!gameState.achievements.includes(achievement.id) && achievement.condition()) {
+                    gameState.achievements.push(achievement.id);
+                    showNotification(`🏆 Achievement: ${achievement.name}`);
+                }
+            });
+        }
+
+        function updateGame() {
+            gameState.perSecond = calculateEffectiveCPS();
+            gameState.perClick = calculateClickValue();
+            gameState.milk = calculateMilk();
+            
+            updateDisplay();
+            renderBuildings();
+            renderUpgrades();
+            checkAchievements();
+            
+            if (gameState.achievements.length !== renderAchievements.lastLength) {
+                renderAchievements();
+                renderAchievements.lastLength = gameState.achievements.length;
+            }
+        }
+        renderAchievements.lastLength = 0;
+
+        // Main click handler
+        document.getElementById('main-button').addEventListener('click', function(e) {
+            const gained = gameState.perClick;
+            gameState.total67 += gained;
+            gameState.lifetime67 += gained;
+            gameState.handClicks++;
+            
+            // Play sound effect
+            clickSound.currentTime = 0;
+            clickSound.play().catch(() => {}); // Ignore errors if audio not ready
+            
+            // Check if we got a 67 (when lifetime67 reaches a multiple of 67)
+            const previousLifetime = gameState.lifetime67 - gained;
+            const previousMilestone = Math.floor(previousLifetime / 67);
+            const currentMilestone = Math.floor(gameState.lifetime67 / 67);
+            
+            if (currentMilestone > previousMilestone) {
+                // We got a new 67! Play the special sound (overlay allowed)
+                playSixtySevenSound();
+                showNotification('🎉 SIX-SEVEN! 🎉');
+            }
+            
+            // Create floating number
+            const rect = this.getBoundingClientRect();
+            const x = e.clientX || (rect.left + rect.width / 2);
+            const y = e.clientY || (rect.top);
+            createFloatingNumber(x - 30, y - 20, gained);
+            
+            // Animation
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => this.style.transform = 'scale(1)', 50);
+            
+            updateGame();
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(this.dataset.tab + '-tab').classList.add('active');
+            });
+        });
+
+        // Game loop - add 67s per second every second
+        setInterval(() => {
+            const gained = gameState.perSecond / 10; // Update 10 times per second for smoothness
+            gameState.total67 += gained;
+            gameState.lifetime67 += gained;
+            gameState.playTime += 0.1;
+            updateDisplay();
+        }, 100);
+
+        // Save/Load system
+        function saveGame() {
+            // Save to localStorage
+            localStorage.setItem('67ClickerSave', JSON.stringify(gameState));
+            
+            // Also save to cookies
+            const gameStateStr = JSON.stringify(gameState);
+            document.cookie = `67ClickerSave=${encodeURIComponent(gameStateStr)}; path=/; max-age=31536000; SameSite=Lax`; // 1 year expiry
+            console.log('Game saved to cookies and localStorage');
+        }
+
+        function loadGame() {
+            let save = localStorage.getItem('67ClickerSave');
+            
+            // If no localStorage, try cookies
+            if (!save) {
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === '67ClickerSave' && value) {
+                        try {
+                            save = decodeURIComponent(value);
+                            break;
+                        } catch (e) {
+                            console.error('Error decoding cookie:', e);
+                        }
+                    }
+                }
+            }
+            
+            if (save) {
+                try {
+                    const loaded = JSON.parse(save);
+                    Object.assign(gameState, loaded);
+                    // Reset calculated values
+                    gameState.perSecond = calculateEffectiveCPS();
+                    gameState.perClick = calculateClickValue();
+                    gameState.milk = calculateMilk();
+                } catch (e) {
+                    console.error('Error loading save:', e);
+                }
+            }
+        }
+
+        // Auto-save every 30 seconds
+        setInterval(saveGame, 30000);
+
+        // Initialize
+        loadGame();
+        renderAchievements();
+        updateGame();
+    </script>
+</body>
+</html>
