@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Weather - iOS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="app-styles.css">
+</head>
+<body class="app-body">
+    <div class="app-screen active" id="weather-screen">
+        <div class="close-app" onclick="closeApp()">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/></svg>
+        </div>
+        
+        <div class="weather-header">
+            <h2>Weather</h2>
+        </div>
+        
+        <div class="weather-content" id="weather-content">
+            <div class="weather-location">
+                <svg class="location-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span id="weather-city">San Francisco</span>
+            </div>
+            <div class="weather-current">
+                <div class="weather-temp-large" id="current-temp">72°</div>
+                <div class="weather-desc-large" id="current-desc">Partly Cloudy</div>
+                <div class="weather-hl">
+                    <span id="temp-high">H:78°</span>
+                    <span id="temp-low">L:65°</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="hourly-forecast" id="hourly-forecast">
+            <!-- Hourly forecast items -->
+        </div>
+        
+        <div class="daily-forecast" id="daily-forecast">
+            <!-- Daily forecast items -->
+        </div>
+    </div>
+    
+    <script src="weather.js"></script>
+</body>
+</html>
