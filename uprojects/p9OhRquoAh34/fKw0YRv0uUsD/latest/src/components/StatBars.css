@@ -1,0 +1,139 @@
+.stat-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 80px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 7px;
+  color: #2d3436;
+}
+
+.stat-icon {
+  font-size: 14px;
+}
+
+.stat-name {
+  font-size: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-bar-container {
+  flex: 1;
+  height: 12px;
+  background: #dfe6e9;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  position: relative;
+}
+
+.stat-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.stat-value {
+  min-width: 28px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 8px;
+  color: #2d3436;
+  text-align: right;
+}
+
+.stat-bar.critical .stat-bar-fill {
+  animation: pulse-critical 1s ease-in-out infinite;
+}
+
+.stat-bar.warning .stat-bar-fill {
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+@keyframes pulse-critical {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes pulse-warning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .stat-bars {
+    padding: 10px;
+    gap: 6px;
+  }
+  
+  .stat-label {
+    min-width: 65px;
+  }
+  
+  .stat-icon {
+    font-size: 12px;
+  }
+  
+  .stat-name {
+    font-size: 5px;
+  }
+  
+  .stat-bar-container {
+    height: 10px;
+  }
+  
+  .stat-value {
+    font-size: 7px;
+    min-width: 24px;
+  }
+}
