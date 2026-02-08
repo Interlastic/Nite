@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Palette Generator - Tests</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background: #1a1a2e; color: #eee; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        h1 { color: #6366f1; }
+        .test-section { margin: 20px 0; }
+        .test-title { font-size: 18px; color: #ec4899; margin-bottom: 10px; }
+        .test-result { margin: 5px 0; padding: 10px; border-radius: 4px; }
+        .pass { background: #22c55e33; border-left: 4px solid #22c55e; }
+        .fail { background: #ef444433; border-left: 4px solid #ef4444; }
+        .summary { position: fixed; top: 20px; right: 20px; background: #1e293b; padding: 20px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .summary h2 { margin: 0 0 10px 0; font-size: 16px; }
+        #runTests { background: #6366f1; color: white; border: none; padding: 12px 24px; font-size: 16px; cursor: pointer; border-radius: 6px; margin-bottom: 20px; }
+        #runTests:hover { background: #4f46e5; }
+    </style>
+</head>
+<body>
+    <h1>🎨 Color Palette Generator - Test Suite</h1>
+    <button id="runTests">Run All Tests</button>
+    <div class="summary" id="summary">
+        <h2>Test Summary</h2>
+        <div>Total: <span id="total">0</span></div>
+        <div>Passed: <span id="passed" style="color: #22c55e">0</span></div>
+        <div>Failed: <span id="failed" style="color: #ef4444">0</span></div>
+    </div>
+    <div id="results"></div>
+    <script src="app.js"></script>
+    <script>
+        let totalTests = 0, passedTests = 0, failedTests = 0;
+        function assert(condition, testName, errorMessage) {
+            totalTests++;
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'test-result ' + (condition ? 'pass' : 'fail');
+            if (condition) { passedTests++; resultDiv.innerHTML = '✅ ' + testName; }
+            else { failedTests++; resultDiv.innerHTML = '❌ ' + testName + '<br><small>' + errorMessage + '</small>'; }
+            return resultDiv;
+        }
+        function updateSummary() {
+            document.getElementById('total').textContent = totalTests;
+            document.getElementById('passed').textContent = passedTests;
+            document.getElementById('failed').textContent = failedTests;
+        }
+        function addTestSection(title) {
+            const section = document.createElement('div');
+            section.className = 'test-section';
+            section.innerHTML = '<h3 class="test-title">' + title + '</h3>';
+            document.getElementById('results').appendChild(section);
+            return section;
+        }
+        function addResult(result) {
+            const section = document.querySelector('.test-section:last-child');
+            if (section) section.appendChild(result);
+        }
+        function testColorConversions() {
+            const section = addTestSection('Color Conversion Tests');
+            const app = new ColorPaletteGenerator();
+            addResult(assert(app.rgbToHex(255, 0, 0) === '#FF0000', 'rgbToHex - Pure Red', 'Expected #FF0000'));
+            addResult(assert(app.rgbToHex(0, 255, 0) === '#00FF00', 'rgbToHex - Pure Green', 'Expected #00FF00'));
+            addResult(assert(app.rgbToHex(0, 0, 255) === '#0000FF', 'rgbToHex - Pure Blue', 'Expected #0000FF'));
+            addResult(assert(app.rgbToHex(255, 255, 255) === '#FFFFFF', 'rgbToHex - White', 'Expected #FFFFFF'));
+            addResult(assert(app.rgbToHex(0, 0, 0) === '#000000', 'rgbToHex - Black', 'Expected #000000'));
+            addResult(assert(app.hslToHex(0, 100, 50) === '#FF0000', 'hslToHex - Red (0, 100, 50)', 'Expected #FF0000'));
+            addResult(assert(app.hslToHex(120, 100, 50) === '#00FF00', 'hslToHex - Green (120, 100, 50)', 'Expected #00FF00'));
+            addResult(assert(app.hslToHex(240, 100, 50) === '#0000FF', 'hslToHex - Blue (240, 100, 50)', 'Expected #0000FF'));
+            const hsl = app.hexToHSL('#FF0000');
+            addResult(assert(hsl.h === 0 && hsl.s === 100 && hsl.l === 50, 'hexToHSL - Red', 'Expected {h:0, s:100, l:50}'));
+            addResult(assert(app.hexToRGB('#FF0000') === 'rgb(255, 0, 0)', 'hexToRGB - Red string format', 'Expected rgb(255, 0, 0)'));
+            updateSummary();
+        }
+        function testLuminanceContrast() {
+            const section = addTestSection('Luminance & Contrast Tests');
+            const app = new ColorPaletteGenerator();
+            const lumWhite = app.calculateLuminance('#FFFFFF');
+            addResult(assert(Math.abs(lumWhite - 1.0) < 0.01, 'calculateLuminance - White', 'Expected ~1.0'));
+            const lumBlack = app.calculateLuminance('#000000');
+            addResult(assert(Math.abs(lumBlack - 0) < 0.01, 'calculateLuminance - Black', 'Expected ~0'));
+            const contrastWB = app.calculateContrastRatio('#FFFFFF', '#000000');
+            addResult(assert(Math.abs(contrastWB - 21) < 0.1, 'calculateContrastRatio - White on Black', 'Expected ~21:1'));
+            const grade = app.getContrastGrade(7.5);
+            addResult(assert(grade.grade === 'AAA' && grade.class === 'grade-aaa', 'getContrastGrade - AAA (7.5)', 'Expected AAA'));
+            const gradeAA = app.getContrastGrade(5);
+            addResult(assert(gradeAA.grade === 'AA' && gradeAA.class === 'grade-aa', 'getContrastGrade - AA (5)', 'Expected AA'));
+            const gradeFail = app.getContrastGrade(2);
+            addResult(assert(gradeFail.grade === 'Fail' && gradeFail.class === 'grade-fail', 'getContrastGrade - Fail (2)', 'Expected Fail'));
+            updateSummary();
+        }
+        function testPaletteGeneration() {
+            const section = addTestSection('Palette Generation Tests');
+            const app = new ColorPaletteGenerator();
+            const randomColor = app.generateRandomColor();
+            addResult(assert(/^#[0-9A-F]{6}$/i.test(randomColor), 'generateRandomColor - Valid hex format', 'Got: ' + randomColor));
+            app.generateRandomPalette();
+            addResult(assert(app.currentPalette.length === 6, 'generateRandomPalette - Creates 6 colors', 'Got ' + app.currentPalette.length + ' colors'));
+            const allValid = app.currentPalette.every(function(c) { return /^#[0-9A-F]{6}$/i.test(c); });
+            addResult(assert(allValid, 'generateRandomPalette - All valid hex codes', 'Some colors are invalid'));
+            updateSummary();
+        }
+        function testHarmonySchemes() {
+            const section = addTestSection('Harmony Scheme Tests');
+            const app = new ColorPaletteGenerator();
+            app.updatePalette(['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF']);
+            app.generateHarmony('complementary');
+            addResult(assert(app.currentPalette.length === 6, 'generateHarmony - Complementary creates 6 colors', 'Got ' + app.currentPalette.length));
+            app.updatePalette(['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF']);
+            app.generateHarmony('analogous');
+            addResult(assert(app.currentPalette.length === 6, 'generateHarmony - Analogous creates 6 colors', 'Got ' + app.currentPalette.length));
+            app.updatePalette(['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF']);
+            app.generateHarmony('triadic');
+            addResult(assert(app.currentPalette.length === 6, 'generateHarmony - Triadic creates 6 colors', 'Got ' + app.currentPalette.length));
+            app.updatePalette(['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF']);
+            app.generateHarmony('split-complementary');
+            addResult(assert(app.currentPalette.length === 6, 'generateHarmony - Split Complementary creates 6 colors', 'Got ' + app.currentPalette.length));
+            app.updatePalette(['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF']);
+            app.generateHarmony('tetradic');
+            addResult(assert(app.currentPalette.length === 6, 'generateHarmony - Tetradic creates 6 colors', 'Got ' + app.currentPalette.length));
+            updateSummary();
+        }
+        function testColorLocking() {
+            const section = addTestSection('Color Lock System Tests');
+            const app = new ColorPaletteGenerator();
+            app.updatePalette(['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF']);
+            addResult(assert(app.lockedColors.size === 0, 'Lock system - No colors locked initially', 'Found ' + app.lockedColors.size + ' locked colors'));
+            app.toggleLock(0);
+            addResult(assert(app.lockedColors.has(0), 'toggleLock - Lock first color', 'First color should be locked'));
+            app.toggleLock(0);
+            addResult(assert(!app.lockedColors.has(0), 'toggleLock - Unlock first color', 'First color should be unlocked'));
+            app.lockAllColors();
+            addResult(assert(app.lockedColors.size === 6, 'lockAllColors - All 6 colors locked', 'Found ' + app.lockedColors.size + ' locked colors'));
+            app.unlockAllColors();
+            addResult(assert(app.lockedColors.size === 0, 'unlockAllColors - All colors unlocked', 'Found ' + app.lockedColors.size + ' locked colors'));
+            updateSummary();
+        }
+        function testHistory() {
+            const section = addTestSection('History Management Tests');
+            const app = new ColorPaletteGenerator();
+            app.history = [];
+            app.currentPalette = [];
+            app.saveToHistory(['#FF0000', '#00FF00', '#0000FF']);
+            addResult(assert(app.history.length === 1, 'saveToHistory - Adds palette to history', 'History length: ' + app.history.length));
+            addResult(assert(app.history[0].colors.length === 3, 'saveToHistory - Preserves color count', 'Found ' + app.history[0].colors.length + ' colors'));
+            addResult(assert(app.history[0].colors[0] === '#FF0000', 'saveToHistory - Preserves color values', 'First color: ' + app.history[0].colors[0]));
+            app.saveToHistory(['#111111', '#222222', '#333333']);
+            addResult(assert(app.history.length === 2, 'saveToHistory - Adds multiple palettes', 'History length: ' + app.history.length));
+            addResult(assert(app.history[0].colors[0] === '#111111', 'saveToHistory - Newest first', 'First color: ' + app.history[0].colors[0]));
+            updateSummary();
+        }
+        function testExports() {
+            const section = addTestSection('Export Functionality Tests');
+            const app = new ColorPaletteGenerator();
+            app.updatePalette(['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF']);
+            const jsonContent = JSON.stringify(app.currentPalette, null, 2);
+            addResult(assert(jsonContent.includes('#FF0000'), 'Export - JSON contains colors', 'JSON export failed'));
+            addResult(assert(jsonContent.startsWith('['), 'Export - JSON is array format', 'JSON should start with ['));
+            const cssContent = app.currentPalette.map(function(c, i) { return '--color-' + (i + 1) + ': ' + c + ';'; }).join('\n');
+            addResult(assert(cssContent.includes('--color-1: #FF0000;'), 'Export - CSS variables format', 'CSS export failed'));
+            const arrayContent = "['" + app.currentPalette.join("', '") + "']";
+            addResult(assert(arrayContent.includes("'#FF0000'") && arrayContent.includes("'#00FF00'"), 'Export - Array format', 'Array export failed'));
+            updateSummary();
+        }
+        function testNearestColorName() {
+            const section = addTestSection('Nearest Color Name Tests');
+            const app = new ColorPaletteGenerator();
+            addResult(assert(app.getNearestColorName('#FF0000') === 'Red', 'getNearestColorName - Pure Red', 'Got: ' + app.getNearestColorName('#FF0000')));
+            addResult(assert(app.getNearestColorName('#00FF00') === 'Lime', 'getNearestColorName - Pure Green/Lime', 'Got: ' + app.getNearestColorName('#00FF00')));
+            addResult(assert(app.getNearestColorName('#0000FF') === 'Blue', 'getNearestColorName - Pure Blue', 'Got: ' + app.getNearestColorName('#0000FF')));
+            addResult(assert(app.getNearestColorName('#000000') === 'Black', 'getNearestColorName - Black', 'Got: ' + app.getNearestColorName('#000000')));
+            addResult(assert(app.getNearestColorName('#FFFFFF') === 'White', 'getNearestColorName - White', 'Got: ' + app.getNearestColorName('#FFFFFF')));
+            updateSummary();
+        }
+        function testKMeansClustering() {
+            const section = addTestSection('K-Means Clustering Tests');
+            const app = new ColorPaletteGenerator();
+            const pixels = [];
+            for (let i = 0; i < 50; i++) pixels.push({ r: 255, g: 0, b: 0 });
+            for (let i = 0; i < 50; i++) pixels.push({ r: 0, g: 255, b: 0 });
+            for (let i = 0; i < 50; i++) pixels.push({ r: 0, g: 0, b: 255 });
+            const colors = app.kMeansClustering(pixels, 3);
+            addResult(assert(colors.length === 3, 'kMeansClustering - Returns correct number of colors', 'Expected 3, got ' + colors.length));
+            const hasRed = colors.some(function(c) {
+                const rgb = app.hexToRGB(c).match(/\d+/g).map(Number);
+                return rgb[0] > 200 && rgb[1] < 50 && rgb[2] < 50;
+            });
+            addResult(assert(hasRed, 'kMeansClustering - Detects red cluster', 'Should contain a red-like color'));
+            const smallColors = app.kMeansClustering([{ r: 100, g: 100, b: 100 }], 5);
+            addResult(assert(smallColors.length === 1, 'kMeansClustering - Handles case where pixels < k', 'Expected 1 color'));
+            updateSummary();
+        }
+        function testEdgeCases() {
+            const section = addTestSection('Edge Case Tests');
+            const app = new ColorPaletteGenerator();
+            app.currentPalette = [];
+            addResult(assert(app.currentPalette.length === 0, 'Edge Case - Empty palette', 'Should handle empty palette'));
+            app.updatePalette(['#FF0000']);
+            addResult(assert(app.currentPalette.length === 1, 'Edge Case - Single color palette', 'Should handle single color'));
+            const dist = app.colorDistance({r: 100, g: 100, b: 100}, {r: 100, g: 100, b: 100});
+            addResult(assert(dist === 0, 'Edge Case - Distance between identical colors is 0', 'Got distance: ' + dist));
+            const wrappedColor = app.hslToHex(400, 100, 50);
+            addResult(assert(/^#[0-9A-F]{6}$/i.test(wrappedColor), 'Edge Case - HSL hue wrapping (>360)', 'Got: ' + wrappedColor));
+            const negativeHue = app.hslToHex(-30, 100, 50);
+            addResult(assert(/^#[0-9A-F]{6}$/i.test(negativeHue), 'Edge Case - HSL hue wrapping (<0)', 'Got: ' + negativeHue));
+            updateSummary();
+        }
+        function runAllTests() {
+            totalTests = 0; passedTests = 0; failedTests = 0;
+            document.getElementById('results').innerHTML = '';
+            updateSummary();
+            testColorConversions();
+            testLuminanceContrast();
+            testPaletteGeneration();
+            testHarmonySchemes();
+            testColorLocking();
+            testHistory();
+            testExports();
+            testNearestColorName();
+            testKMeansClustering();
+            testEdgeCases();
+            updateSummary();
+            console.log('Tests completed: ' + passedTests + '/' + totalTests + ' passed');
+        }
+        document.getElementById('runTests').addEventListener('click', runAllTests);
+    </script>
+</body>
+</html>
