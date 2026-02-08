@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2c3e50">
+  <meta name="description" content="A cute virtual pet to care for!">
+  <title>Pixie Pet - Virtual Pet Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Press Start 2P', cursive;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    #root {
+      min-height: 100vh;
+    }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-size: 14px;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div class="loading">
+      <div>
+        <div class="loading-spinner"></div>
+        <p>🎀 Loading Pixie Pet...</p>
+        <p style="font-size: 8px; margin-top: 20px;">Please wait while we prepare your pet!</p>
+      </div>
+    </div>
+  </div>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.2.0",
+      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client"
+    }
+  }
+  </script>
+  <script type="module">
+    // Inline the application for deployment
+    window.PET_APP = {};
+  </script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel" data-presets="react,stage-3">
+    // All game constants and utilities would be here
+    // For now, showing a simplified version
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    // Simplified constants
+    const GAME_CONFIG = {
+      TICK_RATE: 1000,
+      MAX_STAT: 100,
+      CRITICAL_THRESHOLD: 20,
+    };
+
+    const STAT_DECAY = {
+      hunger: 2,
+      happiness: 1.5,
+      energy: 1.8,
+      health: 0.5,
+      cleanliness: 1.2,
+    };
+
+    // Main App Component
+    function App() {
+      const [stats, setStats] = useState({
+        hunger: 80,
+        happiness: 80,
+        energy: 80,
+        health: 100,
+        cleanliness: 100,
+      });
+      const [coins, setCoins] = useState(100);
+      const [age, setAge] = useState(0);
+      const [lifeStage, setLifeStage] = useState('egg');
+      const [isSleeping, setIsSleeping] = useState(false);
+      const [soundEnabled, setSoundEnabled] = useState(true);
+      const [showMessage, setShowMessage] = useState(null);
+
+      // Game loop
+      useEffect(() => {
+        const interval = setInterval(() => {
+          setAge(a => a + 1);
+          setStats(prev => {
+            const newStats = { ...prev };
+            if (!isSleeping) {
+              newStats.hunger = Math.max(0, prev.hunger - STAT_DECAY.hunger);
+              newStats.happiness = Math.max(0, prev.happiness - STAT_DECAY.happiness);
+              newStats.energy = Math.max(0, prev.energy - STAT_DECAY.energy);
+            } else {
+              newStats.energy = Math.min(100, prev.energy + STAT_DECAY.energy * 2);
+            }
+            newStats.health = Math.max(0, prev.health - STAT_DECAY.health);
+            newStats.cleanliness = Math.max(0, prev.cleanliness - STAT_DECAY.cleanliness);
+            return newStats;
+          });
+
+          // Life stage progression
+          if (age === 30) setLifeStage('baby');
+          if (age === 300) setLifeStage('child');
+          if (age === 900) setLifeStage('adult');
+        }, GAME_CONFIG.TICK_RATE);
+
+        return () => clearInterval(interval);
+      }, [isSleeping, age]);
+
+      const getStatColor = (value) => {
+        if (value <= 20) return '#e74c3c';
+        if (value <= 40) return '#f39c12';
+        return '#2ecc71';
+      };
+
+      const getPetEmoji = () => {
+        if (lifeStage === 'egg') return '🥚';
+        if (lifeStage === 'baby') return '🐣';
+        if (lifeStage === 'child') return '🐥';
+        return '🐔';
+      };
+
+      const getPetState = () => {
+        if (stats.health <= 0) return 'dead';
+        if (isSleeping) return 'sleeping';
+        if (stats.hunger <= 20) return 'hungry';
+        if (stats.happiness <= 20) return 'sad';
+        if (stats.happiness > 70 && stats.hunger > 70) return 'happy';
+        return 'idle';
+      };
+
+      const handleAction = (action) => {
+        switch(action) {
+          case 'feed':
+            if (coins >= 5) {
+              setCoins(c => c - 5);
+              setStats(s => ({ ...s, hunger: Math.min(100, s.hunger + 20) }));
+              setShowMessage('Yummy! 🍖');
+            }
+            break;
+          case 'play':
+            if (!isSleeping && coins >= 5) {
+              setCoins(c => c - 5);
+              setStats(s => ({ ...s, happiness: Math.min(100, s.happiness + 20), energy: Math.max(0, s.energy - 10) }));
+              setShowMessage('Fun! 🎮');
+            }
+            break;
+          case 'clean':
+            if (coins >= 3) {
+              setCoins(c => c - 3);
+              setStats(s => ({ ...s, cleanliness: 100 }));
+              setShowMessage('Sparkle! ✨');
+            }
+            break;
+          case 'sleep':
+            setIsSleeping(!isSleeping);
+            setShowMessage(isSleeping ? 'Good morning! ☀️' : 'Good night! 💤');
+            break;
+          case 'cure':
+            if (coins >= 10) {
+              setCoins(c => c - 10);
+              setStats(s => ({ ...s, health: Math.min(100, s.health + 30) }));
+              setShowMessage('Feeling better! 💊');
+            }
+            break;
+          case 'earn':
+            setCoins(c => c + 20);
+            setShowMessage('+20 coins! 🪙');
+            break;
+        }
+        setTimeout(() => setShowMessage(null), 2000);
+      };
+
+      const formatAge = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}m ${secs}s`;
+      };
+
+      const petState = getPetState();
+      const isDead = petState === 'dead';
+
+      return (
+        <div style={{
+          minHeight: '100vh',
+          padding: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}>
+          {/* Header */}
+          <div style={{
+            width: '100%',
+            maxWidth: '400px',
+            marginBottom: '20px',
+            background: 'rgba(255,255,255,0.95)',
+            borderRadius: '16px',
+            padding: '16px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <div>
+              <h1 style={{ fontSize: '14px', color: '#667eea', margin: '0 0 8px 0' }}>🎀 Pixie Pet</h1>
+              <div style={{ fontSize: '7px', color: '#636e72' }}>
+                Stage: {lifeStage.toUpperCase()} | Age: {formatAge(age)}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '20px' }}>🪙</span>
+              <span style={{ fontSize: '10px', color: '#f39c12', fontWeight: 'bold' }}>{coins}</span>
+            </div>
+          </div>
+
+          {/* Pet Display */}
+          <div style={{
+            width: '100%',
+            maxWidth: '400px',
+            aspectRatio: '1',
+            borderRadius: '20px',
+            padding: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '16px',
+            position: 'relative',
+            background: isSleeping 
+              ? 'linear-gradient(135deg, #1e272e 0%, #485460 100%)'
+              : isDead
+              ? 'linear-gradient(135deg, #636e72 0%, #2d3436 100%)'
+              : 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+          }}>
+            <div style={{
+              fontSize: '80px',
+              filter: isDead ? 'grayscale(1)' : 'none',
+              animation: isSleeping ? 'none' : 'bounce 2s ease-in-out infinite',
+            }}>
+              {getPetEmoji()}
+            </div>
+            {showMessage && (
+              <div style={{
+                position: 'absolute',
+                top: '20px',
+                background: 'white',
+                padding: '8px 16px',
+                borderRadius: '20px',
+                fontSize: '8px',
+                animation: 'fadeIn 0.3s',
+              }}>
+                {showMessage}
+              </div>
+            )}
+            {isSleeping && (
+              <div style={{
+                position: 'absolute',
+                top: '10px',
+                right: '20px',
+                fontSize: '20px',
+              }}>💤</div>
+            )}
+          </div>
+
+          {/* Stat Bars */}
+          <div style={{
+            width: '100%',
+            maxWidth: '400px',
+            background: 'rgba(255,255,255,0.95)',
+            borderRadius: '12px',
+            padding: '12px',
+            marginBottom: '16px',
+          }}>
+            {Object.entries(stats).map(([key, value]) => (
+              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '12px', minWidth: '16px' }}>
+                  {key === 'hunger' ? '🍖' : 
+                   key === 'happiness' ? '😊' :
+                   key === 'energy' ? '⚡' :
+                   key === 'health' ? '❤️' : '✨'}
+                </span>
+                <div style={{
+                  flex: 1,
+                  height: '12px',
+                  background: '#dfe6e9',
+                  borderRadius: '6px',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${value}%`,
+                    background: getStatColor(value),
+                    borderRadius: '6px',
+                    transition: 'width 0.3s, background-color 0.3s',
+                  }} />
+                </div>
+                <span style={{ fontSize: '8px', minWidth: '24px', textAlign: 'right' }}>{Math.round(value)}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Action Buttons */}
+          {!isDead ? (
+            <div style={{
+              width: '100%',
+              maxWidth: '400px',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '8px',
+            }}>
+              <button
+                onClick={() => handleAction('feed')}
+                disabled={isSleeping}
+                style={{
+                  background: 'linear-gradient(135deg, #e17055 0%, #d63031 100%)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '16px 8px',
+                  cursor: isSleeping ? 'not-allowed' : 'pointer',
+                  color: 'white',
+                  fontSize: '8px',
+                  opacity: isSleeping ? 0.5 : 1,
+                }}
+              >
+                🍖 Feed<br/>(5🪙)
+              </button>
+              <button
+                onClick={() => handleAction('play')}
+                disabled={isSleeping}
+                style={{
+                  background: 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '16px 8px',
+                  cursor: isSleeping ? 'not-allowed' : 'pointer',
+                  color: 'white',
+                  fontSize: '8px',
+                  opacity: isSleeping ? 0.5 : 1,
+                }}
+              >
+                🎮 Play<br/>(5🪙)
+              </button>
+              <button
+                onClick={() => handleAction('clean')}
+                style={{
+                  background: 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '16px 8px',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: '8px',
+                }}
+              >
+                🧹 Clean<br/>(3🪙)
+              </button>
+              <button
+                onClick={() => handleAction('sleep')}
+                style={{
+                  background: 'linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '16px 8px',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: '8px',
+                }}
+              >
+                {isSleeping ? '☀️ Wake' : '💤 Sleep'}
+              </button>
+              <button
+                onClick={() => handleAction('cure')}
+                style={{
+                  background: 'linear-gradient(135deg, #fd79a8 0%, #e84393 100%)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '16px 8px',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: '8px',
+                }}
+              >
+                💊 Cure<br/>(10🪙)
+              </button>
+              <button
+                onClick={() => handleAction('earn')}
+                style={{
+                  background: 'linear-gradient(135deg, #f1c40f 0%, #f39c12 100%)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '16px 8px',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: '8px',
+                }}
+              >
+                🎲 Earn
+              </button>
+            </div>
+          ) : (
+            <div style={{
+              width: '100%',
+              maxWidth: '400px',
+              background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
+              borderRadius: '12px',
+              padding: '20px',
+              textAlign: 'center',
+              color: 'white',
+            }}>
+              <p style={{ fontSize: '10px', margin: '0 0 10px 0' }}>Your pet has passed away 💔</p>
+              <p style={{ fontSize: '7px', margin: '0 0 20px 0' }}>Age: {formatAge(age)} | Stage: {lifeStage}</p>
+              <button
+                onClick={() => {
+                  setStats({ hunger: 80, happiness: 80, energy: 80, health: 100, cleanliness: 100 });
+                  setCoins(100);
+                  setAge(0);
+                  setLifeStage('egg');
+                  setIsSleeping(false);
+                }}
+                style={{
+                  background: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  cursor: 'pointer',
+                  fontSize: '8px',
+                  color: '#e74c3c',
+                }}
+              >
+                🔄 New Pet
+              </button>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div style={{ marginTop: '20px', textAlign: 'center', opacity: 0.8 }}>
+            <p style={{ fontSize: '6px', color: 'white' }}>Care for your pet • Keep stats high • Have fun!</p>
+          </div>
+
+          <style>{`
+            @keyframes bounce {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-10px); }
+            }
+            @keyframes fadeIn {
+              from { opacity: 0; transform: translateY(-10px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+          `}</style>
+        </div>
+      );
+    }
+
+    // Render the app
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
