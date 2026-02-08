@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mail - iOS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="app-styles.css">
+</head>
+<body class="app-body">
+    <div class="app-screen active" id="mail-list-screen">
+        <div class="close-app" onclick="closeApp()">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/></svg>
+        </div>
+        
+        <div class="mail-header">
+            <h2>Inbox</h2>
+            <button class="compose-btn" onclick="composeMail()">
+                <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            </button>
+        </div>
+        
+        <div class="mail-list" id="mail-list">
+            <div class="mail-item unread" onclick="openMail(0)">
+                <div class="mail-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">A</div>
+                <div class="mail-content">
+                    <div class="mail-header">
+                        <span class="mail-sender">Apple</span>
+                        <span class="mail-date">10:30 AM</span>
+                    </div>
+                    <div class="mail-subject">Your Apple ID was used to sign in</div>
+                    <div class="mail-preview">Your Apple ID was used to sign in to iCloud...</div>
+                </div>
+            </div>
+            <div class="mail-item unread" onclick="openMail(1)">
+                <div class="mail-avatar" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">N</div>
+                <div class="mail-content">
+                    <div class="mail-header">
+                        <span class="mail-sender">Newsletter</span>
+                        <span class="mail-date">Yesterday</span>
+                    </div>
+                    <div class="mail-subject">Weekly Digest - Top Stories</div>
+                    <div class="mail-preview">Here are this week's top stories...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="app-screen" id="mail-view-screen">
+        <div class="close-app" onclick="backToMailList()">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </div>
+        
+        <div class="mail-view-header">
+            <h2 id="mail-view-subject">Your Apple ID was used to sign in</h2>
+            <div class="mail-view-info">
+                <div class="mail-view-avatar" id="mail-view-avatar">A</div>
+                <div>
+                    <div class="mail-view-sender" id="mail-view-sender">Apple</div>
+                    <div class="mail-view-date" id="mail-view-date">10:30 AM</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mail-view-body" id="mail-view-body">
+            Your Apple ID was used to sign in to iCloud via a web browser.
+        </div>
+        
+        <div class="mail-view-actions">
+            <button class="mail-action-btn" onclick="replyMail()">
+                <svg viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+            </button>
+            <button class="mail-action-btn" onclick="deleteMail()">
+                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            </button>
+        </div>
+    </div>
+    
+    <script src="mail.js"></script>
+</body>
+</html>
