@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Camera - iOS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="app-styles.css">
+</head>
+<body class="app-body">
+    <div class="app-screen active" id="camera-screen">
+        <div class="close-app" onclick="closeApp()">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/></svg>
+        </div>
+        
+        <div class="camera-permission-overlay" id="permission-overlay">
+            <div class="permission-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/></svg>
+            </div>
+            <h2>Allow Camera Access</h2>
+            <p>This app needs access to your camera to take photos and videos.</p>
+            <button class="permission-btn" onclick="requestCameraPermission()">Allow Access</button>
+            <button class="permission-btn secondary" onclick="closeApp()">Not Now</button>
+        </div>
+        
+        <video id="camera-feed" autoplay playsinline></video>
+        
+        <div class="camera-top-bar">
+            <button class="camera-top-btn flash-btn" id="flash-btn" onclick="toggleFlash()">
+                <svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>
+            </button>
+            <button class="camera-top-btn live-photo-btn" id="live-btn">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+            </button>
+        </div>
+        
+        <div class="camera-modes">
+            <div class="camera-mode active" data-mode="photo">PHOTO</div>
+            <div class="camera-mode" data-mode="video">VIDEO</div>
+            <div class="camera-mode" data-mode="portrait">PORTRAIT</div>
+        </div>
+        
+        <div class="camera-controls">
+            <button class="camera-control-btn" onclick="openPhotos()">
+                <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+            </button>
+            <button class="capture-btn" onclick="capturePhoto()"></button>
+            <button class="camera-control-btn flip-btn" onclick="flipCamera()">
+                <svg viewBox="0 0 24 24"><path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 11.5V13H9v2.5L5.5 12 9 8.5V11h6V8.5l3.5 3.5-3.5 3.5z"/></svg>
+            </button>
+        </div>
+    </div>
+    
+    <script src="camera.js"></script>
+</body>
+</html>
