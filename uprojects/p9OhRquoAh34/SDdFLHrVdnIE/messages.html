@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Messages - iOS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="app-styles.css">
+</head>
+<body class="app-body">
+    <div class="app-screen active" id="messages-list-screen">
+        <div class="close-app" onclick="closeApp()">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/></svg>
+        </div>
+        <div class="messages-header">
+            <h2>Messages</h2>
+            <button class="compose-btn" onclick="showNewMessage()">
+                <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+            </button>
+        </div>
+        <div class="messages-list" id="messages-list">
+            <div class="message-item" onclick="openConversation('John Doe', 'JD')">
+                <div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">JD</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-name">John Doe</span>
+                        <span class="message-time">10:30 AM</span>
+                    </div>
+                    <div class="message-preview">Hey, how are you doing today?</div>
+                </div>
+            </div>
+            <div class="message-item" onclick="openConversation('Sarah Miller', 'SM')">
+                <div class="message-avatar" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">SM</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-name">Sarah Miller</span>
+                        <span class="message-time">Yesterday</span>
+                    </div>
+                    <div class="message-preview">The meeting is at 3pm tomorrow</div>
+                </div>
+            </div>
+            <div class="message-item" onclick="openConversation('Alex Wilson', 'AW')">
+                <div class="message-avatar" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">AW</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-name">Alex Wilson</span>
+                        <span class="message-time">Monday</span>
+                    </div>
+                    <div class="message-preview">Thanks for the help!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="app-screen" id="conversation-screen">
+        <div class="close-app" onclick="backToList()">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </div>
+        <div class="conversation-header">
+            <div class="conversation-avatar" id="conv-avatar">JD</div>
+            <div class="conversation-info">
+                <div class="conversation-name" id="conv-name">John Doe</div>
+                <div class="conversation-status">Online</div>
+            </div>
+        </div>
+        <div class="conversation-messages" id="conversation-messages">
+            <div class="message-bubble received">
+                <div class="message-text">Hey, how are you doing today?</div>
+                <div class="message-time">10:30 AM</div>
+            </div>
+        </div>
+        <div class="conversation-input">
+            <input type="text" id="message-input" placeholder="iMessage" class="input-field">
+            <button class="send-btn" onclick="sendMessage()">
+                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>
+    </div>
+    
+    <div class="app-screen" id="new-message-screen">
+        <div class="close-app" onclick="backToList()">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </div>
+        <div class="new-message-header">
+            <h2>New Message</h2>
+        </div>
+        <div class="to-field">
+            <label>To:</label>
+            <input type="text" id="to-input" placeholder="Name or phone number" class="input-field">
+        </div>
+        <div class="conversation-messages" id="new-message-content">
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                <p>No recipients</p>
+            </div>
+        </div>
+        <div class="conversation-input">
+            <input type="text" id="new-message-input" placeholder="iMessage" class="input-field">
+            <button class="send-btn" onclick="sendNewMessage()">
+                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>
+    </div>
+    
+    <script src="messages.js"></script>
+</body>
+</html>
