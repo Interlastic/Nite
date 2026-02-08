@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Music - iOS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="app-styles.css">
+</head>
+<body class="app-body">
+    <div class="app-screen active" id="music-screen">
+        <div class="close-app" onclick="closeApp()">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/></svg>
+        </div>
+        
+        <div class="music-header">
+            <h2>Music</h2>
+        </div>
+        
+        <div class="music-tabs">
+            <div class="music-tab active" data-tab="library">Library</div>
+            <div class="music-tab" data-tab="radio">Radio</div>
+            <div class="music-tab" data-tab="search">Search</div>
+        </div>
+        
+        <div class="music-content" id="music-content">
+            <div class="music-section">
+                <h3>Recently Played</h3>
+                <div class="song-list" id="song-list">
+                    <!-- Songs will be loaded here -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="music-player" id="music-player">
+            <div class="now-playing">
+                <div class="album-art" id="album-art">
+                    <svg viewBox="0 0 24 24"><path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/></svg>
+                </div>
+                <div class="song-info">
+                    <div class="song-title" id="song-title">No Song Playing</div>
+                    <div class="song-artist" id="song-artist">-</div>
+                </div>
+            </div>
+            <div class="player-controls">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="time-display">
+                    <span id="current-time">0:00</span>
+                    <span id="total-time">0:00</span>
+                </div>
+                <div class="control-buttons">
+                    <button class="control-btn" onclick="prevSong()">
+                        <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                    </button>
+                    <button class="control-btn play-btn" id="play-btn" onclick="togglePlay()">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                    <button class="control-btn" onclick="nextSong()">
+                        <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="music.js"></script>
+</body>
+</html>
