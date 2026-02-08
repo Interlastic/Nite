@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Calculator - iOS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="app-styles.css">
+</head>
+<body class="app-body">
+    <div class="app-screen active" id="calculator-screen">
+        <div class="close-app" onclick="closeApp()">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/></svg>
+        </div>
+        
+        <div class="calculator-display" id="calculator-display">0</div>
+        
+        <div class="calculator-keypad">
+            <button class="calc-btn function" data-action="clearAll">AC</button>
+            <button class="calc-btn function" data-action="toggleSign">+/-</button>
+            <button class="calc-btn function" data-action="inputPercent">%</button>
+            <button class="calc-btn operator" data-action="setOperator" data-value="/">÷</button>
+            
+            <button class="calc-btn number" data-action="inputNumber" data-value="7">7</button>
+            <button class="calc-btn number" data-action="inputNumber" data-value="8">8</button>
+            <button class="calc-btn number" data-action="inputNumber" data-value="9">9</button>
+            <button class="calc-btn operator" data-action="setOperator" data-value="*">×</button>
+            
+            <button class="calc-btn number" data-action="inputNumber" data-value="4">4</button>
+            <button class="calc-btn number" data-action="inputNumber" data-value="5">5</button>
+            <button class="calc-btn number" data-action="inputNumber" data-value="6">6</button>
+            <button class="calc-btn operator" data-action="setOperator" data-value="-">−</button>
+            
+            <button class="calc-btn number" data-action="inputNumber" data-value="1">1</button>
+            <button class="calc-btn number" data-action="inputNumber" data-value="2">2</button>
+            <button class="calc-btn number" data-action="inputNumber" data-value="3">3</button>
+            <button class="calc-btn operator" data-action="setOperator" data-value="+">+</button>
+            
+            <button class="calc-btn number zero" data-action="inputNumber" data-value="0">0</button>
+            <button class="calc-btn number" data-action="inputDecimal">.</button>
+            <button class="calc-btn equals" data-action="calculate">=</button>
+        </div>
+    </div>
+    
+    <script src="calculator.js"></script>
+</body>
+</html>
