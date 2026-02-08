@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentation Rater AI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Presentation Rater AI</h1>
+            <p class="subtitle">Upload your PowerPoint and get an AI-powered rating (1-10)</p>
+        </header>
+
+        <main>
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div id="dropZone" class="drop-zone">
+                    <div class="drop-zone-content">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <h3>Drop your PowerPoint here</h3>
+                        <p>or click to browse</p>
+                        <p class="file-types">Supports .pptx files (max 50MB)</p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pptx" hidden>
+                </div>
+            </section>
+
+            <!-- File Info -->
+            <section id="fileInfo" class="file-info hidden">
+                <div class="file-details">
+                    <span class="file-name" id="fileName"></span>
+                    <span class="file-size" id="fileSize"></span>
+                    <button id="removeFile" class="btn-remove">×</button>
+                </div>
+            </section>
+
+            <!-- Model Selection -->
+            <section id="modelSection" class="model-section hidden">
+                <h3>Select AI Model</h3>
+                <div class="model-options">
+                    <label class="model-option">
+                        <input type="radio" name="model" value="local" checked>
+                        <div class="model-card">
+                            <span class="model-icon">🖥️</span>
+                            <div class="model-info">
+                                <h4>Local Browser Model</h4>
+                                <p>Runs entirely in your browser. Private and free. Requires WebGPU support.</p>
+                                <small class="model-note">First load may take 1-2 minutes to download model (~4GB)</small>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="model-option">
+                        <input type="radio" name="model" value="api">
+                        <div class="model-card">
+                            <span class="model-icon">☁️</span>
+                            <div class="model-info">
+                                <h4>Free Cloud API</h4>
+                                <p>Uses Hugging Face free API. Faster but requires internet.</p>
+                                <small class="model-note">Rate limited: 300 requests/hour for free users</small>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Analyze Button -->
+            <section id="analyzeSection" class="analyze-section hidden">
+                <button id="analyzeBtn" class="btn-primary" disabled>
+                    <span class="btn-text">Analyze Presentation</span>
+                </button>
+            </section>
+
+            <!-- Progress Section -->
+            <section id="progressSection" class="progress-section hidden">
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progressBar" class="progress-fill"></div>
+                    </div>
+                    <p id="progressText" class="progress-text">Initializing...</p>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="resultsSection" class="results-section hidden">
+                <div class="rating-card">
+                    <div class="rating-score">
+                        <span id="ratingValue">--</span>
+                        <span class="rating-max">/10</span>
+                    </div>
+                    <div class="rating-label">Overall Rating</div>
+                </div>
+                <div class="results-details">
+                    <h3>AI Analysis</h3>
+                    <div id="analysisContent" class="analysis-content"></div>
+                </div>
+                <button id="resetBtn" class="btn-secondary">Analyze Another Presentation</button>
+            </section>
+
+            <!-- Error Section -->
+            <section id="errorSection" class="error-section hidden">
+                <div class="error-card">
+                    <span class="error-icon">⚠️</span>
+                    <h3>Error</h3>
+                    <p id="errorMessage"></p>
+                    <button id="retryBtn" class="btn-secondary">Try Again</button>
+                </div>
+            </section>
+
+            <!-- WebGPU Not Supported -->
+            <section id="webgpuWarning" class="warning-section hidden">
+                <div class="warning-card">
+                    <span class="warning-icon">⚠️</span>
+                    <h3>WebGPU Not Supported</h3>
+                    <p>Your browser doesn't support WebGPU, which is required for the local model.</p>
+                    <p>Please use Chrome 113+, Edge 113+, or enable WebGPU in your browser settings.</p>
+                    <p>You can still use the Cloud API option.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Built with WebLLM and PPTX Parser | Privacy: Local model processes data entirely in your browser</p>
+        </footer>
+    </div>
+
+    <!-- Import Maps for ES Modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "pptx-parser": "https://cdn.jsdelivr.net/npm/pptx-parser@1.1.5/dist/pptx-parser.min.js",
+            "@mlc-ai/web-llm": "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.80/dist/index.mjs",
+            "jszip": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"
+        }
+    }
+    </script>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
