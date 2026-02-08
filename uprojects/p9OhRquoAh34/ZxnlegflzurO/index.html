@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>iOS Clone</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="device-frame">
+        <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+                <svg class="signal-icon" viewBox="0 0 24 24">
+                    <path d="M2 22h20V2z"/>
+                </svg>
+                <svg class="wifi-icon" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9c0-2.76 2.24-5 5-5s5 2.24 5 5h-2c0-1.66-1.34-3-3-3s-3 1.34-3 3H7z"/>
+                </svg>
+                <svg class="battery-icon" viewBox="0 0 24 24">
+                    <rect x="1" y="6" width="18" height="12" rx="2" stroke="currentColor" fill="none" stroke-width="2"/>
+                    <rect x="3" y="8" width="14" height="8" rx="1" fill="currentColor"/>
+                    <rect x="20" y="10" width="2" height="4" rx="1" fill="currentColor"/>
+                </svg>
+            </div>
+        </div>
+        
+        <div class="screen" id="home-screen">
+            <div class="wallpaper"></div>
+            <div class="date-widget">
+                <div class="day" id="widget-day">Wednesday</div>
+                <div class="date" id="widget-date">January 15</div>
+            </div>
+            <div class="app-grid">
+                <div class="app" data-app="messages">
+                    <div class="app-icon messages-icon"></div>
+                    <span class="app-name">Messages</span>
+                </div>
+                <div class="app" data-app="camera">
+                    <div class="app-icon camera-icon"></div>
+                    <span class="app-name">Camera</span>
+                </div>
+                <div class="app" data-app="photos">
+                    <div class="app-icon photos-icon"></div>
+                    <span class="app-name">Photos</span>
+                </div>
+                <div class="app" data-app="weather">
+                    <div class="app-icon weather-icon"></div>
+                    <span class="app-name">Weather</span>
+                </div>
+                <div class="app" data-app="clock">
+                    <div class="app-icon clock-icon"></div>
+                    <span class="app-name">Clock</span>
+                </div>
+                <div class="app" data-app="settings">
+                    <div class="app-icon settings-icon"></div>
+                    <span class="app-name">Settings</span>
+                </div>
+                <div class="app" data-app="calculator">
+                    <div class="app-icon calculator-icon"></div>
+                    <span class="app-name">Calculator</span>
+                </div>
+                <div class="app" data-app="notes">
+                    <div class="app-icon notes-icon"></div>
+                    <span class="app-name">Notes</span>
+                </div>
+                <div class="app" data-app="music">
+                    <div class="app-icon music-icon"></div>
+                    <span class="app-name">Music</span>
+                </div>
+                <div class="app" data-app="appstore">
+                    <div class="app-icon appstore-icon"></div>
+                    <span class="app-name">App Store</span>
+                </div>
+            </div>
+            <div class="dock">
+                <div class="app" data-app="phone">
+                    <div class="app-icon phone-icon"></div>
+                </div>
+                <div class="app" data-app="safari">
+                    <div class="app-icon safari-icon"></div>
+                </div>
+                <div class="app" data-app="mail">
+                    <div class="app-icon mail-icon"></div>
+                </div>
+                <div class="app" data-app="music">
+                    <div class="app-icon music-icon"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Screens -->
+        <div class="app-screen" id="camera-screen">
+            <video id="camera-feed" autoplay playsinline></video>
+            <div class="camera-controls">
+                <div class="camera-btn flash-btn">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+                    </svg>
+                </div>
+                <div class="camera-btn capture-btn"></div>
+                <div class="camera-btn flip-btn">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 11.5V13H9v2.5L5.5 12 9 8.5V11h6V8.5l3.5 3.5-3.5 3.5z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="close-app" data-close="camera-screen">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="app-screen" id="photos-screen">
+            <div class="photos-header">
+                <h2>Photos</h2>
+                <div class="close-app" data-close="photos-screen">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="photos-grid" id="photos-grid">
+                <!-- Sample photos will be added here -->
+            </div>
+        </div>
+
+        <div class="app-screen" id="settings-screen">
+            <div class="settings-header">
+                <div class="close-app" data-close="settings-screen">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                    </svg>
+                </div>
+                <h2>Settings</h2>
+            </div>
+            <div class="settings-list">
+                <div class="settings-item">
+                    <div class="settings-icon settings-icon-wifi"></div>
+                    <span>Wi-Fi</span>
+                    <div class="settings-value">Connected</div>
+                    <svg class="chevron" viewBox="0 0 24 24">
+                        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                    </svg>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-icon settings-icon-bluetooth"></div>
+                    <span>Bluetooth</span>
+                    <div class="settings-value">On</div>
+                    <svg class="chevron" viewBox="0 0 24 24">
+                        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                    </svg>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-icon settings-icon-cellular"></div>
+                    <span>Cellular</span>
+                    <svg class="chevron" viewBox="0 0 24 24">
+                        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                    </svg>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-icon settings-icon-notifications"></div>
+                    <span>Notifications</span>
+                    <svg class="chevron" viewBox="0 0 24 24">
+                        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                    </svg>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-icon settings-icon-sounds"></div>
+                    <span>Sounds & Haptics</span>
+                    <svg class="chevron" viewBox="0 0 24 24">
+                        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                    </svg>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-icon settings-icon-general"></div>
+                    <span>General</span>
+                    <svg class="chevron" viewBox="0 0 24 24">
+                        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                    </svg>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-icon settings-icon-display"></div>
+                    <span>Display & Brightness</span>
+                    <svg class="chevron" viewBox="0 0 24 24">
+                        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-screen" id="messages-screen">
+            <div class="messages-header">
+                <h2>Messages</h2>
+                <div class="close-app" data-close="messages-screen">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="messages-list">
+                <div class="message-item">
+                    <div class="message-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">JD</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-name">John Doe</span>
+                            <span class="message-time">10:30 AM</span>
+                        </div>
+                        <div class="message-preview">Hey, how are you doing today?</div>
+                    </div>
+                </div>
+                <div class="message-item">
+                    <div class="message-avatar" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">SM</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-name">Sarah Miller</span>
+                            <span class="message-time">Yesterday</span>
+                        </div>
+                        <div class="message-preview">The meeting is at 3pm tomorrow</div>
+                    </div>
+                </div>
+                <div class="message-item">
+                    <div class="message-avatar" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">AW</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-name">Alex Wilson</span>
+                            <span class="message-time">Monday</span>
+                        </div>
+                        <div class="message-preview">Thanks for the help!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-screen" id="weather-screen">
+            <div class="close-app" data-close="weather-screen">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
+                </svg>
+            </div>
+            <div class="weather-content">
+                <h2 class="weather-city">San Francisco</h2>
+                <div class="weather-temp">72°</div>
+                <div class="weather-desc">Partly Cloudy</div>
+                <svg class="weather-icon" viewBox="0 0 24 24">
+                    <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.93l-1.41 1.41c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.41-1.41c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0zm12.37 12.37l-1.41 1.41c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.41-1.41c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0zm1.41-10.96c-.39-.39-1.02-.39-1.41 0l-1.41 1.41c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.41-1.41c.39-.39.39-1.02 0-1.41zM7.05 18.36c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0l-1.41 1.41c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.41-1.41z"/>
+                </svg>
+                <div class="weather-hl">
+                    <span>H:78°</span>
+                    <span>L:65°</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-screen" id="clock-screen">
+            <div class="close-app" data-close="clock-screen">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
+                </svg>
+            </div>
+            <div class="clock-content">
+                <div class="clock-face" id="clock-face">
+                    <div class="clock-hand hour-hand" id="hour-hand"></div>
+                    <div class="clock-hand minute-hand" id="minute-hand"></div>
+                    <div class="clock-hand second-hand" id="second-hand"></div>
+                    <div class="clock-center"></div>
+                </div>
+                <div class="digital-time" id="digital-time">12:00:00</div>
+            </div>
+        </div>
+
+        <div class="home-indicator"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
