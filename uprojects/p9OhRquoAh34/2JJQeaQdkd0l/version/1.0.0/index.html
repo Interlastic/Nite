@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOOM - HTML5 Recreation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            position: relative;
+            border: 4px solid #444;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+        }
+        
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+        }
+        
+        #hud {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
+            border-top: 2px solid #555;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: #ff0;
+            font-size: 18px;
+            text-shadow: 0 0 5px #ff0;
+        }
+        
+        .hud-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .hud-label {
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .hud-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+        }
+        
+        #crosshair::before,
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 0, 0, 0.7);
+        }
+        
+        #crosshair::before {
+            width: 2px;
+            height: 20px;
+            left: 9px;
+        }
+        
+        #crosshair::after {
+            width: 20px;
+            height: 2px;
+            top: 9px;
+        }
+        
+        #minimap {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            border: 2px solid #444;
+            background: rgba(0, 0, 0, 0.7);
+            opacity: 0.8;
+        }
+        
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #f00;
+            font-size: 48px;
+            text-shadow: 0 0 10px #f00;
+            display: none;
+            text-align: center;
+        }
+        
+        #controls-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #888;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <canvas id="minimap" width="150" height="150"></canvas>
+        <div id="crosshair"></div>
+        <div id="hud">
+            <div class="hud-stat">
+                <span class="hud-label">HEALTH</span>
+                <span class="hud-value" id="health">100</span>
+            </div>
+            <div class="hud-stat">
+                <span class="hud-label">AMMO</span>
+                <span class="hud-value" id="ammo">50</span>
+            </div>
+            <div class="hud-stat">
+                <span class="hud-label">ARMOR</span>
+                <span class="hud-value" id="armor">0</span>
+            </div>
+            <div class="hud-stat">
+                <span class="hud-label">KILLS</span>
+                <span class="hud-value" id="kills">0</span>
+            </div>
+        </div>
+        <div id="message"></div>
+        <div id="controls-info">
+            WASD/Arrows: Move | Mouse: Look | Click: Shoot | R: Reload
+        </div>
+    </div>
+
+    <script>
+        // ================= GAME CONSTANTS =================
+        const SCREEN_WIDTH = 800;
+        const SCREEN_HEIGHT = 600;
+        const HUD_HEIGHT = 80;
+        const MINIMAP_SIZE = 150;
+        const TILE_SIZE = 64;
+        const FOV = Math.PI / 3;
+        const NUM_RAYS = SCREEN_WIDTH;
+        const MAX_DEPTH = 800;
+        const MOVE_SPEED = 3.0;
+        const ROTATION_SPEED = 0.03;
+        const MOUSE_SENSITIVITY = 0.002;
+
+        // ================= GAME STATE =================
+        let player = {
+            x: 300,
+            y: 300,
+            angle: 0,
+            health: 100,
+            ammo: 50,
+            armor: 0,
+            kills: 0,
+            weapon: 'pistol',
+            shooting: false,
+            lastShot: 0
+        };
+
+        let enemies = [];
+        let pickups = [];
+        let projectiles = [];
+        let gameRunning = true;
+        let keys = {};
+        let mouseMovement = { x: 0, y: 0 };
+
+        // ================= MAP DATA =================
+        // 1 = wall, 0 = empty, 2 = door, 3 = secret
+        const MAP_WIDTH = 20;
+        const MAP_HEIGHT = 20;
+        const worldMap = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,0,1,0,0,1,1,1,0,0,1,0,0,0,0,1],
+            [1,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1],
+            [1,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1],
+            [1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+            [1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+            [1,0,1,1,1,0,1,0,0,1,1,1,0,0,1,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        // ================= CANVAS SETUP =================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const minimapCanvas = document.getElementById('minimap');
+        const minimapCtx = minimapCanvas.getContext('2d');
+
+        // ================= TEXTURE GENERATION =================
+        const textures = {
+            wall: createWallTexture(),
+            door: createDoorTexture(),
+            floor: createFloorTexture(),
+            ceiling: createCeilingTexture()
+        };
+
+        function createWallTexture() {
+            const textureCanvas = document.createElement('canvas');
+            textureCanvas.width = 64;
+            textureCanvas.height = 64;
+            const textureCtx = textureCanvas.getContext('2d');
+            
+            // Base color
+            textureCtx.fillStyle = '#8B4513';
+            textureCtx.fillRect(0, 0, 64, 64);
+            
+            // Add brick pattern
+            textureCtx.fillStyle = '#A0522D';
+            for (let y = 0; y < 8; y++) {
+                for (let x = 0; x < 4; x++) {
+                    const offset = (y % 2) * 8;
+                    textureCtx.fillRect(x * 16 + offset, y * 8, 14, 6);
+                }
+            }
+            
+            // Add grime
+            textureCtx.fillStyle = 'rgba(0,0,0,0.2)';
+            for (let i = 0; i < 20; i++) {
+                const x = Math.random() * 64;
+                const y = Math.random() * 64;
+                textureCtx.fillRect(x, y, 2, 2);
+            }
+            
+            return textureCanvas;
+        }
+
+        function createDoorTexture() {
+            const textureCanvas = document.createElement('canvas');
+            textureCanvas.width = 64;
+            textureCanvas.height = 64;
+            const textureCtx = textureCanvas.getContext('2d');
+            
+            // Door color
+            textureCtx.fillStyle = '#4a4a4a';
+            textureCtx.fillRect(0, 0, 64, 64);
+            
+            // Door frame
+            textureCtx.strokeStyle = '#666';
+            textureCtx.lineWidth = 4;
+            textureCtx.strokeRect(2, 2, 60, 60);
+            
+            // Handle
+            textureCtx.fillStyle = '#888';
+            textureCtx.beginPath();
+            textureCtx.arc(52, 32, 3, 0, Math.PI * 2);
+            textureCtx.fill();
+            
+            return textureCanvas;
+        }
+
+        function createFloorTexture() {
+            const textureCanvas = document.createElement('canvas');
+            textureCanvas.width = 64;
+            textureCanvas.height = 64;
+            const textureCtx = textureCanvas.getContext('2d');
+            
+            // Floor color
+            textureCtx.fillStyle = '#3a3a3a';
+            textureCtx.fillRect(0, 0, 64, 64);
+            
+            // Tile pattern
+            textureCtx.strokeStyle = '#4a4a4a';
+            textureCtx.lineWidth = 1;
+            for (let i = 0; i <= 64; i += 16) {
+                textureCtx.beginPath();
+                textureCtx.moveTo(i, 0);
+                textureCtx.lineTo(i, 64);
+                textureCtx.stroke();
+                
+                textureCtx.beginPath();
+                textureCtx.moveTo(0, i);
+                textureCtx.lineTo(64, i);
+                textureCtx.stroke();
+            }
+            
+            return textureCanvas;
+        }
+
+        function createCeilingTexture() {
+            const textureCanvas = document.createElement('canvas');
+            textureCanvas.width = 64;
+            textureCanvas.height = 64;
+            const textureCtx = textureCanvas.getContext('2d');
+            
+            // Ceiling color
+            textureCtx.fillStyle = '#2a2a2a';
+            textureCtx.fillRect(0, 0, 64, 64);
+            
+            // Add some detail
+            textureCtx.fillStyle = '#3a3a3a';
+            for (let i = 0; i < 10; i++) {
+                const x = Math.random() * 64;
+                const y = Math.random() * 64;
+                textureCtx.fillRect(x, y, 4, 4);
+            }
+            
+            return textureCanvas;
+        }
+
+        // ================= SPRITE GENERATION =================
+        const sprites = {
+            imp: createEnemySprite('#8B0000'),
+            demon: createEnemySprite('#4B0082'),
+            player: createPlayerSprite()
+        };
+
+        function createEnemySprite(color) {
+            const spriteCanvas = document.createElement('canvas');
+            spriteCanvas.width = 64;
+            spriteCanvas.height = 64;
+            const spriteCtx = spriteCanvas.getContext('2d');
+            
+            // Body
+            spriteCtx.fillStyle = color;
+            spriteCtx.fillRect(20, 20, 24, 40);
+            
+            // Head
+            spriteCtx.fillStyle = '#ff6600';
+            spriteCtx.fillRect(24, 8, 16, 16);
+            
+            // Eyes
+            spriteCtx.fillStyle = '#fff';
+            spriteCtx.fillRect(26, 12, 4, 4);
+            spriteCtx.fillRect(34, 12, 4, 4);
+            
+            // Arms
+            spriteCtx.fillStyle = color;
+            spriteCtx.fillRect(12, 24, 8, 20);
+            spriteCtx.fillRect(44, 24, 8, 20);
+            
+            return spriteCanvas;
+        }
+
+        function createPlayerSprite() {
+            const spriteCanvas = document.createElement('canvas');
+            spriteCanvas.width = 64;
+            spriteCanvas.height = 64;
+            const spriteCtx = spriteCanvas.getContext('2d');
+            
+            // Body
+            spriteCtx.fillStyle = '#228B22';
+            spriteCtx.fillRect(24, 20, 16, 40);
+            
+            // Head
+            spriteCtx.fillStyle = '#FFE4C4';
+            spriteCtx.fillRect(28, 8, 8, 14);
+            
+            // Arms
+            spriteCtx.fillStyle = '#228B22';
+            spriteCtx.fillRect(16, 24, 8, 20);
+            spriteCtx.fillRect(40, 24, 8, 20);
+            
+            return spriteCanvas;
+        }
+
+        // ================= GAME INITIALIZATION =================
+        function initEnemies() {
+            enemies = [
+                { x: 400, y: 400, type: 'imp', health: 50, speed: 1.5, damage: 10, lastAttack: 0, state: 'idle' },
+                { x: 600, y: 300, type: 'demon', health: 80, speed: 1.0, damage: 15, lastAttack: 0, state: 'idle' },
+                { x: 500, y: 500, type: 'imp', health: 50, speed: 1.5, damage: 10, lastAttack: 0, state: 'idle' },
+                { x: 200, y: 450, type: 'demon', health: 80, speed: 1.0, damage: 15, lastAttack: 0, state: 'idle' },
+                { x: 350, y: 200, type: 'imp', health: 50, speed: 1.5, damage: 10, lastAttack: 0, state: 'idle' }
+            ];
+        }
+
+        function initPickups() {
+            pickups = [
+                { x: 450, y: 350, type: 'health', value: 25 },
+                { x: 550, y: 450, type: 'ammo', value: 10 },
+                { x: 250, y: 400, type: 'armor', value: 50 },
+                { x: 400, y: 250, type: 'health', value: 25 },
+                { x: 600, y: 400, type: 'ammo', value: 10 }
+            ];
+        }
+
+        // ================= RAYCASTING ENGINE =================
+        function castRay(angle) {
+            let rayX = player.x;
+            let rayY = player.y;
+            const rayDirX = Math.cos(angle);
+            const rayDirY = Math.sin(angle);
+            
+            const mapX = Math.floor(rayX / TILE_SIZE);
+            const mapY = Math.floor(rayY / TILE_SIZE);
+            
+            const deltaDistX = Math.abs(1 / rayDirX);
+            const deltaDistY = Math.abs(1 / rayDirY);
+            
+            let stepX, stepY;
+            let sideDistX, sideDistY;
+            
+            if (rayDirX < 0) {
+                stepX = -1;
+                sideDistX = (rayX / TILE_SIZE - mapX) * deltaDistX;
+            } else {
+                stepX = 1;
+                sideDistX = (mapX + 1.0 - rayX / TILE_SIZE) * deltaDistX;
+            }
+            
+            if (rayDirY < 0) {
+                stepY = -1;
+                sideDistY = (rayY / TILE_SIZE - mapY) * deltaDistY;
+            } else {
+                stepY = 1;
+                sideDistY = (mapY + 1.0 - rayY / TILE_SIZE) * deltaDistY;
+            }
+            
+            let hit = false;
+            let side = 0;
+            let wallType = 0;
+            
+            while (!hit && (sideDistX < MAX_DEPTH && sideDistY < MAX_DEPTH)) {
+                if (sideDistX < sideDistY) {
+                    sideDistX += deltaDistX;
+                    mapX += stepX;
+                    side = 0;
+                } else {
+                    sideDistY += deltaDistY;
+                    mapY += stepY;
+                    side = 1;
+                }
+                
+                if (mapX >= 0 && mapX < MAP_WIDTH && mapY >= 0 && mapY < MAP_HEIGHT) {
+                    wallType = worldMap[mapY][mapX];
+                    if (wallType > 0 && wallType !== 3) {
+                        hit = true;
+                    }
+                } else {
+                    hit = true;
+                    wallType = 1;
+                }
+            }
+            
+            let perpWallDist;
+            if (side === 0) {
+                perpWallDist = (mapX - rayX / TILE_SIZE + (1 - stepX) / 2) / rayDirX;
+            } else {
+                perpWallDist = (mapY - rayY / TILE_SIZE + (1 - stepY) / 2) / rayDirY;
+            }
+            
+            // Fix fisheye distortion
+            perpWallDist *= Math.cos(angle - player.angle);
+            
+            // Calculate texture coordinates
+            let wallX;
+            if (side === 0) {
+                wallX = rayY / TILE_SIZE + perpWallDist * rayDirY;
+            } else {
+                wallX = rayX / TILE_SIZE + perpWallDist * rayDirX;
+            }
+            wallX -= Math.floor(wallX);
+            
+            let texX = Math.floor(wallX * 64);
+            if (side === 0 && rayDirX > 0) texX = 64 - texX - 1;
+            if (side === 1 && rayDirY < 0) texX = 64 - texX - 1;
+            
+            return {
+                distance: perpWallDist * TILE_SIZE,
+                side: side,
+                wallType: wallType,
+                texX: texX,
+                mapX: mapX,
+                mapY: mapY
+            };
+        }
+
+        // ================= RENDERING SYSTEM =================
+        function render3DView() {
+            // Draw ceiling
+            const gradient = ctx.createLinearGradient(0, 0, 0, SCREEN_HEIGHT / 2);
+            gradient.addColorStop(0, '#1a1a1a');
+            gradient.addColorStop(1, '#2a2a2a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT / 2);
+            
+            // Draw floor
+            const floorGradient = ctx.createLinearGradient(0, SCREEN_HEIGHT / 2, 0, SCREEN_HEIGHT);
+            floorGradient.addColorStop(0, '#3a3a3a');
+            floorGradient.addColorStop(1, '#4a4a4a');
+            ctx.fillStyle = floorGradient;
+            ctx.fillRect(0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2);
+            
+            // Cast rays and draw walls
+            const zBuffer = [];
+            
+            for (let x = 0; x < NUM_RAYS; x++) {
+                const rayAngle = (player.angle - FOV / 2.0) + (x / NUM_RAYS) * FOV;
+                const ray = castRay(rayAngle);
+                
+                // Calculate wall height
+                const lineHeight = Math.floor((SCREEN_HEIGHT * TILE_SIZE) / ray.distance);
+                const drawStart = Math.max(0, Math.floor((SCREEN_HEIGHT - lineHeight) / 2));
+                const drawEnd = Math.min(SCREEN_HEIGHT - HUD_HEIGHT, Math.floor((SCREEN_HEIGHT + lineHeight) / 2));
+                
+                // Select texture
+                let texture;
+                if (ray.wallType === 2) {
+                    texture = textures.door;
+                } else {
+                    texture = textures.wall;
+                }
+                
+                // Apply distance shading
+                const shade = Math.min(1, ray.distance / 400);
+                ctx.filter = `brightness(${1 - shade * 0.7})`;
+                
+                // Draw textured wall strip
+                const texWidth = 1;
+                const texHeight = lineHeight;
+                const srcX = ray.texX;
+                const srcY = 0;
+                const srcWidth = 1;
+                const srcHeight = 64;
+                
+                ctx.drawImage(
+                    texture,
+                    srcX, srcY, srcWidth, srcHeight,
+                    x, drawStart, texWidth, texHeight
+                );
+                
+                ctx.filter = 'none';
+                
+                zBuffer[x] = ray.distance;
+            }
+            
+            // Render sprites (enemies and pickups)
+            renderSprites(zBuffer);
+            
+            // Draw weapon
+            renderWeapon();
+            
+            // Update HUD
+            updateHUD();
+        }
+
+        function renderSprites(zBuffer) {
+            // Combine enemies and pickups
+            const allSprites = [...enemies, ...pickups];
+            
+            // Calculate sprite distances and sort
+            allSprites.forEach(sprite => {
+                sprite.distance = Math.sqrt(
+                    Math.pow(sprite.x - player.x, 2) + 
+                    Math.pow(sprite.y - player.y, 2)
+                );
+            });
+            
+            allSprites.sort((a, b) => b.distance - a.distance);
+            
+            allSprites.forEach(sprite => {
+                const dx = sprite.x - player.x;
+                const dy = sprite.y - player.y;
+                
+                // Calculate sprite position relative to camera
+                const spriteDirX = dx / sprite.distance;
+                const spriteDirY = dy / sprite.distance;
+                
+                // Calculate angle between sprite and player direction
+                const spriteAngle = Math.atan2(spriteDirY, spriteDirX) - player.angle;
+                
+                // Normalize angle
+                let normalizedAngle = spriteAngle;
+                while (normalizedAngle > Math.PI) normalizedAngle -= 2 * Math.PI;
+                while (normalizedAngle < -Math.PI) normalizedAngle += 2 * Math.PI;
+                
+                // Check if sprite is in FOV
+                if (Math.abs(normalizedAngle) < FOV / 1.5) {
+                    // Calculate screen position
+                    const screenX = (0.5 * (1 - normalizedAngle / (FOV / 2))) * SCREEN_WIDTH;
+                    
+                    // Calculate sprite size based on distance
+                    const spriteHeight = Math.abs(Math.floor((SCREEN_HEIGHT * TILE_SIZE) / sprite.distance));
+                    const spriteWidth = spriteHeight;
+                    
+                    const drawStartX = Math.floor(screenX - spriteWidth / 2);
+                    const drawStartY = Math.floor((SCREEN_HEIGHT - spriteHeight) / 2);
+                    const drawEndX = Math.floor(screenX + spriteWidth / 2);
+                    const drawEndY = Math.floor((SCREEN_HEIGHT + spriteHeight) / 2);
+                    
+                    // Check if sprite is visible (not behind walls)
+                    let visible = false;
+                    for (let x = Math.max(0, drawStartX); x < Math.min(SCREEN_WIDTH, drawEndX); x++) {
+                        if (sprite.distance < zBuffer[x]) {
+                            visible = true;
+                            break;
+                        }
+                    }
+                    
+                    if (visible && drawStartX < SCREEN_WIDTH && drawEndX > 0) {
+                        // Get sprite image
+                        let spriteImage;
+                        if (sprite.type) {
+                            spriteImage = sprites[sprite.type];
+                        } else {
+                            spriteImage = sprites.player; // Default
+                        }
+                        
+                        // Apply distance shading
+                        const shade = Math.min(1, sprite.distance / 400);
+                        ctx.filter = `brightness(${1 - shade * 0.5})`;
+                        
+                        // Draw sprite
+                        ctx.drawImage(
+                            spriteImage,
+                            drawStartX, drawStartY, spriteWidth, spriteHeight
+                        );
+                        
+                        ctx.filter = 'none';
+                    }
+                }
+            });
+        }
+
+        function renderWeapon() {
+            const weaponX = SCREEN_WIDTH / 2 - 100;
+            const weaponY = SCREEN_HEIGHT - HUD_HEIGHT - 150;
+            
+            // Weapon bobbing
+            const bobX = Math.sin(Date.now() / 200) * 5;
+            const bobY = Math.abs(Math.cos(Date.now() / 200)) * 5;
+            
+            ctx.fillStyle = '#4a4a4a';
+            ctx.fillRect(weaponX + bobX, weaponY + bobY, 200, 150);
+            
+            // Weapon details
+            ctx.fillStyle = '#3a3a3a';
+            ctx.fillRect(weaponX + 20 + bobX, weaponY + 20 + bobY, 160, 100);
+            
+            // Muzzle flash when shooting
+            if (player.shooting && Date.now() - player.lastShot < 100) {
+                ctx.fillStyle = `rgba(255, 200, 50, ${Math.random() * 0.5 + 0.5})`;
+                ctx.beginPath();
+                ctx.arc(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 30 + Math.random() * 20, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function renderMinimap() {
+            minimapCtx.fillStyle = '#000';
+            minimapCtx.fillRect(0, 0, MINIMAP_SIZE, MINIMAP_SIZE);
+            
+            const scale = MINIMAP_SIZE / (MAP_WIDTH * TILE_SIZE);
+            
+            // Draw map
+            for (let y = 0; y < MAP_HEIGHT; y++) {
+                for (let x = 0; x < MAP_WIDTH; x++) {
+                    if (worldMap[y][x] > 0) {
+                        if (worldMap[y][x] === 2) {
+                            minimapCtx.fillStyle = '#4a4a4a';
+                        } else {
+                            minimapCtx.fillStyle = '#8B4513';
+                        }
+                        minimapCtx.fillRect(
+                            x * TILE_SIZE * scale,
+                            y * TILE_SIZE * scale,
+                            TILE_SIZE * scale,
+                            TILE_SIZE * scale
+                        );
+                    }
+                }
+            }
+            
+            // Draw enemies
+            minimapCtx.fillStyle = '#f00';
+            enemies.forEach(enemy => {
+                minimapCtx.fillRect(
+                    enemy.x * scale - 2,
+                    enemy.y * scale - 2,
+                    4, 4
+                );
+            });
+            
+            // Draw pickups
+            minimapCtx.fillStyle = '#0f0';
+            pickups.forEach(pickup => {
+                minimapCtx.fillRect(
+                    pickup.x * scale - 2,
+                    pickup.y * scale - 2,
+                    4, 4
+                );
+            });
+            
+            // Draw player
+            minimapCtx.fillStyle = '#ff0';
+            minimapCtx.fillRect(
+                player.x * scale - 3,
+                player.y * scale - 3,
+                6, 6
+            );
+            
+            // Draw player direction
+            minimapCtx.strokeStyle = '#ff0';
+            minimapCtx.beginPath();
+            minimapCtx.moveTo(player.x * scale, player.y * scale);
+            minimapCtx.lineTo(
+                (player.x + Math.cos(player.angle) * 30) * scale,
+                (player.y + Math.sin(player.angle) * 30) * scale
+            );
+            minimapCtx.stroke();
+        }
+
+        // ================= GAMEPLAY MECHANICS =================
+        function updatePlayer() {
+            let moveX = 0;
+            let moveY = 0;
+            
+            // Keyboard movement
+            if (keys['w'] || keys['arrowup']) {
+                moveX += Math.cos(player.angle) * MOVE_SPEED;
+                moveY += Math.sin(player.angle) * MOVE_SPEED;
+            }
+            if (keys['s'] || keys['arrowdown']) {
+                moveX -= Math.cos(player.angle) * MOVE_SPEED;
+                moveY -= Math.sin(player.angle) * MOVE_SPEED;
+            }
+            if (keys['a'] || keys['arrowleft']) {
+                moveX += Math.cos(player.angle - Math.PI / 2) * MOVE_SPEED;
+                moveY += Math.sin(player.angle - Math.PI / 2) * MOVE_SPEED;
+            }
+            if (keys['d'] || keys['arrowright']) {
+                moveX += Math.cos(player.angle + Math.PI / 2) * MOVE_SPEED;
+                moveY += Math.sin(player.angle + Math.PI / 2) * MOVE_SPEED;
+            }
+            
+            // Mouse rotation
+            player.angle += mouseMovement.x * MOUSE_SENSITIVITY;
+            mouseMovement.x = 0;
+            
+            // Normalize angle
+            while (player.angle > Math.PI * 2) player.angle -= Math.PI * 2;
+            while (player.angle < 0) player.angle += Math.PI * 2;
+            
+            // Collision detection
+            const newX = player.x + moveX;
+            const newY = player.y + moveY;
+            
+            if (!checkCollision(newX, player.y)) {
+                player.x = newX;
+            }
+            if (!checkCollision(player.x, newY)) {
+                player.y = newY;
+            }
+            
+            // Shooting
+            if (player.shooting && Date.now() - player.lastShot > 500) {
+                shoot();
+                player.lastShot = Date.now();
+            }
+        }
+
+        function checkCollision(x, y) {
+            const margin = 10;
+            const checkPoints = [
+                { x: x - margin, y: y - margin },
+                { x: x + margin, y: y - margin },
+                { x: x - margin, y: y + margin },
+                { x: x + margin, y: y + margin }
+            ];
+            
+            for (const point of checkPoints) {
+                const mapX = Math.floor(point.x / TILE_SIZE);
+                const mapY = Math.floor(point.y / TILE_SIZE);
+                
+                if (mapX < 0 || mapX >= MAP_WIDTH || mapY < 0 || mapY >= MAP_HEIGHT) {
+                    return true;
+                }
+                
+                if (worldMap[mapY][mapX] > 0) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        function shoot() {
+            if (player.ammo <= 0) return;
+            
+            player.ammo--;
+            player.shooting = true;
+            
+            setTimeout(() => {
+                player.shooting = false;
+            }, 100);
+            
+            // Check if hitting enemies
+            enemies.forEach((enemy, index) => {
+                const dx = enemy.x - player.x;
+                const dy = enemy.y - player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Calculate angle to enemy
+                const angleToEnemy = Math.atan2(dy, dx);
+                let angleDiff = angleToEnemy - player.angle;
+                
+                // Normalize angle
+                while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                
+                // Check if enemy is in front and close enough
+                if (Math.abs(angleDiff) < 0.2 && distance < 300) {
+                    // Check if there's a wall between player and enemy
+                    const ray = castRay(angleToEnemy);
+                    if (ray.distance > distance) {
+                        // Hit enemy
+                        const damage = Math.floor(Math.random() * 10) + 15;
+                        enemy.health -= damage;
+                        
+                        if (enemy.health <= 0) {
+                            enemies.splice(index, 1);
+                            player.kills++;
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateEnemies() {
+            enemies.forEach(enemy => {
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 400) {
+                    // Move towards player
+                    const moveX = (dx / distance) * enemy.speed;
+                    const moveY = (dy / distance) * enemy.speed;
+                    
+                    const newX = enemy.x + moveX;
+                    const newY = enemy.y + moveY;
+                    
+                    if (!checkCollision(newX, enemy.y)) {
+                        enemy.x = newX;
+                    }
+                    if (!checkCollision(enemy.x, newY)) {
+                        enemy.y = newY;
+                    }
+                    
+                    // Attack player
+                    if (distance < 50 && Date.now() - enemy.lastAttack > 1000) {
+                        const damage = Math.floor(Math.random() * enemy.damage);
+                        player.health -= damage;
+                        enemy.lastAttack = Date.now();
+                        
+                        if (player.health <= 0) {
+                            gameOver();
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePickups() {
+            pickups.forEach((pickup, index) => {
+                const dx = pickup.x - player.x;
+                const dy = pickup.y - player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 30) {
+                    switch (pickup.type) {
+                        case 'health':
+                            player.health = Math.min(100, player.health + pickup.value);
+                            break;
+                        case 'ammo':
+                            player.ammo += pickup.value;
+                            break;
+                        case 'armor':
+                            player.armor = Math.min(100, player.armor + pickup.value);
+                            break;
+                    }
+                    
+                    pickups.splice(index, 1);
+                }
+            });
+        }
+
+        // ================= GAME STATE MANAGEMENT =================
+        function updateHUD() {
+            document.getElementById('health').textContent = Math.max(0, player.health);
+            document.getElementById('ammo').textContent = player.ammo;
+            document.getElementById('armor').textContent = player.armor;
+            document.getElementById('kills').textContent = player.kills;
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = 'GAME OVER';
+            messageDiv.style.display = 'block';
+        }
+
+        function checkVictory() {
+            if (enemies.length === 0) {
+                gameRunning = false;
+                const messageDiv = document.getElementById('message');
+                messageDiv.textContent = 'VICTORY!';
+                messageDiv.style.display = 'block';
+            }
+        }
+
+        // ================= INPUT HANDLING =================
+        function setupInput() {
+            document.addEventListener('keydown', (e) => {
+                keys[e.key.toLowerCase()] = true;
+                
+                if (e.key.toLowerCase() === 'r' && player.ammo < 50) {
+                    player.ammo = 50;
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                keys[e.key.toLowerCase()] = false;
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (document.pointerLockElement === canvas) {
+                    mouseMovement.x += e.movementX;
+                    mouseMovement.y += e.movementY;
+                }
+            });
+            
+            canvas.addEventListener('click', () => {
+                canvas.requestPointerLock();
+                if (player.ammo > 0 && !player.shooting) {
+                    player.shooting = true;
+                    shoot();
+                    player.lastShot = Date.now();
+                }
+            });
+            
+            document.addEventListener('pointerlockchange', () => {
+                if (!document.pointerLockElement) {
+                    mouseMovement = { x: 0, y: 0 };
+                }
+            });
+        }
+
+        // ================= GAME LOOP =================
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            updatePlayer();
+            updateEnemies();
+            updatePickups();
+            
+            render3DView();
+            renderMinimap();
+            
+            checkVictory();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ================= INITIALIZATION =================
+        function init() {
+            initEnemies();
+            initPickups();
+            setupInput();
+            gameLoop();
+        }
+
+        // Start Game
+        init();
+    </script>
+</body>
+</html>
