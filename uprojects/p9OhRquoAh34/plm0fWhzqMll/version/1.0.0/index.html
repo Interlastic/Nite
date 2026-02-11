@@ -30,6 +30,10 @@
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
     }
+    .app-icon-svg {
+      width: 32px;
+      height: 32px;
+    }
   </style>
 </head>
 <body>
@@ -40,13 +44,13 @@
   <div class="status-bar light">
     <span class="status-bar-time">9:41</span>
     <div class="status-bar-icons">
-      <svg viewBox="0 0 24 24" fill="currentColor">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
         <path d="M1.5 9.5l9 9 9-9-1.41-1.41L12 14.17l-6.09-6.08L1.5 9.5z" transform="rotate(180 12 12)"/>
       </svg>
-      <svg viewBox="0 0 24 24" fill="currentColor">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
         <path d="M12 21l-1.5-1.5C5.4 14.4 2 11.3 2 7.5 2 4.4 4.4 2 7.5 2c1.7 0 3.4.8 4.5 2.1C13.1 2.8 14.8 2 16.5 2 19.6 2 22 4.4 22 7.5c0 3.8-3.4 6.9-8.5 12L12 21z"/>
       </svg>
-      <svg viewBox="0 0 24 24" fill="currentColor">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
         <rect x="2" y="7" width="18" height="10" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
         <rect x="4" y="9" width="12" height="6" rx="1" fill="currentColor"/>
         <path d="M20 10h2v4h-2z"/>
@@ -61,7 +65,10 @@
     
     <div class="lock-notification">
       <div class="lock-notification-header">
-        <span class="lock-notification-icon">📱</span>
+        <svg class="lock-notification-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+          <rect x="5" y="2" width="14" height="20" rx="2"/>
+          <line x1="12" y1="18" x2="12" y2="18.01" stroke-width="2" stroke-linecap="round"/>
+        </svg>
         <span class="lock-notification-app">iOS Clone</span>
         <span class="lock-notification-time">now</span>
       </div>
@@ -74,94 +81,247 @@
   
   <!-- Home Screen -->
   <div class="home-screen">
-    <!-- App Grid Row 1 -->
+    <!-- App Grid -->
     <div class="app-grid">
+      <!-- Camera -->
       <div class="app-icon" data-app="camera">
-        <div class="app-icon-image camera">📷</div>
+        <div class="app-icon-image camera">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Camera</span>
       </div>
+      
+      <!-- Photos -->
       <div class="app-icon" data-app="photos">
-        <div class="app-icon-image photos">🌅</div>
+        <div class="app-icon-image photos">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+            <line x1="9" y1="9" x2="9.01" y2="9" stroke-width="3" stroke-linecap="round"/>
+            <line x1="15" y1="9" x2="15.01" y2="9" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Photos</span>
       </div>
+      
+      <!-- Messages -->
       <div class="app-icon" data-app="messages">
-        <div class="app-icon-image messages">💬</div>
+        <div class="app-icon-image messages">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Messages</span>
       </div>
+      
+      <!-- FaceTime -->
       <div class="app-icon" data-app="facetime">
-        <div class="app-icon-image facetime">📹</div>
+        <div class="app-icon-image facetime">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+        </div>
         <span class="app-icon-label">FaceTime</span>
       </div>
       
-      <!-- Row 2 -->
+      <!-- Mail -->
       <div class="app-icon" data-app="mail">
-        <div class="app-icon-image mail">✉️</div>
+        <div class="app-icon-image mail">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Mail</span>
       </div>
+      
+      <!-- Music -->
       <div class="app-icon" data-app="music">
-        <div class="app-icon-image music">🎵</div>
+        <div class="app-icon-image music">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="5.5" cy="17.5" r="2.5"/>
+            <circle cx="17.5" cy="15.5" r="2.5"/>
+            <path d="M8 17V5l12-2v12"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Music</span>
       </div>
+      
+      <!-- Weather -->
       <div class="app-icon" data-app="weather">
-        <div class="app-icon-image weather">🌤️</div>
+        <div class="app-icon-image weather">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Weather</span>
       </div>
+      
+      <!-- Calendar -->
       <div class="app-icon" data-app="calendar">
-        <div class="app-icon-image calendar">📅</div>
+        <div class="app-icon-image calendar">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Calendar</span>
       </div>
       
-      <!-- Row 3 -->
+      <!-- Clock -->
       <div class="app-icon" data-app="clock">
-        <div class="app-icon-image clock">🕐</div>
+        <div class="app-icon-image clock">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Clock</span>
       </div>
+      
+      <!-- Maps -->
       <div class="app-icon" data-app="maps">
-        <div class="app-icon-image maps">🗺️</div>
+        <div class="app-icon-image maps">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+            <line x1="8" y1="2" x2="8" y2="18"/>
+            <line x1="16" y1="6" x2="16" y2="22"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Maps</span>
       </div>
+      
+      <!-- Wallet -->
       <div class="app-icon" data-app="wallet">
-        <div class="app-icon-image wallet">💳</div>
+        <div class="app-icon-image wallet">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+            <line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Wallet</span>
       </div>
+      
+      <!-- Notes -->
       <div class="app-icon" data-app="notes">
-        <div class="app-icon-image notes">📝</div>
+        <div class="app-icon-image notes">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Notes</span>
       </div>
       
-      <!-- Row 4 -->
+      <!-- Reminders -->
       <div class="app-icon" data-app="reminders">
-        <div class="app-icon-image reminders">✓</div>
+        <div class="app-icon-image reminders">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="9 12 11 14 15 10"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Reminders</span>
       </div>
+      
+      <!-- Health -->
       <div class="app-icon" data-app="health">
-        <div class="app-icon-image health">❤️</div>
+        <div class="app-icon-image health">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Health</span>
       </div>
+      
+      <!-- Files -->
       <div class="app-icon" data-app="files">
-        <div class="app-icon-image files">📁</div>
+        <div class="app-icon-image files">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Files</span>
       </div>
+      
+      <!-- Calculator -->
       <div class="app-icon" data-app="calculator">
-        <div class="app-icon-image calculator">🔢</div>
+        <div class="app-icon-image calculator">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="2" width="16" height="20" rx="2"/>
+            <line x1="8" y1="6" x2="16" y2="6"/>
+            <line x1="8" y1="10" x2="8" y2="10.01"/>
+            <line x1="12" y1="10" x2="12" y2="10.01"/>
+            <line x1="16" y1="10" x2="16" y2="10.01"/>
+            <line x1="8" y1="14" x2="8" y2="14.01"/>
+            <line x1="12" y1="14" x2="12" y2="14.01"/>
+            <line x1="16" y1="14" x2="16" y2="14.01"/>
+            <line x1="8" y1="18" x2="8" y2="18.01"/>
+            <line x1="12" y1="18" x2="12" y2="18.01"/>
+            <line x1="16" y1="18" x2="16" y2="18.01"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Calculator</span>
       </div>
       
-      <!-- Row 5 -->
+      <!-- App Store -->
       <div class="app-icon" data-app="appstore">
-        <div class="app-icon-image appstore">🅰️</div>
+        <div class="app-icon-image appstore">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+        </div>
         <span class="app-icon-label">App Store</span>
       </div>
+      
+      <!-- Settings -->
       <div class="app-icon" data-app="settings">
-        <div class="app-icon-image settings">⚙️</div>
+        <div class="app-icon-image settings">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Settings</span>
       </div>
+      
+      <!-- Videos -->
       <div class="app-icon" data-app="videos">
-        <div class="app-icon-image videos">🎬</div>
+        <div class="app-icon-image videos">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Videos</span>
       </div>
+      
+      <!-- Safari -->
       <div class="app-icon" data-app="safari">
-        <div class="app-icon-image safari">🧭</div>
+        <div class="app-icon-image safari">
+          <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+          </svg>
+        </div>
         <span class="app-icon-label">Safari</span>
       </div>
     </div>
@@ -177,16 +337,36 @@
   <!-- Dock -->
   <div class="dock">
     <div class="app-icon" data-app="safari">
-      <div class="app-icon-image safari">🧭</div>
+      <div class="app-icon-image safari">
+        <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+        </svg>
+      </div>
     </div>
     <div class="app-icon" data-app="messages">
-      <div class="app-icon-image messages">💬</div>
+      <div class="app-icon-image messages">
+        <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
     </div>
     <div class="app-icon" data-app="mail">
-      <div class="app-icon-image mail">✉️</div>
+      <div class="app-icon-image mail">
+        <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+      </div>
     </div>
     <div class="app-icon" data-app="music">
-      <div class="app-icon-image music">🎵</div>
+      <div class="app-icon-image music">
+        <svg class="app-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="5.5" cy="17.5" r="2.5"/>
+          <circle cx="17.5" cy="15.5" r="2.5"/>
+          <path d="M8 17V5l12-2v12"/>
+        </svg>
+      </div>
     </div>
   </div>
   

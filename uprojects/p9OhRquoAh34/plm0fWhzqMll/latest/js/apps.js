@@ -528,7 +528,7 @@ function initMusicApp() {
 // PLACEHOLDER APPS
 // =========================================
 function getPlaceholderApp(name) {
-  return `<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ios-dark-bg);"><div style="font-size:60px;margin-bottom:20px;">📱</div><div style="font-size:24px;font-weight:600;margin-bottom:8px;text-transform:capitalize;">${name}</div><div style="font-size:14px;color:var(--ios-gray);">Coming soon</div></div>`;
+  return `<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ios-dark-bg);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="60" height="60" style="margin-bottom:20px;opacity:0.5;"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01" stroke-width="2" stroke-linecap="round"/></svg><div style="font-size:24px;font-weight:600;margin-bottom:8px;text-transform:capitalize;">${name}</div><div style="font-size:14px;color:var(--ios-gray);">Coming soon</div></div>`;
 }
 
 function getMessagesApp() { return getPlaceholderApp('Messages'); }
