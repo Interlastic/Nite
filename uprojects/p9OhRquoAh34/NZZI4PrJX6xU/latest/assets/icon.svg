@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8338ec;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="#1a1a2e"/>
+  <circle cx="256" cy="256" r="180" fill="url(#grad1)" opacity="0.2"/>
+  <g fill="url(#grad1)">
+    <!-- Music note icon -->
+    <ellipse cx="180" cy="320" rx="50" ry="40" fill="url(#grad1)"/>
+    <rect x="220" y="140" width="16" height="180" fill="url(#grad1)"/>
+    <ellipse cx="332" cy="280" rx="50" ry="40" fill="url(#grad1)"/>
+    <rect x="372" y="100" width="16" height="180" fill="url(#grad1)"/>
+    <!-- Connecting bars -->
+    <path d="M236 140 Q290 100 388 100" stroke="url(#grad1)" stroke-width="20" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- Sound waves -->
+  <g stroke="#00d4ff" stroke-width="8" fill="none" opacity="0.6">
+    <path d="M80 256 Q80 200 120 180" stroke-linecap="round"/>
+    <path d="M60 256 Q60 180 110 150" stroke-linecap="round"/>
+    <path d="M432 256 Q432 200 392 180" stroke-linecap="round"/>
+    <path d="M452 256 Q452 180 402 150" stroke-linecap="round"/>
+  </g>
+</svg>
