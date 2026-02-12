@@ -1515,6 +1515,13 @@
                 const line = gameState.lines[gameState.drawingLine.lineIndex];
                 if (!line.stations.includes(station)) {
                     line.addStation(station);
+                    
+                    // Add train if this is the second station and we have trains available
+                    if (line.stations.length === 2 && gameState.availableTrains > 0 && line.trains.length === 0) {
+                        const train = new Train(line, 0);
+                        line.trains.push(train);
+                        gameState.availableTrains--;
+                    }
                 }
             }
             
