@@ -826,7 +826,7 @@
                 this.capacity = TRAIN_CAPACITY;
                 this.speed = TRAIN_SPEED;
                 this.atStation = true;
-                this.stationWaitTime = 0;
+                this.stationWaitTime = 0.3; // Brief wait before departing
                 this.x = 0;
                 this.y = 0;
                 this.updatePosition();
@@ -866,7 +866,7 @@
                         this.progress = 0;
                         this.currentStationIndex = this.targetStationIndex;
                         this.atStation = true;
-                        this.stationWaitTime = 500; // Wait at station
+                        this.stationWaitTime = 0.5; // Wait at station (seconds)
                         
                         // Update direction at end of line
                         if (this.currentStationIndex === 0) {
