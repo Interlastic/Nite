@@ -2,13 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1a1a2e">
-    <meta name="description" content="Mini Metro - A strategy puzzle game about designing subway maps">
-    <title>Mini Metro</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
-    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Metro - Track Builder</title>
     <style>
         * {
             margin: 0;
@@ -16,181 +11,70 @@
             box-sizing: border-box;
         }
         
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+        body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #1a1a2e;
-            color: #eee;
-            touch-action: none;
-            user-select: none;
+            overflow: hidden;
         }
         
-        #game-container {
-            width: 100%;
-            height: 100%;
+        #gameContainer {
             position: relative;
+            width: 100vw;
+            height: 100vh;
         }
         
-        #game-canvas {
-            width: 100%;
-            height: 100%;
+        #gameCanvas {
             display: block;
             cursor: crosshair;
         }
         
-        /* Main Menu */
-        #main-menu {
+        #ui {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 10px;
+            left: 10px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            z-index: 100;
+            gap: 10px;
         }
         
-        #main-menu.hidden {
-            display: none;
-        }
-        
-        .menu-title {
-            font-size: 4rem;
-            font-weight: 300;
-            letter-spacing: 0.5rem;
-            margin-bottom: 1rem;
-            color: #f5f5f5;
-        }
-        
-        .menu-subtitle {
-            font-size: 1.2rem;
-            font-weight: 300;
-            letter-spacing: 0.2rem;
-            margin-bottom: 3rem;
-            color: #888;
-        }
-        
-        .menu-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        
-        .menu-btn {
-            padding: 1rem 3rem;
-            font-size: 1.2rem;
-            font-weight: 400;
-            letter-spacing: 0.1rem;
-            border: 2px solid #4a5568;
-            background: transparent;
-            color: #eee;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 250px;
-        }
-        
-        .menu-btn:hover {
-            background: #4a5568;
-            border-color: #718096;
-        }
-        
-        .menu-btn.primary {
-            background: #e94560;
-            border-color: #e94560;
-        }
-        
-        .menu-btn.primary:hover {
-            background: #ff6b6b;
-            border-color: #ff6b6b;
-        }
-        
-        /* Game HUD */
-        #game-hud {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            pointer-events: none;
-            z-index: 10;
-        }
-        
-        #game-hud.hidden {
-            display: none;
-        }
-        
-        .hud-left, .hud-right {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .hud-item {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            pointer-events: auto;
-        }
-        
-        .hud-item.label {
-            color: #888;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1rem;
-        }
-        
-        .hud-item.value {
-            font-size: 1.5rem;
-            font-weight: 300;
-        }
-        
-        /* Line Palette */
-        #line-palette {
-            position: absolute;
-            bottom: 1rem;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 0.5rem;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 0.5rem;
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 8px;
-            z-index: 10;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         
-        #line-palette.hidden {
-            display: none;
+        #stats {
+            font-size: 14px;
+            color: #333;
+        }
+        
+        #stats div {
+            margin: 4px 0;
+        }
+        
+        #lineSelector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         
         .line-btn {
-            width: 48px;
-            height: 48px;
-            border: 2px solid transparent;
-            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            border: 3px solid transparent;
+            border-radius: 50%;
             cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
         }
         
         .line-btn:hover {
             transform: scale(1.1);
         }
         
-        .line-btn.selected {
-            border-color: white;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        .line-btn.active {
+            border-color: #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
         }
         
         .line-btn.disabled {
@@ -198,578 +82,223 @@
             cursor: not-allowed;
         }
         
-        .line-btn svg {
-            width: 24px;
-            height: 24px;
-        }
-        
-        /* Upgrade Panel */
-        #upgrade-panel {
+        #controls {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(26, 26, 46, 0.95);
-            padding: 2rem;
-            border-radius: 12px;
-            border: 2px solid #4a5568;
-            z-index: 50;
-            text-align: center;
-            min-width: 300px;
-        }
-        
-        #upgrade-panel.hidden {
-            display: none;
-        }
-        
-        .upgrade-title {
-            font-size: 1.5rem;
-            font-weight: 300;
-            margin-bottom: 1rem;
-            letter-spacing: 0.1rem;
-        }
-        
-        .upgrade-subtitle {
-            color: #888;
-            margin-bottom: 1.5rem;
-        }
-        
-        .upgrade-options {
+            bottom: 10px;
+            left: 10px;
             display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
+            gap: 8px;
         }
         
-        .upgrade-option {
-            padding: 1rem 1.5rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid #4a5568;
+        .ctrl-btn {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            padding: 10px 15px;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            min-width: 100px;
+            font-size: 14px;
+            transition: all 0.2s;
         }
         
-        .upgrade-option:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: #718096;
+        .ctrl-btn:hover {
+            background: #fff;
+            transform: translateY(-2px);
         }
         
-        .upgrade-option-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .upgrade-option-label {
-            font-size: 0.85rem;
-            color: #aaa;
-        }
-        
-        /* Game Over */
-        #game-over {
+        #help {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 10px;
+            right: 10px;
+            max-width: 320px;
+        }
+        
+        #help h3 {
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        #help ul {
+            padding-left: 20px;
+            font-size: 13px;
+            color: #555;
+        }
+        
+        #help li {
+            margin: 4px 0;
+        }
+        
+        #zoomControls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 60;
+            gap: 5px;
         }
         
-        #game-over.hidden {
-            display: none;
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            font-weight: bold;
         }
         
-        .game-over-title {
-            font-size: 3rem;
-            font-weight: 300;
-            margin-bottom: 1rem;
-            color: #e94560;
-        }
-        
-        .game-over-stats {
-            margin-bottom: 2rem;
+        #zoomLevel {
             text-align: center;
+            font-size: 12px;
+            color: #666;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px;
+            border-radius: 4px;
         }
         
-        .game-over-stats p {
-            font-size: 1.2rem;
-            margin: 0.5rem 0;
-            color: #aaa;
+        #tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            display: none;
+            z-index: 100;
         }
         
-        .game-over-stats span {
-            color: #eee;
-            font-weight: 500;
-        }
-        
-        /* Pause Menu */
-        #pause-menu {
+        #gameOver {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(26, 26, 46, 0.95);
-            padding: 2rem;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 30px 50px;
             border-radius: 12px;
-            border: 2px solid #4a5568;
-            z-index: 50;
             text-align: center;
-            min-width: 300px;
-        }
-        
-        #pause-menu.hidden {
             display: none;
+            z-index: 200;
         }
         
-        /* Tutorial */
-        #tutorial {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            text-align: center;
-            z-index: 20;
-            max-width: 400px;
+        #gameOver h2 {
+            color: #e74c3c;
+            margin-bottom: 15px;
         }
         
-        #tutorial.hidden {
-            display: none;
-        }
-        
-        .tutorial-text {
-            font-size: 0.9rem;
-            color: #ccc;
-            line-height: 1.5;
-        }
-        
-        /* Speed Controls */
-        #speed-controls {
-            position: absolute;
-            bottom: 1rem;
-            right: 1rem;
-            display: flex;
-            gap: 0.5rem;
-            z-index: 10;
-        }
-        
-        #speed-controls.hidden {
-            display: none;
-        }
-        
-        .speed-btn {
-            width: 40px;
-            height: 40px;
-            border: 2px solid #4a5568;
-            background: rgba(0, 0, 0, 0.5);
-            color: #eee;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.2s ease;
-        }
-        
-        .speed-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .speed-btn.active {
-            background: #4a5568;
-            border-color: #718096;
-        }
-        
-        /* Install prompt */
-        .install-banner {
-            background: #e94560;
-            color: white;
-            text-align: center;
-            padding: 0.75rem;
-            font-size: 0.9rem;
-        }
-        
-        .install-banner button {
-            background: white;
-            color: #e94560;
-            border: none;
-            padding: 0.5rem 1rem;
-            margin-left: 1rem;
-            cursor: pointer;
-            border-radius: 4px;
-            font-weight: 500;
-        }
-        
-        @media (max-width: 600px) {
-            .menu-title {
-                font-size: 2.5rem;
-            }
-            
-            .menu-btn {
-                padding: 0.75rem 2rem;
-                font-size: 1rem;
-                min-width: 200px;
-            }
-            
-            .line-btn {
-                width: 40px;
-                height: 40px;
-            }
+        #gameOver p {
+            color: #555;
+            margin: 8px 0;
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <canvas id="game-canvas"></canvas>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
         
-        <!-- Main Menu -->
-        <div id="main-menu">
-            <h1 class="menu-title">MINI METRO</h1>
-            <p class="menu-subtitle">A Subway Simulation Game</p>
-            <div class="menu-buttons">
-                <button class="menu-btn primary" id="new-game-btn">New Game</button>
-                <button class="menu-btn" id="continue-btn">Continue</button>
-                <button class="menu-btn" id="how-to-play-btn">How to Play</button>
+        <div id="ui">
+            <div class="panel" id="stats">
+                <div><strong>⏱ Time:</strong> <span id="time">0:00</span></div>
+                <div><strong>👥 Passengers:</strong> <span id="passengers">0</span></div>
+                <div><strong>🚇 Lines:</strong> <span id="linesCount">0</span>/4</div>
+            </div>
+            
+            <div class="panel">
+                <div style="margin-bottom: 8px; font-weight: bold; color: #333;">Select Line:</div>
+                <div id="lineSelector"></div>
             </div>
         </div>
         
-        <!-- Game HUD -->
-        <div id="game-hud" class="hidden">
-            <div class="hud-left">
-                <div class="hud-item">
-                    <div class="hud-item label">Week</div>
-                    <div class="hud-item value" id="week-display">1</div>
-                </div>
-                <div class="hud-item">
-                    <div class="hud-item label">Passengers</div>
-                    <div class="hud-item value" id="passengers-display">0</div>
-                </div>
-            </div>
-            <div class="hud-right">
-                <button class="speed-btn" id="pause-btn">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                        <rect x="6" y="4" width="4" height="16"/>
-                        <rect x="14" y="4" width="4" height="16"/>
-                    </svg>
-                </button>
-            </div>
+        <div id="controls">
+            <button class="ctrl-btn" onclick="game.pause()">⏸ Pause</button>
+            <button class="ctrl-btn" onclick="game.resetView()">🎯 Reset View</button>
+            <button class="ctrl-btn" onclick="game.clearLine()">🗑 Clear Line</button>
+            <button class="ctrl-btn" onclick="game.newGame()">🔄 New Game</button>
         </div>
         
-        <!-- Line Palette -->
-        <div id="line-palette" class="hidden">
-            <!-- Lines will be generated dynamically -->
+        <div id="help" class="panel">
+            <h3>📖 Track Logic</h3>
+            <ul>
+                <li><strong>Start:</strong> Click a station to start a line</li>
+                <li><strong>Extend:</strong> Click another station to connect</li>
+                <li><strong>Continue:</strong> Click more stations to extend</li>
+                <li><strong>Overlap:</strong> Lines offset automatically when crossing</li>
+                <li><strong>Zoom:</strong> Scroll wheel or +/- buttons</li>
+                <li><strong>Pan:</strong> Drag with right-click or middle-click</li>
+            </ul>
         </div>
         
-        <!-- Speed Controls -->
-        <div id="speed-controls" class="hidden">
-            <button class="speed-btn active" id="speed-1">1x</button>
-            <button class="speed-btn" id="speed-2">2x</button>
-            <button class="speed-btn" id="speed-3">3x</button>
+        <div id="zoomControls">
+            <button class="ctrl-btn zoom-btn" onclick="game.zoomIn()">+</button>
+            <div id="zoomLevel">100%</div>
+            <button class="ctrl-btn zoom-btn" onclick="game.zoomOut()">−</button>
         </div>
         
-        <!-- Upgrade Panel -->
-        <div id="upgrade-panel" class="hidden">
-            <h2 class="upgrade-title">Week Complete</h2>
-            <p class="upgrade-subtitle">Choose an upgrade:</p>
-            <div class="upgrade-options" id="upgrade-options">
-                <!-- Options generated dynamically -->
-            </div>
-        </div>
+        <div id="tooltip"></div>
         
-        <!-- Game Over -->
-        <div id="game-over" class="hidden">
-            <h2 class="game-over-title">Game Over</h2>
-            <div class="game-over-stats">
-                <p>Week reached: <span id="final-week">1</span></p>
-                <p>Passengers delivered: <span id="final-passengers">0</span></p>
-            </div>
-            <div class="menu-buttons">
-                <button class="menu-btn primary" id="retry-btn">Try Again</button>
-                <button class="menu-btn" id="menu-btn">Main Menu</button>
-            </div>
-        </div>
-        
-        <!-- Pause Menu -->
-        <div id="pause-menu" class="hidden">
-            <h2 class="upgrade-title">Paused</h2>
-            <div class="menu-buttons">
-                <button class="menu-btn primary" id="resume-btn">Resume</button>
-                <button class="menu-btn" id="quit-btn">Quit to Menu</button>
-            </div>
-        </div>
-        
-        <!-- Tutorial -->
-        <div id="tutorial" class="hidden">
-            <p class="tutorial-text" id="tutorial-text"></p>
+        <div id="gameOver">
+            <h2>Game Over!</h2>
+            <p>A station became too crowded!</p>
+            <p><strong>Final Score:</strong> <span id="finalScore">0</span> passengers</p>
+            <button class="ctrl-btn" onclick="game.newGame()" style="margin-top: 15px;">Play Again</button>
         </div>
     </div>
-
+    
     <script>
-        // ==================== GAME CONSTANTS ====================
-        const STATION_SHAPES = ['circle', 'square', 'triangle', 'diamond', 'pentagon', 'star'];
-        const INITIAL_SHAPES = ['circle', 'triangle', 'square'];
         const LINE_COLORS = [
-            '#e94560', // red
-            '#4ecdc4', // teal
-            '#ffe66d', // yellow
-            '#95e1d3', // mint
-            '#f38181', // coral
-            '#aa96da', // lavender
-            '#fcbad3', // pink
-            '#a8d8ea', // light blue
+            '#e74c3c', // Red
+            '#3498db', // Blue
+            '#2ecc71', // Green
+            '#f39c12', // Orange
+            '#9b59b6', // Purple
+            '#1abc9c', // Teal
         ];
-        const MAX_PASSENGERS_PER_STATION = 6;
-        const OVERCROWD_TIME = 45000; // 45 seconds in ms
-        const PASSENGER_SPAWN_INTERVAL = 3000; // ms between passenger spawns
-        const TRAIN_SPEED = 80; // pixels per second
-        const TRAIN_CAPACITY = 6;
-        const CARRIAGE_CAPACITY = 6;
-        const WEEK_DURATION = 60000; // 60 seconds per week
-        const STATION_SPAWN_INTERVAL = 15000; // 15 seconds between new stations
         
-        // ==================== GAME STATE ====================
-        let gameState = {
-            screen: 'menu', // menu, playing, paused, upgrade, gameover
-            week: 1,
-            passengersDelivered: 0,
-            stations: [],
-            lines: [],
-            trains: [],
-            availableLines: 3,
-            availableTrains: 3,
-            availableCarriages: 0,
-            availableTunnels: 1,
-            maxTrainsPerLine: 2,
-            shapeWeights: {},
-            gameTime: 0,
-            weekTime: 0,
-            lastStationSpawn: 0,
-            lastPassengerSpawn: 0,
-            selectedLine: null,
-            drawingLine: null,
-            gameSpeed: 1,
-            tutorialStep: 0,
-            maps: ['city', 'river', 'islands'],
-            currentMap: 'city',
-            waterTiles: [],
-            unlockedShapes: ['circle', 'triangle', 'square']
-        };
+        const STATION_SHAPES = ['circle', 'triangle', 'square', 'diamond', 'pentagon', 'star'];
+        const MAX_PASSENGERS = 8;
+        const SPAWN_INTERVAL = 2000;
+        const PASSENGER_INTERVAL = 3000;
         
-        // ==================== CANVAS SETUP ====================
-        const canvas = document.getElementById('game-canvas');
-        const ctx = canvas.getContext('2d');
-        let canvasWidth, canvasHeight;
-        
-        function resizeCanvas() {
-            const dpr = window.devicePixelRatio || 1;
-            canvasWidth = window.innerWidth;
-            canvasHeight = window.innerHeight;
-            canvas.width = canvasWidth * dpr;
-            canvas.height = canvasHeight * dpr;
-            canvas.style.width = canvasWidth + 'px';
-            canvas.style.height = canvasHeight + 'px';
-            ctx.scale(dpr, dpr);
-        }
-        
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        
-        // ==================== UTILITY FUNCTIONS ====================
-        function distance(p1, p2) {
-            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-        }
-        
-        function randomRange(min, max) {
-            return Math.random() * (max - min) + min;
-        }
-        
-        function randomChoice(arr) {
-            return arr[Math.floor(Math.random() * arr.length)];
-        }
-        
-        function lerp(a, b, t) {
-            return a + (b - a) * t;
-        }
-        
-        function clamp(val, min, max) {
-            return Math.max(min, Math.min(max, val));
-        }
-        
-        function pointToSegmentDistance(p, v, w) {
-            const l2 = distance(v, w) ** 2;
-            if (l2 === 0) return distance(p, v);
-            let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
-            t = clamp(t, 0, 1);
-            return distance(p, { x: lerp(v.x, w.x, t), y: lerp(v.y, w.y, t) });
-        }
-        
-        // ==================== STATION CLASS ====================
         class Station {
             constructor(x, y, shape) {
-                this.id = Date.now() + Math.random();
                 this.x = x;
                 this.y = y;
                 this.shape = shape;
                 this.passengers = [];
-                this.overcrowdedSince = null;
-                this.isInterchange = false;
-                this.connectedLines = [];
-                this.radius = 25;
+                this.connections = new Set();
+                this.id = Math.random().toString(36).substr(2, 9);
             }
             
-            addPassenger(destinationShape) {
-                if (this.passengers.length < MAX_PASSENGERS_PER_STATION + (this.isInterchange ? 2 : 0)) {
-                    this.passengers.push({
-                        destination: destinationShape,
-                        waitTime: 0
-                    });
-                    if (this.passengers.length >= MAX_PASSENGERS_PER_STATION && !this.overcrowdedSince) {
-                        this.overcrowdedSince = Date.now();
-                    }
+            addPassenger(destination) {
+                if (this.passengers.length < MAX_PASSENGERS) {
+                    this.passengers.push(destination);
                     return true;
                 }
                 return false;
             }
             
-            removePassenger(destinationShape) {
-                const idx = this.passengers.findIndex(p => p.destination === destinationShape);
+            removePassenger(destination) {
+                const idx = this.passengers.findIndex(p => p === destination);
                 if (idx !== -1) {
                     this.passengers.splice(idx, 1);
-                    if (this.passengers.length < MAX_PASSENGERS_PER_STATION) {
-                        this.overcrowdedSince = null;
-                    }
                     return true;
                 }
                 return false;
-            }
-            
-            getOvercrowdProgress() {
-                if (!this.overcrowdedSince) return 0;
-                return Math.min(1, (Date.now() - this.overcrowdedSince) / OVERCROWD_TIME);
             }
             
             isOvercrowded() {
-                return this.overcrowdedSince && (Date.now() - this.overcrowdedSince) >= OVERCROWD_TIME;
-            }
-            
-            draw(ctx) {
-                // Draw station background
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                
-                // Overcrowding indicator
-                if (this.overcrowdedSince) {
-                    const progress = this.getOvercrowdProgress();
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.radius + 10, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * progress));
-                    ctx.strokeStyle = '#e94560';
-                    ctx.lineWidth = 4;
-                    ctx.stroke();
-                }
-                
-                // Station shape
-                ctx.fillStyle = '#1a1a2e';
-                ctx.strokeStyle = '#eee';
-                ctx.lineWidth = 3;
-                
-                this.drawShape(ctx, this.shape, this.radius);
-                
-                // Interchange indicator
-                if (this.isInterchange) {
-                    ctx.strokeStyle = '#ffe66d';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.radius + 5, 0, Math.PI * 2);
-                    ctx.stroke();
-                }
-                
-                // Draw passengers
-                this.drawPassengers(ctx);
-                
-                ctx.restore();
-            }
-            
-            drawShape(ctx, shape, size) {
-                ctx.beginPath();
-                switch(shape) {
-                    case 'circle':
-                        ctx.arc(0, 0, size, 0, Math.PI * 2);
-                        break;
-                    case 'square':
-                        ctx.rect(-size, -size, size * 2, size * 2);
-                        break;
-                    case 'triangle':
-                        ctx.moveTo(0, -size);
-                        ctx.lineTo(size, size);
-                        ctx.lineTo(-size, size);
-                        ctx.closePath();
-                        break;
-                    case 'diamond':
-                        ctx.moveTo(0, -size);
-                        ctx.lineTo(size, 0);
-                        ctx.lineTo(0, size);
-                        ctx.lineTo(-size, 0);
-                        ctx.closePath();
-                        break;
-                    case 'pentagon':
-                        for (let i = 0; i < 5; i++) {
-                            const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
-                            const x = Math.cos(angle) * size;
-                            const y = Math.sin(angle) * size;
-                            if (i === 0) ctx.moveTo(x, y);
-                            else ctx.lineTo(x, y);
-                        }
-                        ctx.closePath();
-                        break;
-                    case 'star':
-                        for (let i = 0; i < 5; i++) {
-                            const outerAngle = (i * 2 * Math.PI / 5) - Math.PI / 2;
-                            const innerAngle = outerAngle + Math.PI / 5;
-                            ctx.lineTo(Math.cos(outerAngle) * size, Math.sin(outerAngle) * size);
-                            ctx.lineTo(Math.cos(innerAngle) * size * 0.5, Math.sin(innerAngle) * size * 0.5);
-                        }
-                        ctx.closePath();
-                        break;
-                }
-                ctx.fill();
-                ctx.stroke();
-            }
-            
-            drawPassengers(ctx) {
-                const passengerSize = 8;
-                const spacing = 12;
-                const startOffset = -((this.passengers.length - 1) * spacing) / 2;
-                
-                this.passengers.forEach((passenger, i) => {
-                    ctx.save();
-                    ctx.translate(startOffset + i * spacing, this.radius + 15);
-                    ctx.fillStyle = '#eee';
-                    this.drawShape(ctx, passenger.destination, passengerSize);
-                    ctx.restore();
-                });
+                return this.passengers.length >= MAX_PASSENGERS;
             }
         }
         
-        // ==================== LINE CLASS ====================
         class Line {
-            constructor(id, color) {
-                this.id = id;
+            constructor(color, id) {
                 this.color = color;
+                this.id = id;
                 this.stations = [];
                 this.trains = [];
-                this.maxTrains = 2;
             }
             
             addStation(station) {
                 if (!this.stations.includes(station)) {
                     this.stations.push(station);
-                    station.connectedLines.push(this.id);
+                    station.connections.add(this.id);
                     return true;
                 }
                 return false;
@@ -779,955 +308,755 @@
                 const idx = this.stations.indexOf(station);
                 if (idx !== -1) {
                     this.stations.splice(idx, 1);
-                    const lineIdx = station.connectedLines.indexOf(this.id);
-                    if (lineIdx !== -1) station.connectedLines.splice(lineIdx, 1);
+                    station.connections.delete(this.id);
                 }
-            }
-            
-            draw(ctx) {
-                if (this.stations.length < 2) return;
-                
-                // Draw line segments
-                ctx.strokeStyle = this.color;
-                ctx.lineWidth = 8;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                
-                ctx.beginPath();
-                ctx.moveTo(this.stations[0].x, this.stations[0].y);
-                
-                for (let i = 1; i < this.stations.length; i++) {
-                    ctx.lineTo(this.stations[i].x, this.stations[i].y);
-                }
-                
-                ctx.stroke();
-                
-                // Draw line end caps
-                this.stations.forEach((station, idx) => {
-                    if (idx === 0 || idx === this.stations.length - 1) {
-                        ctx.fillStyle = this.color;
-                        ctx.beginPath();
-                        ctx.arc(station.x, station.y, 6, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                });
             }
         }
         
-        // ==================== TRAIN CLASS ====================
         class Train {
-            constructor(line, startIndex = 0) {
+            constructor(line) {
                 this.line = line;
-                this.currentStationIndex = startIndex;
-                this.targetStationIndex = startIndex === 0 ? 1 : startIndex - 1;
-                this.direction = startIndex === 0 ? 1 : -1; // 1 = forward, -1 = backward
-                this.progress = 0; // 0-1 progress between stations
+                this.currentStationIndex = 0;
+                this.progress = 0;
+                this.direction = 1;
                 this.passengers = [];
-                this.capacity = TRAIN_CAPACITY;
-                this.speed = TRAIN_SPEED;
-                this.atStation = true;
-                this.stationWaitTime = 0.3; // Brief wait before departing
-                this.x = 0;
-                this.y = 0;
-                this.updatePosition();
+                this.capacity = 6;
             }
             
-            updatePosition() {
+            update(dt) {
                 if (this.line.stations.length < 2) return;
                 
-                const from = this.line.stations[this.currentStationIndex];
-                const to = this.line.stations[this.targetStationIndex];
+                this.progress += dt * 0.5; // Speed
                 
-                if (from && to) {
-                    this.x = lerp(from.x, to.x, this.progress);
-                    this.y = lerp(from.y, to.y, this.progress);
+                if (this.progress >= 1) {
+                    this.progress = 0;
+                    this.currentStationIndex += this.direction;
+                    
+                    // Reverse at ends
+                    if (this.currentStationIndex >= this.line.stations.length - 1) {
+                        this.direction = -1;
+                        this.currentStationIndex = this.line.stations.length - 1;
+                    } else if (this.currentStationIndex <= 0) {
+                        this.direction = 1;
+                        this.currentStationIndex = 0;
+                    }
+                    
+                    // Handle passengers at station
+                    this.handleStation();
                 }
             }
             
-            update(deltaTime) {
-                if (this.line.stations.length < 2) return;
-                
-                if (this.atStation) {
-                    this.stationWaitTime -= deltaTime;
-                    if (this.stationWaitTime <= 0) {
-                        this.atStation = false;
-                        this.processStation();
-                    }
-                } else {
-                    const from = this.line.stations[this.currentStationIndex];
-                    const to = this.line.stations[this.targetStationIndex];
-                    const dist = distance(from, to);
-                    
-                    if (dist > 0) {
-                        this.progress += (this.speed * deltaTime) / dist;
-                    }
-                    
-                    if (this.progress >= 1) {
-                        this.progress = 0;
-                        this.currentStationIndex = this.targetStationIndex;
-                        this.atStation = true;
-                        this.stationWaitTime = 0.5; // Wait at station (seconds)
-                        
-                        // Update direction at end of line
-                        if (this.currentStationIndex === 0) {
-                            this.direction = 1;
-                        } else if (this.currentStationIndex === this.line.stations.length - 1) {
-                            this.direction = -1;
-                        }
-                        
-                        this.targetStationIndex = this.currentStationIndex + this.direction;
-                    }
-                    
-                    this.updatePosition();
-                }
-            }
-            
-            processStation() {
+            handleStation() {
                 const station = this.line.stations[this.currentStationIndex];
                 if (!station) return;
                 
                 // Drop off passengers
-                for (let i = this.passengers.length - 1; i >= 0; i--) {
-                    if (this.passengers[i].destination === station.shape) {
-                        this.passengers.splice(i, 1);
-                        gameState.passengersDelivered++;
+                this.passengers = this.passengers.filter(dest => {
+                    if (dest === station.shape) {
+                        game.passengersDelivered++;
+                        return false;
                     }
-                }
+                    return true;
+                });
                 
                 // Pick up passengers
-                for (let i = station.passengers.length - 1; i >= 0; i--) {
-                    if (this.passengers.length >= this.capacity) break;
-                    
-                    const passenger = station.passengers[i];
-                    // Check if this train can reach the passenger's destination
-                    if (this.canReachDestination(passenger.destination)) {
-                        station.passengers.splice(i, 1);
+                const availableSpace = this.capacity - this.passengers.length;
+                for (let i = 0; i < availableSpace && station.passengers.length > 0;) {
+                    const passenger = station.passengers.shift();
+                    // Check if this line can reach the destination
+                    if (this.canReachDestination(passenger, station)) {
                         this.passengers.push(passenger);
-                        
-                        // Reset overcrowding if needed
-                        if (station.passengers.length < MAX_PASSENGERS_PER_STATION) {
-                            station.overcrowdedSince = null;
-                        }
+                    } else {
+                        station.passengers.push(passenger);
+                        break;
                     }
+                    i++;
                 }
             }
             
-            canReachDestination(destinationShape) {
-                // Check if any station on this line has the destination shape
-                for (const station of this.line.stations) {
-                    if (station.shape === destinationShape) return true;
+            canReachDestination(destination, currentStation) {
+                return this.line.stations.some(s => s.shape === destination);
+            }
+            
+            getPosition() {
+                if (this.line.stations.length < 2) return null;
+                
+                const from = this.line.stations[this.currentStationIndex];
+                const toIdx = this.currentStationIndex + this.direction;
+                const to = this.line.stations[Math.min(Math.max(toIdx, 0), this.line.stations.length - 1)];
+                
+                if (!from || !to) return null;
+                
+                return {
+                    x: from.x + (to.x - from.x) * this.progress,
+                    y: from.y + (to.y - from.y) * this.progress
+                };
+            }
+        }
+        
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.stations = [];
+                this.lines = [];
+                this.trains = [];
+                
+                this.selectedLine = null;
+                this.currentLine = null;
+                this.drawingLine = false;
+                this.tempLine = null;
+                
+                this.zoom = 1;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                this.isDragging = false;
+                this.dragStart = { x: 0, y: 0 };
+                
+                this.time = 0;
+                this.passengersDelivered = 0;
+                this.isPaused = false;
+                this.isGameOver = false;
+                
+                this.lastSpawn = 0;
+                this.lastPassenger = 0;
+                
+                this.setupCanvas();
+                this.setupEventListeners();
+                this.initUI();
+                this.newGame();
+                
+                this.lastTime = performance.now();
+                this.animate();
+            }
+            
+            setupCanvas() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                
+                window.addEventListener('resize', () => {
+                    this.canvas.width = window.innerWidth;
+                    this.canvas.height = window.innerHeight;
+                });
+            }
+            
+            setupEventListeners() {
+                // Mouse events for track drawing
+                this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+                this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+                this.canvas.addEventListener('wheel', (e) => this.handleWheel(e));
+                this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+                
+                // Touch events
+                this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+                this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+                this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+            }
+            
+            initUI() {
+                const selector = document.getElementById('lineSelector');
+                selector.innerHTML = '';
+                
+                LINE_COLORS.forEach((color, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'line-btn';
+                    btn.style.backgroundColor = color;
+                    btn.onclick = () => this.selectLine(i);
+                    btn.id = `line-btn-${i}`;
+                    selector.appendChild(btn);
+                });
+            }
+            
+            selectLine(index) {
+                this.selectedLine = index;
+                
+                // Find or create line
+                this.currentLine = this.lines.find(l => l.id === index);
+                if (!this.currentLine) {
+                    this.currentLine = new Line(LINE_COLORS[index], index);
+                    this.lines.push(this.currentLine);
+                    // Add a train
+                    const train = new Train(this.currentLine);
+                    this.trains.push(train);
+                }
+                
+                // Update UI
+                document.querySelectorAll('.line-btn').forEach((btn, i) => {
+                    btn.classList.toggle('active', i === index);
+                });
+            }
+            
+            handleMouseDown(e) {
+                const pos = this.screenToWorld(e.clientX, e.clientY);
+                
+                // Right click or middle click for panning
+                if (e.button === 1 || e.button === 2) {
+                    this.isDragging = true;
+                    this.dragStart = { x: e.clientX - this.offsetX, y: e.clientY - this.offsetY };
+                    return;
+                }
+                
+                // Left click for track drawing
+                if (e.button === 0 && this.selectedLine !== null) {
+                    const station = this.findStationAt(pos.x, pos.y);
                     
-                    // Check connecting lines
-                    for (const lineId of station.connectedLines) {
-                        if (lineId === this.line.id) continue;
-                        const otherLine = gameState.lines.find(l => l.id === lineId);
-                        if (otherLine) {
-                            for (const otherStation of otherLine.stations) {
-                                if (otherStation.shape === destinationShape) return true;
-                            }
+                    if (station) {
+                        if (!this.drawingLine) {
+                            // Start new line or extend existing
+                            this.drawingLine = true;
+                            this.currentLine.addStation(station);
+                            this.tempLine = { from: station, to: null };
+                        } else {
+                            // Add station to line
+                            this.currentLine.addStation(station);
+                            this.tempLine.from = station;
                         }
                     }
                 }
-                return false;
             }
             
-            draw(ctx) {
-                // Draw train as rounded rectangle
-                ctx.save();
-                ctx.translate(this.x, this.y);
+            handleMouseMove(e) {
+                if (this.isDragging) {
+                    this.offsetX = e.clientX - this.dragStart.x;
+                    this.offsetY = e.clientY - this.dragStart.y;
+                    return;
+                }
                 
-                // Calculate angle based on direction
-                if (this.line.stations.length >= 2) {
-                    const from = this.line.stations[this.currentStationIndex];
-                    const to = this.line.stations[this.targetStationIndex];
-                    if (from && to) {
-                        const angle = Math.atan2(to.y - from.y, to.x - from.x);
-                        ctx.rotate(angle);
+                if (this.drawingLine && this.tempLine) {
+                    const pos = this.screenToWorld(e.clientX, e.clientY);
+                    this.tempLine.to = pos;
+                    
+                    // Show tooltip for station
+                    const station = this.findStationAt(pos.x, pos.y);
+                    const tooltip = document.getElementById('tooltip');
+                    
+                    if (station && station !== this.tempLine.from) {
+                        tooltip.style.display = 'block';
+                        tooltip.style.left = (e.clientX + 15) + 'px';
+                        tooltip.style.top = (e.clientY + 15) + 'px';
+                        tooltip.innerHTML = `Connect to ${station.shape}<br>Passengers: ${station.passengers.length}/${MAX_PASSENGERS}`;
+                    } else {
+                        tooltip.style.display = 'none';
+                    }
+                }
+            }
+            
+            handleMouseUp(e) {
+                if (this.isDragging) {
+                    this.isDragging = false;
+                    return;
+                }
+                
+                if (this.drawingLine && this.tempLine && this.tempLine.to) {
+                    const station = this.findStationAt(this.tempLine.to.x, this.tempLine.to.y);
+                    
+                    if (station && station !== this.tempLine.from) {
+                        this.currentLine.addStation(station);
                     }
                 }
                 
-                // Train body
-                ctx.fillStyle = this.line.color;
-                ctx.beginPath();
-                ctx.roundRect(-20, -10, 40, 20, 5);
-                ctx.fill();
+                this.drawingLine = false;
+                this.tempLine = null;
+                document.getElementById('tooltip').style.display = 'none';
+            }
+            
+            handleWheel(e) {
+                e.preventDefault();
                 
-                // Passenger count indicator
-                if (this.passengers.length > 0) {
-                    ctx.fillStyle = '#1a1a2e';
-                    ctx.font = 'bold 12px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(this.passengers.length, 0, 0);
+                const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+                const newZoom = Math.max(0.3, Math.min(3, this.zoom * zoomFactor));
+                
+                // Zoom towards mouse position
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
+                
+                const worldX = (mouseX - this.offsetX) / this.zoom;
+                const worldY = (mouseY - this.offsetY) / this.zoom;
+                
+                this.zoom = newZoom;
+                
+                this.offsetX = mouseX - worldX * this.zoom;
+                this.offsetY = mouseY - worldY * this.zoom;
+                
+                document.getElementById('zoomLevel').textContent = Math.round(this.zoom * 100) + '%';
+            }
+            
+            handleTouchStart(e) {
+                if (e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    this.handleMouseDown({ 
+                        clientX: touch.clientX, 
+                        clientY: touch.clientY, 
+                        button: 0 
+                    });
+                } else if (e.touches.length === 2) {
+                    this.isDragging = true;
+                    this.dragStart = { 
+                        x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - this.offsetX,
+                        y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - this.offsetY
+                    };
                 }
+            }
+            
+            handleTouchMove(e) {
+                e.preventDefault();
+                if (e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    this.handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
+                } else if (e.touches.length === 2 && this.isDragging) {
+                    this.offsetX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - this.dragStart.x;
+                    this.offsetY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - this.dragStart.y;
+                }
+            }
+            
+            handleTouchEnd(e) {
+                this.handleMouseUp({});
+            }
+            
+            screenToWorld(sx, sy) {
+                return {
+                    x: (sx - this.offsetX) / this.zoom,
+                    y: (sy - this.offsetY) / this.zoom
+                };
+            }
+            
+            worldToScreen(wx, wy) {
+                return {
+                    x: wx * this.zoom + this.offsetX,
+                    y: wy * this.zoom + this.offsetY
+                };
+            }
+            
+            findStationAt(x, y) {
+                const threshold = 30 / this.zoom;
+                return this.stations.find(s => {
+                    const dx = s.x - x;
+                    const dy = s.y - y;
+                    return Math.sqrt(dx * dx + dy * dy) < threshold;
+                });
+            }
+            
+            newGame() {
+                this.stations = [];
+                this.lines = [];
+                this.trains = [];
+                this.selectedLine = null;
+                this.currentLine = null;
+                this.time = 0;
+                this.passengersDelivered = 0;
+                this.isPaused = false;
+                this.isGameOver = false;
+                this.zoom = 1;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                
+                document.getElementById('gameOver').style.display = 'none';
+                
+                // Create initial stations
+                for (let i = 0; i < 5; i++) {
+                    this.spawnStation();
+                }
+                
+                // Reset UI
+                document.querySelectorAll('.line-btn').forEach(btn => btn.classList.remove('active', 'disabled'));
+            }
+            
+            spawnStation() {
+                const margin = 100;
+                const x = margin + Math.random() * (this.canvas.width - margin * 2);
+                const y = margin + Math.random() * (this.canvas.height - margin * 2);
+                const shape = STATION_SHAPES[Math.floor(Math.random() * 3)]; // Start with basic shapes
+                
+                // Ensure minimum distance from other stations
+                const minDist = 100;
+                const tooClose = this.stations.some(s => {
+                    const dx = s.x - x;
+                    const dy = s.y - y;
+                    return Math.sqrt(dx * dx + dy * dy) < minDist;
+                });
+                
+                if (!tooClose) {
+                    this.stations.push(new Station(x, y, shape));
+                }
+            }
+            
+            update(dt) {
+                if (this.isPaused || this.isGameOver) return;
+                
+                this.time += dt;
+                
+                // Spawn new stations periodically
+                this.lastSpawn += dt;
+                if (this.lastSpawn > SPAWN_INTERVAL / 1000 && this.stations.length < 15) {
+                    this.spawnStation();
+                    this.lastSpawn = 0;
+                }
+                
+                // Spawn passengers
+                this.lastPassenger += dt;
+                if (this.lastPassenger > PASSENGER_INTERVAL / 1000) {
+                    this.spawnPassengers();
+                    this.lastPassenger = 0;
+                }
+                
+                // Update trains
+                this.trains.forEach(train => train.update(dt));
+                
+                // Check for overcrowded stations
+                for (const station of this.stations) {
+                    if (station.isOvercrowded()) {
+                        // Give some time before game over
+                        station.overcrowdedTime = (station.overcrowdedTime || 0) + dt;
+                        if (station.overcrowdedTime > 10) {
+                        this.gameOver();
+                        return;
+                        }
+                    } else {
+                        station.overcrowdedTime = 0;
+                    }
+                }
+                
+                // Update UI
+                const minutes = Math.floor(this.time / 60);
+                const seconds = Math.floor(this.time % 60);
+                document.getElementById('time').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('passengers').textContent = this.passengersDelivered;
+                document.getElementById('linesCount').textContent = this.lines.length;
+            }
+            
+            spawnPassengers() {
+                if (this.stations.length < 2) return;
+                
+                // Add passenger to random station
+                const station = this.stations[Math.floor(Math.random() * this.stations.length)];
+                const destination = STATION_SHAPES[Math.floor(Math.random() * 3)];
+                
+                if (destination !== station.shape) {
+                    station.addPassenger(destination);
+                }
+            }
+            
+            gameOver() {
+                this.isGameOver = true;
+                document.getElementById('finalScore').textContent = this.passengersDelivered;
+                document.getElementById('gameOver').style.display = 'block';
+            }
+            
+            pause() {
+                this.isPaused = !this.isPaused;
+            }
+            
+            resetView() {
+                this.zoom = 1;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                document.getElementById('zoomLevel').textContent = '100%';
+            }
+            
+            clearLine() {
+                if (this.currentLine) {
+                    this.currentLine.stations.forEach(s => s.connections.delete(this.currentLine.id));
+                    this.currentLine.stations = [];
+                }
+            }
+            
+            zoomIn() {
+                this.zoom = Math.min(3, this.zoom * 1.2);
+                document.getElementById('zoomLevel').textContent = Math.round(this.zoom * 100) + '%';
+            }
+            
+            zoomOut() {
+                this.zoom = Math.max(0.3, this.zoom / 1.2);
+                document.getElementById('zoomLevel').textContent = Math.round(this.zoom * 100) + '%';
+            }
+            
+            draw() {
+                const ctx = this.ctx;
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                ctx.save();
+                ctx.translate(this.offsetX, this.offsetY);
+                ctx.scale(this.zoom, this.zoom);
+                
+                // Draw grid
+                this.drawGrid();
+                
+                // Draw lines with overlap handling
+                this.drawLines();
+                
+                // Draw temporary line
+                if (this.tempLine && this.tempLine.to) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = this.currentLine.color;
+                    ctx.lineWidth = 8;
+                    ctx.setLineDash([10, 10]);
+                    ctx.moveTo(this.tempLine.from.x, this.tempLine.from.y);
+                    ctx.lineTo(this.tempLine.to.x, this.tempLine.to.y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+                
+                // Draw stations
+                this.stations.forEach(station => this.drawStation(station));
+                
+                // Draw trains
+                this.trains.forEach(train => this.drawTrain(train));
                 
                 ctx.restore();
             }
-        }
-        
-        // ==================== MAP GENERATION ====================
-        function generateMap(type) {
-            gameState.waterTiles = [];
             
-            switch(type) {
-                case 'river':
-                    // Add a river running through the middle
-                    gameState.waterTiles.push({
-                        type: 'river',
-                        y: canvasHeight / 2,
-                        width: canvasWidth,
-                        height: 80
-                    });
-                    break;
-                case 'islands':
-                    // Add water around islands
-                    gameState.waterTiles.push({
-                        type: 'ocean',
-                        areas: [
-                            { x: 0, y: canvasHeight * 0.3, w: canvasWidth * 0.4, h: canvasHeight * 0.2 },
-                            { x: canvasWidth * 0.6, y: canvasHeight * 0.5, w: canvasWidth * 0.4, h: canvasHeight * 0.3 }
-                        ]
-                    });
-                    break;
-            }
-        }
-        
-        function spawnStation() {
-            const padding = 80;
-            let x, y;
-            let attempts = 0;
-            const maxAttempts = 50;
-            
-            // Find a valid position
-            do {
-                x = randomRange(padding, canvasWidth - padding);
-                y = randomRange(padding, canvasHeight - padding);
-                attempts++;
-            } while (attempts < maxAttempts && gameState.stations.some(s => distance(s, {x, y}) < 100));
-            
-            if (attempts >= maxAttempts) return null;
-            
-            // Determine shape based on weights and unlocked shapes
-            const shape = selectStationShape();
-            
-            const station = new Station(x, y, shape);
-            gameState.stations.push(station);
-            return station;
-        }
-        
-        function selectStationShape() {
-            const availableShapes = gameState.unlockedShapes.filter(s => gameState.stations.some(st => st.shape === s) || gameState.stations.length < 3);
-            
-            // If we have no stations yet or only a few, ensure variety
-            if (gameState.stations.length < 3) {
-                return INITIAL_SHAPES[gameState.stations.length % INITIAL_SHAPES.length];
-            }
-            
-            // Weight towards less common shapes
-            const shapeCounts = {};
-            availableShapes.forEach(s => shapeCounts[s] = 0);
-            gameState.stations.forEach(s => {
-                if (shapeCounts[s.shape] !== undefined) shapeCounts[s.shape]++;
-            });
-            
-            // Prefer shapes that are less common
-            const weights = availableShapes.map(s => 1 / (shapeCounts[s] + 1));
-            const totalWeight = weights.reduce((a, b) => a + b, 0);
-            let random = Math.random() * totalWeight;
-            
-            for (let i = 0; i < availableShapes.length; i++) {
-                random -= weights[i];
-                if (random <= 0) return availableShapes[i];
-            }
-            
-            return randomChoice(availableShapes);
-        }
-        
-        function spawnPassenger() {
-            if (gameState.stations.length < 2) return;
-            
-            // Pick a random station to spawn at
-            const station = randomChoice(gameState.stations);
-            
-            // Pick a destination shape different from current station
-            const possibleDestinations = gameState.unlockedShapes.filter(s => s !== station.shape);
-            if (possibleDestinations.length === 0) return;
-            
-            const destination = randomChoice(possibleDestinations);
-            station.addPassenger(destination);
-        }
-        
-        // ==================== GAME INITIALIZATION ====================
-        function initGame() {
-            gameState = {
-                screen: 'playing',
-                week: 1,
-                passengersDelivered: 0,
-                stations: [],
-                lines: [],
-                trains: [],
-                availableLines: 3,
-                availableTrains: 3,
-                availableCarriages: 0,
-                availableTunnels: 1,
-                maxTrainsPerLine: 2,
-                shapeWeights: {},
-                gameTime: 0,
-                weekTime: 0,
-                lastStationSpawn: 0,
-                lastPassengerSpawn: 0,
-                selectedLine: null,
-                drawingLine: null,
-                gameSpeed: 1,
-                tutorialStep: 0,
-                currentMap: randomChoice(['city', 'river', 'islands']),
-                waterTiles: [],
-                unlockedShapes: ['circle', 'triangle', 'square']
-            };
-            
-            // Generate map
-            generateMap(gameState.currentMap);
-            
-            // Create initial stations
-            for (let i = 0; i < 3; i++) {
-                spawnStation();
-            }
-            
-            // Create initial lines
-            for (let i = 0; i < gameState.availableLines; i++) {
-                gameState.lines.push(new Line(i, LINE_COLORS[i]));
-            }
-            
-            // Set initial trains available
-            gameState.availableTrains = 3;
-            
-            updateUI();
-            showTutorial(0);
-        }
-        
-        // ==================== GAME LOOP ====================
-        let lastTime = 0;
-        
-        function gameLoop(timestamp) {
-            const deltaTime = (timestamp - lastTime) / 1000 * gameState.gameSpeed;
-            lastTime = timestamp;
-            
-            if (gameState.screen === 'playing') {
-                update(deltaTime);
-            }
-            
-            render();
-            requestAnimationFrame(gameLoop);
-        }
-        
-        function update(deltaTime) {
-            gameState.gameTime += deltaTime * 1000;
-            gameState.weekTime += deltaTime * 1000;
-            
-            // Check for week end
-            if (gameState.weekTime >= WEEK_DURATION) {
-                gameState.weekTime = 0;
-                gameState.week++;
-                showUpgradePanel();
-                return;
-            }
-            
-            // Spawn new stations
-            if (gameState.gameTime - gameState.lastStationSpawn > STATION_SPAWN_INTERVAL) {
-                gameState.lastStationSpawn = gameState.gameTime;
-                if (gameState.stations.length < 20) {
-                    spawnStation();
+            drawGrid() {
+                const ctx = this.ctx;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.lineWidth = 1;
+                
+                const gridSize = 50;
+                const startX = -this.offsetX / this.zoom;
+                const startY = -this.offsetY / this.zoom;
+                const endX = startX + this.canvas.width / this.zoom;
+                const endY = startY + this.canvas.height / this.zoom;
+                
+                for (let x = Math.floor(startX / gridSize) * gridSize; x < endX; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, startY);
+                    ctx.lineTo(x, endY);
+                    ctx.stroke();
                 }
                 
-                // Unlock new shapes over time
-                if (gameState.week >= 3 && !gameState.unlockedShapes.includes('diamond')) {
-                    gameState.unlockedShapes.push('diamond');
-                }
-                if (gameState.week >= 6 && !gameState.unlockedShapes.includes('pentagon')) {
-                    gameState.unlockedShapes.push('pentagon');
-                }
-                if (gameState.week >= 9 && !gameState.unlockedShapes.includes('star')) {
-                    gameState.unlockedShapes.push('star');
+                for (let y = Math.floor(startY / gridSize) * gridSize; y < endY; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(startX, y);
+                    ctx.lineTo(endX, y);
+                    ctx.stroke();
                 }
             }
             
-            // Spawn passengers
-            if (gameState.gameTime - gameState.lastPassengerSpawn > PASSENGER_SPAWN_INTERVAL) {
-                gameState.lastPassengerSpawn = gameState.gameTime;
-                for (let i = 0; i < Math.ceil(gameState.week / 2); i++) {
-                    spawnPassenger();
-                }
-            }
-            
-            // Update trains
-            gameState.lines.forEach(line => {
-                line.trains.forEach(train => train.update(deltaTime));
-            });
-            
-            // Check for overcrowding
-            for (const station of gameState.stations) {
-                if (station.isOvercrowded()) {
-                    showGameOver();
-                    return;
-                }
-            }
-            
-            updateUI();
-        }
-        
-        function render() {
-            // Clear canvas
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-            
-            // Draw water
-            drawWater();
-            
-            // Draw lines
-            gameState.lines.forEach(line => line.draw(ctx));
-            
-            // Draw stations
-            gameState.stations.forEach(station => station.draw(ctx));
-            
-            // Draw trains
-            gameState.lines.forEach(line => {
-                line.trains.forEach(train => train.draw(ctx));
-            });
-            
-            // Draw line being drawn
-            if (gameState.drawingLine) {
-                drawDrawingLine();
-            }
-        }
-        
-        function drawWater() {
-            gameState.waterTiles.forEach(water => {
-                if (water.type === 'river') {
-                    ctx.fillStyle = 'rgba(100, 150, 200, 0.3)';
-                    ctx.fillRect(0, water.y - water.height / 2, water.width, water.height);
-                } else if (water.type === 'ocean') {
-                    ctx.fillStyle = 'rgba(100, 150, 200, 0.3)';
-                    water.areas.forEach(area => {
-                        ctx.fillRect(area.x, area.y, area.w, area.h);
-                    });
-                }
-            });
-        }
-        
-        function drawDrawingLine() {
-            if (!gameState.drawingLine) return;
-            
-            const line = gameState.lines[gameState.drawingLine.lineIndex];
-            if (!line) return;
-            
-            ctx.strokeStyle = line.color;
-            ctx.lineWidth = 8;
-            ctx.lineCap = 'round';
-            ctx.setLineDash([10, 10]);
-            
-            ctx.beginPath();
-            
-            if (line.stations.length > 0) {
-                const lastStation = line.stations[line.stations.length - 1];
-                ctx.moveTo(lastStation.x, lastStation.y);
-                ctx.lineTo(gameState.drawingLine.currentX, gameState.drawingLine.currentY);
-            }
-            
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
-        
-        // ==================== UI FUNCTIONS ====================
-        function updateUI() {
-            document.getElementById('week-display').textContent = gameState.week;
-            document.getElementById('passengers-display').textContent = gameState.passengersDelivered;
-        }
-        
-        function showScreen(screenId) {
-            document.getElementById('main-menu').classList.add('hidden');
-            document.getElementById('game-hud').classList.add('hidden');
-            document.getElementById('line-palette').classList.add('hidden');
-            document.getElementById('speed-controls').classList.add('hidden');
-            document.getElementById('upgrade-panel').classList.add('hidden');
-            document.getElementById('game-over').classList.add('hidden');
-            document.getElementById('pause-menu').classList.add('hidden');
-            document.getElementById('tutorial').classList.add('hidden');
-            
-            switch(screenId) {
-                case 'menu':
-                    document.getElementById('main-menu').classList.remove('hidden');
-                    break;
-                case 'playing':
-                    document.getElementById('game-hud').classList.remove('hidden');
-                    document.getElementById('line-palette').classList.remove('hidden');
-                    document.getElementById('speed-controls').classList.remove('hidden');
-                    break;
-                case 'paused':
-                    document.getElementById('pause-menu').classList.remove('hidden');
-                    break;
-                case 'upgrade':
-                    document.getElementById('upgrade-panel').classList.remove('hidden');
-                    break;
-                case 'gameover':
-                    document.getElementById('game-over').classList.remove('hidden');
-                    break;
-            }
-            
-            gameState.screen = screenId;
-        }
-        
-        function updateLinePalette() {
-            const palette = document.getElementById('line-palette');
-            palette.innerHTML = '';
-            
-            gameState.lines.forEach((line, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'line-btn';
-                btn.dataset.lineIndex = index;
+            drawLines() {
+                const ctx = this.ctx;
                 
-                const trainCount = line.trains.length;
-                const hasTrains = trainCount > 0;
+                // Track overlap offsets
+                const overlapMap = new Map();
                 
-                btn.innerHTML = `
-                    <svg viewBox="0 0 24 24">
-                        <line x1="4" y1="12" x2="20" y2="12" stroke="${line.color}" stroke-width="4" stroke-linecap="round"/>
-                        ${trainCount > 0 ? `<text x="12" y="17" text-anchor="middle" fill="white" font-size="8">${trainCount}</text>` : ''}
-                    </svg>
-                `;
-                
-                if (gameState.selectedLine === index) {
-                    btn.classList.add('selected');
-                }
-                
-                btn.addEventListener('click', () => selectLine(index));
-                palette.appendChild(btn);
-            });
-        }
-        
-        function selectLine(index) {
-            gameState.selectedLine = gameState.selectedLine === index ? null : index;
-            updateLinePalette();
-        }
-        
-        function showUpgradePanel() {
-            gameState.screen = 'upgrade';
-            document.getElementById('upgrade-panel').classList.remove('hidden');
-            
-            const options = document.getElementById('upgrade-options');
-            options.innerHTML = '';
-            
-            const upgrades = generateUpgrades();
-            upgrades.forEach(upgrade => {
-                const opt = document.createElement('div');
-                opt.className = 'upgrade-option';
-                opt.innerHTML = `
-                    <div class="upgrade-option-icon">${upgrade.icon}</div>
-                    <div class="upgrade-option-label">${upgrade.label}</div>
-                `;
-                opt.addEventListener('click', () => applyUpgrade(upgrade));
-                options.appendChild(opt);
-            });
-        }
-        
-        function generateUpgrades() {
-            const upgrades = [];
-            
-            // New line
-            if (gameState.lines.length < 8) {
-                upgrades.push({
-                    type: 'line',
-                    icon: `<svg viewBox="0 0 24 24" width="40" height="40"><line x1="4" y1="12" x2="20" y2="12" stroke="#4ecdc4" stroke-width="4"/></svg>`,
-                    label: 'New Line',
-                    apply: () => {
-                        gameState.lines.push(new Line(gameState.lines.length, LINE_COLORS[gameState.lines.length]));
-                    }
-                });
-            }
-            
-            // New train
-            upgrades.push({
-                type: 'train',
-                icon: `<svg viewBox="0 0 24 24" width="40" height="40"><rect x="4" y="8" width="16" height="8" rx="2" fill="#ffe66d"/></svg>`,
-                label: 'New Train',
-                apply: () => {
-                    gameState.availableTrains++;
-                }
-            });
-            
-            // Carriage
-            upgrades.push({
-                type: 'carriage',
-                icon: `<svg viewBox="0 0 24 24" width="40" height="40"><rect x="2" y="8" width="8" height="8" rx="2" fill="#95e1d3"/><rect x="14" y="8" width="8" height="8" rx="2" fill="#95e1d3"/></svg>`,
-                label: 'Carriage',
-                apply: () => {
-                    gameState.availableCarriages++;
-                }
-            });
-            
-            // Tunnel (if map has water)
-            if (gameState.waterTiles.length > 0) {
-                upgrades.push({
-                    type: 'tunnel',
-                    icon: `<svg viewBox="0 0 24 24" width="40" height="40"><path d="M4 12 L10 6 L14 6 L20 12 L14 18 L10 18 Z" fill="#f38181" stroke="#f38181" stroke-width="1"/></svg>`,
-                    label: 'Tunnel',
-                    apply: () => {
-                        gameState.availableTunnels++;
-                    }
-                });
-            }
-            
-            // Interchange
-            upgrades.push({
-                type: 'interchange',
-                icon: `<svg viewBox="0 0 24 24" width="40" height="40"><circle cx="12" cy="12" r="8" fill="none" stroke="#aa96da" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#aa96da"/></svg>`,
-                label: 'Interchange',
-                apply: () => {
-                    // Mark next station as interchange when clicked
-                    gameState.nextStationInterchange = true;
-                }
-            });
-            
-            // Shuffle: pick 3 random upgrades
-            const shuffled = upgrades.sort(() => Math.random() - 0.5);
-            return shuffled.slice(0, 3);
-        }
-        
-        function applyUpgrade(upgrade) {
-            upgrade.apply();
-            document.getElementById('upgrade-panel').classList.add('hidden');
-            gameState.screen = 'playing';
-            updateLinePalette();
-            saveGame();
-        }
-        
-        function showGameOver() {
-            gameState.screen = 'gameover';
-            document.getElementById('game-over').classList.remove('hidden');
-            document.getElementById('final-week').textContent = gameState.week;
-            document.getElementById('final-passengers').textContent = gameState.passengersDelivered;
-            
-            // Clear saved game
-            localStorage.removeItem('miniMetroSave');
-        }
-        
-        function showTutorial(step) {
-            const tutorials = [
-                'Connect stations by clicking a line below, then clicking stations to build your metro network.',
-                'Passengers (small shapes) want to reach stations matching their shape. Build efficient routes!',
-                'If a station gets too crowded for too long, the game ends. Keep passengers moving!'
-            ];
-            
-            if (step < tutorials.length) {
-                document.getElementById('tutorial-text').textContent = tutorials[step];
-                document.getElementById('tutorial').classList.remove('hidden');
-                
-                setTimeout(() => {
-                    document.getElementById('tutorial').classList.add('hidden');
-                    gameState.tutorialStep = step + 1;
-                    if (gameState.tutorialStep < tutorials.length) {
-                        setTimeout(() => showTutorial(gameState.tutorialStep), 15000);
-                    }
-                }, 8000);
-            }
-        }
-        
-        // ==================== INPUT HANDLING ====================
-        let isDragging = false;
-        let dragStartStation = null;
-        
-        function getInputPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            if (e.touches) {
-                return {
-                    x: e.touches[0].clientX - rect.left,
-                    y: e.touches[0].clientY - rect.top
-                };
-            }
-            return {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
-        }
-        
-        function findStationAt(pos) {
-            return gameState.stations.find(s => distance(s, pos) < s.radius + 10);
-        }
-        
-        function handleInputStart(e) {
-            if (gameState.screen !== 'playing') return;
-            
-            const pos = getInputPos(e);
-            const station = findStationAt(pos);
-            
-            if (station && gameState.selectedLine !== null) {
-                isDragging = true;
-                dragStartStation = station;
-                
-                const line = gameState.lines[gameState.selectedLine];
-                
-                // Check if station is already on this line
-                if (line.stations.includes(station)) {
-                    // Start from this station to extend
-                    gameState.drawingLine = {
-                        lineIndex: gameState.selectedLine,
-                        startStation: station,
-                        currentX: pos.x,
-                        currentY: pos.y
-                    };
-                } else {
-                    // Add station to line
-                    line.addStation(station);
-                    gameState.drawingLine = {
-                        lineIndex: gameState.selectedLine,
-                        startStation: station,
-                        currentX: pos.x,
-                        currentY: pos.y
-                    };
+                this.lines.forEach((line, lineIndex) => {
+                    if (line.stations.length < 2) return;
                     
-                    // Add train if this is the second station and we have trains available
-                    if (line.stations.length === 2 && gameState.availableTrains > 0 && line.trains.length === 0) {
-                        const train = new Train(line, 0);
-                        line.trains.push(train);
-                        gameState.availableTrains--;
-                    }
-                }
-            }
-        }
-        
-        function handleInputMove(e) {
-            if (!isDragging || gameState.screen !== 'playing') return;
-            
-            const pos = getInputPos(e);
-            
-            if (gameState.drawingLine) {
-                gameState.drawingLine.currentX = pos.x;
-                gameState.drawingLine.currentY = pos.y;
-            }
-        }
-        
-        function handleInputEnd(e) {
-            if (!isDragging || gameState.screen !== 'playing') return;
-            
-            const pos = getInputPos(e.changedTouches ? e.changedTouches[0] : e);
-            const station = findStationAt(pos);
-            
-            if (station && gameState.drawingLine && station !== dragStartStation) {
-                const line = gameState.lines[gameState.drawingLine.lineIndex];
-                if (!line.stations.includes(station)) {
-                    line.addStation(station);
+                    ctx.strokeStyle = line.color;
+                    ctx.lineWidth = 8;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
                     
-                    // Add train if this is the second station and we have trains available
-                    if (line.stations.length === 2 && gameState.availableTrains > 0 && line.trains.length === 0) {
-                        const train = new Train(line, 0);
-                        line.trains.push(train);
-                        gameState.availableTrains--;
-                    }
-                }
-            }
-            
-            isDragging = false;
-            dragStartStation = null;
-            gameState.drawingLine = null;
-            
-            updateLinePalette();
-            saveGame();
-        }
-        
-        canvas.addEventListener('mousedown', handleInputStart);
-        canvas.addEventListener('mousemove', handleInputMove);
-        canvas.addEventListener('mouseup', handleInputEnd);
-        canvas.addEventListener('touchstart', handleInputStart, { passive: true });
-        canvas.addEventListener('touchmove', handleInputMove, { passive: true });
-        canvas.addEventListener('touchend', handleInputEnd);
-        
-        // Right-click to remove station from line
-        canvas.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            if (gameState.selectedLine === null) return;
-            
-            const pos = getInputPos(e);
-            const station = findStationAt(pos);
-            
-            if (station) {
-                const line = gameState.lines[gameState.selectedLine];
-                line.removeStation(station);
-                updateLinePalette();
-            }
-        });
-        
-        // ==================== BUTTON HANDLERS ====================
-        document.getElementById('new-game-btn').addEventListener('click', () => {
-            initGame();
-            showScreen('playing');
-            updateLinePalette();
-        });
-        
-        document.getElementById('continue-btn').addEventListener('click', () => {
-            if (loadGame()) {
-                showScreen('playing');
-                updateLinePalette();
-            }
-        });
-        
-        document.getElementById('how-to-play-btn').addEventListener('click', () => {
-            alert(`HOW TO PLAY:
-
-1. Select a line from the palette at the bottom
-2. Click stations to connect them with metro lines
-3. Passengers (small shapes) want to reach stations matching their shape
-4. Trains automatically pick up and drop off passengers
-5. If a station gets too crowded for too long, the game ends!
-
-Tips:
-- Create efficient routes to connect different station types
-- Use interchanges to let passengers transfer between lines
-- Add more trains to busy lines
-- Plan for growth as new stations appear`);
-        });
-        
-        document.getElementById('pause-btn').addEventListener('click', () => {
-            showScreen('paused');
-        });
-        
-        document.getElementById('resume-btn').addEventListener('click', () => {
-            showScreen('playing');
-        });
-        
-        document.getElementById('quit-btn').addEventListener('click', () => {
-            saveGame();
-            showScreen('menu');
-        });
-        
-        document.getElementById('retry-btn').addEventListener('click', () => {
-            initGame();
-            showScreen('playing');
-            updateLinePalette();
-        });
-        
-        document.getElementById('menu-btn').addEventListener('click', () => {
-            showScreen('menu');
-        });
-        
-        // Speed controls
-        document.getElementById('speed-1').addEventListener('click', () => setSpeed(1));
-        document.getElementById('speed-2').addEventListener('click', () => setSpeed(2));
-        document.getElementById('speed-3').addEventListener('click', () => setSpeed(3));
-        
-        function setSpeed(speed) {
-            gameState.gameSpeed = speed;
-            document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`speed-${speed}`).classList.add('active');
-        }
-        
-        // ==================== SAVE/LOAD ====================
-        function saveGame() {
-            const saveData = {
-                week: gameState.week,
-                passengersDelivered: gameState.passengersDelivered,
-                availableTrains: gameState.availableTrains,
-                availableCarriages: gameState.availableCarriages,
-                availableTunnels: gameState.availableTunnels,
-                gameTime: gameState.gameTime,
-                weekTime: gameState.weekTime,
-                currentMap: gameState.currentMap,
-                unlockedShapes: gameState.unlockedShapes,
-                stations: gameState.stations.map(s => ({
-                    x: s.x,
-                    y: s.y,
-                    shape: s.shape,
-                    passengers: s.passengers,
-                    isInterchange: s.isInterchange
-                })),
-                lines: gameState.lines.map(l => ({
-                    color: l.color,
-                    stationIndices: l.stations.map(s => gameState.stations.indexOf(s)),
-                    trainCount: l.trains.length
-                }))
-            };
-            
-            localStorage.setItem('miniMetroSave', JSON.stringify(saveData));
-        }
-        
-        function loadGame() {
-            const saveStr = localStorage.getItem('miniMetroSave');
-            if (!saveStr) return false;
-            
-            try {
-                const saveData = JSON.parse(saveStr);
-                
-                gameState.week = saveData.week;
-                gameState.passengersDelivered = saveData.passengersDelivered;
-                gameState.availableTrains = saveData.availableTrains;
-                gameState.availableCarriages = saveData.availableCarriages;
-                gameState.availableTunnels = saveData.availableTunnels;
-                gameState.gameTime = saveData.gameTime;
-                gameState.weekTime = saveData.weekTime;
-                gameState.currentMap = saveData.currentMap;
-                gameState.unlockedShapes = saveData.unlockedShapes;
-                
-                // Recreate stations
-                gameState.stations = saveData.stations.map(s => {
-                    const station = new Station(s.x, s.y, s.shape);
-                    station.passengers = s.passengers || [];
-                    station.isInterchange = s.isInterchange;
-                    return station;
-                });
-                
-                // Recreate lines
-                gameState.lines = saveData.lines.map((l, i) => {
-                    const line = new Line(i, l.color);
-                    l.stationIndices.forEach(idx => {
-                        if (gameState.stations[idx]) {
-                            line.addStation(gameState.stations[idx]);
+                    ctx.beginPath();
+                    
+                    for (let i = 0; i < line.stations.length - 1; i++) {
+                        const from = line.stations[i];
+                        const to = line.stations[i + 1];
+                        
+                        // Calculate offset for overlapping segments
+                        const key = this.getSegmentKey(from, to);
+                        let offset = 0;
+                        
+                        if (overlapMap.has(key)) {
+                            const count = overlapMap.get(key);
+                            offset = count * 12; // Offset each overlapping line
+                            overlapMap.set(key, count + 1);
+                        } else {
+                            overlapMap.set(key, 1);
                         }
-                    });
-                    
-                    // Recreate trains
-                    for (let t = 0; t < l.trainCount; t++) {
-                        line.trains.push(new Train(line, t % Math.max(1, line.stations.length - 1)));
+                        
+                        // Calculate perpendicular offset
+                        const dx = to.x - from.x;
+                        const dy = to.y - from.y;
+                        const len = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (len > 0) {
+                            const perpX = -dy / len * offset;
+                            const perpY = dx / len * offset;
+                            
+                            if (i === 0) {
+                                ctx.moveTo(from.x + perpX, from.y + perpY);
+                            }
+                            ctx.lineTo(to.x + perpX, to.y + perpY);
+                        }
                     }
                     
-                    return line;
+                    ctx.stroke();
+                    
+                    // Draw line border for better visibility
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 10;
+                    ctx.stroke();
+                    
+                    // Redraw main line
+                    ctx.strokeStyle = line.color;
+                    ctx.lineWidth = 8;
+                    ctx.stroke();
                 });
+            }
+            
+            getSegmentKey(s1, s2) {
+                const ids = [s1.id, s2.id].sort();
+                return ids.join('-');
+            }
+            
+            drawStation(station) {
+                const ctx = this.ctx;
+                const size = 25;
                 
-                gameState.screen = 'playing';
-                generateMap(gameState.currentMap);
-                updateUI();
-                return true;
-            } catch (e) {
-                console.error('Failed to load game:', e);
-                return false;
+                // Background
+                ctx.fillStyle = '#1a1a2e';
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                
+                // Draw shape based on type
+                ctx.beginPath();
+                switch (station.shape) {
+                    case 'circle':
+                        ctx.arc(station.x, station.y, size, 0, Math.PI * 2);
+                        break;
+                    case 'triangle':
+                        ctx.moveTo(station.x, station.y - size);
+                        ctx.lineTo(station.x + size * 0.866, station.y + size * 0.5);
+                        ctx.lineTo(station.x - size * 0.866, station.y + size * 0.5);
+                        ctx.closePath();
+                        break;
+                    case 'square':
+                        ctx.rect(station.x - size * 0.8, station.y - size * 0.8, size * 1.6, size * 1.6);
+                        break;
+                    case 'diamond':
+                        ctx.moveTo(station.x, station.y - size);
+                        ctx.lineTo(station.x + size, station.y);
+                        ctx.lineTo(station.x, station.y + size);
+                        ctx.lineTo(station.x - size, station.y);
+                        ctx.closePath();
+                        break;
+                    case 'pentagon':
+                        for (let i = 0; i < 5; i++) {
+                            const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+                            const x = station.x + size * Math.cos(angle);
+                            const y = station.y + size * Math.sin(angle);
+                            if (i === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.closePath();
+                        break;
+                    case 'star':
+                        for (let i = 0; i < 10; i++) {
+                            const angle = (i * Math.PI / 5) - Math.PI / 2;
+                            const r = i % 2 === 0 ? size : size * 0.5;
+                            const x = station.x + r * Math.cos(angle);
+                            const y = station.y + r * Math.sin(angle);
+                            if (i === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.closePath();
+                        break;
+                }
+                
+                ctx.fill();
+                ctx.stroke();
+                
+                // Draw passengers
+                if (station.passengers.length > 0) {
+                    const passengerSize = 8;
+                    const cols = 4;
+                    station.passengers.forEach((p, i) => {
+                        const px = station.x + 35 + (i % cols) * (passengerSize + 2);
+                        const py = station.y - 20 + Math.floor(i / cols) * (passengerSize + 2);
+                        
+                        ctx.fillStyle = this.getShapeColor(p);
+                        this.drawMiniShape(px, py, p, passengerSize * 0.7);
+                    });
+                }
+                
+                // Warning for overcrowding
+                if (station.isOvercrowded()) {
+                    ctx.strokeStyle = '#e74c3c';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(station.x, station.y, size + 10, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+            
+            drawMiniShape(x, y, shape, size) {
+                const ctx = this.ctx;
+                ctx.beginPath();
+                
+                switch (shape) {
+                    case 'circle':
+                        ctx.arc(x, y, size, 0, Math.PI * 2);
+                        break;
+                    case 'triangle':
+                        ctx.moveTo(x, y - size);
+                        ctx.lineTo(x + size * 0.866, y + size * 0.5);
+                        ctx.lineTo(x - size * 0.866, y + size * 0.5);
+                        ctx.closePath();
+                        break;
+                    case 'square':
+                        ctx.rect(x - size * 0.7, y - size * 0.7, size * 1.4, size * 1.4);
+                        break;
+                    default:
+                        ctx.arc(x, y, size, 0, Math.PI * 2);
+                }
+                
+                ctx.fill();
+            }
+            
+            getShapeColor(shape) {
+                const colors = {
+                    circle: '#e74c3c',
+                    triangle: '#3498db',
+                    square: '#2ecc71',
+                    diamond: '#f39c12',
+                    pentagon: '#9b59b6',
+                    star: '#1abc9c'
+                };
+                return colors[shape] || '#fff';
+            }
+            
+            drawTrain(train) {
+                const pos = train.getPosition();
+                if (!pos) return;
+                
+                const ctx = this.ctx;
+                
+                // Train body
+                ctx.fillStyle = train.line.color;
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.roundRect(pos.x - 15, pos.y - 8, 30, 16, 4);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Passenger indicator
+                if (train.passengers.length > 0) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(train.passengers.length.toString(), pos.x, pos.y + 4);
+                }
+            }
+            
+            animate() {
+                const currentTime = performance.now();
+                const dt = (currentTime - this.lastTime) / 1000;
+                this.lastTime = currentTime;
+                
+                this.update(dt);
+                this.draw();
+                
+                requestAnimationFrame(() => this.animate());
             }
         }
         
-        // ==================== PWA INSTALLATION ====================
-        let deferredPrompt;
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-        });
-        
-        // ==================== SERVICE WORKER REGISTRATION ====================
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registered:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('ServiceWorker registration failed:', error);
-                    });
-            });
-        }
-        
-        // ==================== START GAME ====================
-        // Check for saved game
-        const hasSave = localStorage.getItem('miniMetroSave');
-        document.getElementById('continue-btn').style.display = hasSave ? 'block' : 'none';
-        
-        // Start game loop
-        requestAnimationFrame(gameLoop);
+        // Initialize game
+        const game = new Game();
     </script>
 </body>
 </html>
