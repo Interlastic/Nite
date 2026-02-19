@@ -110,6 +110,12 @@ table {
     transform: none;
 }
 
+:host(.fully-expanded) {
+    max-height: none !important;
+    cursor: default;
+    transform: none;
+}
+
 :host:not(.expanded)::after {
     content: "";
     position: absolute;
@@ -119,6 +125,46 @@ table {
     height: 120px;
     background: linear-gradient(transparent, #ffffff);
     pointer-events: none;
+}
+
+:host(.expanded.is-cut-off:not(.fully-expanded)) {
+    padding-bottom: 100px;
+}
+
+.expand-more-container {
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    z-index: 20;
+}
+
+:host(.expanded.is-cut-off:not(.fully-expanded)) .expand-more-container {
+    display: flex;
+}
+
+.expand-more-button {
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.9);
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.expand-more-button:hover {
+    color: #2563eb;
+    border-color: #bfdbfe;
 }
 
 .hint-text {

@@ -43,11 +43,22 @@ async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = nul
             <h1 class="article-title">${displayText}</h1>
         </div>
         <div class="content">${html}</div>
+        <div class="expand-more-container">
+            <button class="expand-more-button">Read Full Article</button>
+        </div>
         <div class="hint-text">Tap to read</div>
     `;
 
     cardShadow.addEventListener("click", (event) => {
         const potentialLink = event.target.closest("a");
+        const expandMoreButton = event.target.closest(".expand-more-button");
+
+        if (expandMoreButton) {
+            articleCard.classList.add("fully-expanded");
+            event.stopPropagation();
+            return;
+        }
+
         if (potentialLink) {
             const linkHref = potentialLink.getAttribute("href");
             if (!linkHref) return;
@@ -69,7 +80,21 @@ async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = nul
             }
         }
 
-        articleCard.classList.toggle("expanded");
+        if (!articleCard.classList.contains("expanded")) {
+            articleCard.classList.add("expanded");
+            setTimeout(() => {
+                const innerContent = cardShadow.querySelector(".content");
+                if (innerContent && innerContent.scrollHeight > 4500) {
+                    articleCard.classList.add("is-cut-off");
+                }
+            }, 400);
+        } else if (articleCard.classList.contains("fully-expanded")) {
+            articleCard.classList.remove("fully-expanded");
+            articleCard.classList.remove("expanded");
+        } else {
+            articleCard.classList.remove("expanded");
+            articleCard.classList.remove("is-cut-off");
+        }
     });
 
     if (anchorElement) {
