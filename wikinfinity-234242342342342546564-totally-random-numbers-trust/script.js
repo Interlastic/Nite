@@ -1,97 +1,94 @@
-async function getPage(specificTitle = null) {
-    let url = "https://en.wikipedia.org/api/rest_v1/page/random/summary";
-    if (specificTitle) {
-        url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(specificTitle)}`;
+async function fetchWikipediaArticle(searchTitle = null) {
+    let summaryEndpoint = "https://en.wikipedia.org/api/rest_v1/page/random/summary";
+    if (searchTitle) {
+        summaryEndpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTitle)}`;
     }
 
-    const wiki_summary = await fetch(url);
-    const data = await wiki_summary.json();
-    const title = data.displaytitle;
-    const urlTitle = data.titles.canonical; // Use canonical title for HTML fetch
+    const summaryResponse = await fetch(summaryEndpoint);
+    const summaryData = await summaryResponse.json();
+    const displayTitle = summaryData.displaytitle;
+    const canonicalTitle = summaryData.titles.canonical;
 
-    const page = await fetch("https://en.wikipedia.org/api/rest_v1/page/html/" + encodeURIComponent(urlTitle));
-    let pageData = await page.text();
+    const contentResponse = await fetch("https://en.wikipedia.org/api/rest_v1/page/html/" + encodeURIComponent(canonicalTitle));
+    let htmlContent = await contentResponse.text();
 
-    // Fix Protocol-Relative (//)
-    pageData = pageData.replaceAll('src="//', 'src="https://');
-    pageData = pageData.replaceAll('srcset="//', 'srcset="https://');
-    pageData = pageData.replaceAll('href="//', 'href="https://');
+    htmlContent = htmlContent.replaceAll('src="//', 'src="https://');
+    htmlContent = htmlContent.replaceAll('srcset="//', 'srcset="https://');
+    htmlContent = htmlContent.replaceAll('href="//', 'href="https://');
 
-    // Fix Rooted (/)
-    pageData = pageData.replaceAll('src="/', 'src="https://en.wikipedia.org/');
-    pageData = pageData.replaceAll('href="/', 'href="https://en.wikipedia.org/');
+    htmlContent = htmlContent.replaceAll('src="/', 'src="https://en.wikipedia.org/');
+    htmlContent = htmlContent.replaceAll('href="/', 'href="https://en.wikipedia.org/');
 
-    return { html: pageData, title: title, rawTitle: data.title };
+    return {
+        html: htmlContent,
+        displayText: displayTitle,
+        internalTitle: summaryData.title
+    };
 }
 
-async function createCard(specificTitle = null, sourceTitle = null, insertAfterElement = null) {
-    const { html, title, rawTitle } = await getPage(specificTitle);
-    const css = await fetch("styles_inject.css").then(r => r.text());
+async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = null, anchorElement = null) {
+    const { html, displayText, internalTitle } = await fetchWikipediaArticle(searchTitle);
+    const stylesResponse = await fetch("styles_inject.css");
+    const CSSStyles = await stylesResponse.text();
 
-    const card = document.createElement("div");
-    card.className = "e2";
+    const articleCard = document.createElement("div");
+    articleCard.className = "e2";
 
-    const shadow = card.attachShadow({ mode: "open" });
+    const cardShadow = articleCard.attachShadow({ mode: "open" });
 
-    shadow.innerHTML = `
-        <style>${css}</style>
-        ${sourceTitle ? `<div class="source-badge">Linked from: ${sourceTitle}</div>` : ""}
+    cardShadow.innerHTML = `
+        <style>${CSSStyles}</style>
+        ${sourceArticleTitle ? `<div class="source-badge">Linked from: ${sourceArticleTitle}</div>` : ""}
         <div class="article-header">
-            <h1 class="article-title">${title}</h1>
+            <h1 class="article-title">${displayText}</h1>
         </div>
         <div class="content">${html}</div>
         <div class="hint-text">Tap to read</div>
     `;
 
-    // Intercept links
-    shadow.addEventListener("click", (e) => {
-        const link = e.target.closest("a");
-        if (link) {
-            const href = link.getAttribute("href");
-            if (!href) return;
+    cardShadow.addEventListener("click", (event) => {
+        const potentialLink = event.target.closest("a");
+        if (potentialLink) {
+            const linkHref = potentialLink.getAttribute("href");
+            if (!linkHref) return;
 
-            // Resolve relative links against Wikipedia base
-            // Wikipedia HTML usually has links like ./Article_Name
             try {
-                const wikiBase = "https://en.wikipedia.org/wiki/";
-                const url = new URL(href, wikiBase);
+                const wikipediaBase = "https://en.wikipedia.org/wiki/";
+                const resolvedUrl = new URL(linkHref, wikipediaBase);
 
-                if (url.hostname === "en.wikipedia.org" && url.pathname.startsWith("/wiki/")) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                if (resolvedUrl.hostname === "en.wikipedia.org" && resolvedUrl.pathname.startsWith("/wiki/")) {
+                    event.preventDefault();
+                    event.stopPropagation();
 
-                    // Extract title from /wiki/Title
-                    const newTitle = decodeURIComponent(url.pathname.split("/wiki/")[1]);
-                    createCard(newTitle, rawTitle, card);
+                    const newArticleTitle = decodeURIComponent(resolvedUrl.pathname.split("/wiki/")[1]);
+                    renderNewArticleCard(newArticleTitle, internalTitle, articleCard);
                     return;
                 }
-            } catch (err) {
-                console.error("Link resolution error:", err);
+            } catch (error) {
+                console.error("Failed to resolve Wikipedia link:", error);
             }
         }
 
-        // Toggle expansion if not intercepted or if clicking elsewhere
-        card.classList.toggle("expanded");
+        articleCard.classList.toggle("expanded");
     });
 
-    if (insertAfterElement) {
-        insertAfterElement.after(card);
-        // Scroll to the new card
-        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (anchorElement) {
+        anchorElement.after(articleCard);
+        articleCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-        document.getElementById("div1").appendChild(card);
+        document.getElementById("div1").appendChild(articleCard);
     }
 }
 
-(async function () {
-    // Load 3 cards to start
-    await createCard();
-    await createCard();
-    await createCard();
+(async function startFeed() {
+    await renderNewArticleCard();
+    await renderNewArticleCard();
+    await renderNewArticleCard();
 })();
 
 window.addEventListener("scroll", () => {
-    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
-        createCard();
+    let hasReachedBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500;
+    if (hasReachedBottom) {
+        renderNewArticleCard();
     }
 });
