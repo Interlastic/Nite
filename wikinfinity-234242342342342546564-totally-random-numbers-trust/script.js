@@ -1,15 +1,15 @@
-async function fetchWikipediaArticle(searchTitle = null) {
-    let summaryEndpoint = "https://en.wikipedia.org/api/rest_v1/page/random/summary";
+async function fetchWikipediaArticle(searchTitle = null, language = "en") {
+    let summaryEndpoint = "https://" + language + ".wikipedia.org/api/rest_v1/page/random/summary";
     if (searchTitle) {
-        summaryEndpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTitle)}`;
-    }
+        summaryEndpoint = "https://" + language + ".wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(searchTitle);
+    };
 
     const summaryResponse = await fetch(summaryEndpoint);
     const summaryData = await summaryResponse.json();
     const displayTitle = summaryData.displaytitle;
     const canonicalTitle = summaryData.titles.canonical;
 
-    const contentResponse = await fetch("https://en.wikipedia.org/api/rest_v1/page/html/" + encodeURIComponent(canonicalTitle));
+    const contentResponse = await fetch("https://" + language + ".wikipedia.org/api/rest_v1/page/html/" + encodeURIComponent(canonicalTitle));
     let htmlContent = await contentResponse.text();
 
     htmlContent = htmlContent.replaceAll('src="//', 'src="https://');
@@ -26,10 +26,43 @@ async function fetchWikipediaArticle(searchTitle = null) {
     };
 }
 
-async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = null, anchorElement = null) {
-    const { html, displayText, internalTitle } = await fetchWikipediaArticle(searchTitle);
+const PREFETCH_QUEUE_SIZE = 3;
+const SCROLL_THRESHOLD = 1500;
+
+language = localStorage.getItem("language") || "en";
+
+const prefetchQueue = [];
+
+function fillPrefetchQueue() {
+    while (prefetchQueue.length < PREFETCH_QUEUE_SIZE) {
+        prefetchQueue.push(fetchWikipediaArticle(null, language));
+    }
+}
+
+async function getNextArticle(searchTitle = null) {
+    if (searchTitle) {
+        return fetchWikipediaArticle(searchTitle, language);
+    }
+    if (prefetchQueue.length > 0) {
+        const next = prefetchQueue.shift();
+        fillPrefetchQueue();
+        return next;
+    }
+    return fetchWikipediaArticle(null, language);
+}
+
+async function fetchCSSStyles() {
+    if (fetchCSSStyles._cache) return fetchCSSStyles._cache;
     const stylesResponse = await fetch("styles_inject.css");
-    const CSSStyles = await stylesResponse.text();
+    fetchCSSStyles._cache = await stylesResponse.text();
+    return fetchCSSStyles._cache;
+}
+
+async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = null, anchorElement = null, lang = language) {
+    const [{ html, displayText, internalTitle }, CSSStyles] = await Promise.all([
+        getNextArticle(searchTitle),
+        fetchCSSStyles()
+    ]);
 
     const articleCard = document.createElement("div");
     articleCard.className = "e2";
@@ -64,19 +97,19 @@ async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = nul
             if (!linkHref) return;
 
             try {
-                const wikipediaBase = "https://en.wikipedia.org/wiki/";
+                const wikipediaBase = "https://" + lang + ".wikipedia.org/wiki/";
                 const resolvedUrl = new URL(linkHref, wikipediaBase);
 
-                if (resolvedUrl.hostname === "en.wikipedia.org" && resolvedUrl.pathname.startsWith("/wiki/")) {
+                if (resolvedUrl.hostname === lang + ".wikipedia.org" && resolvedUrl.pathname.startsWith("/wiki/")) {
                     event.preventDefault();
                     event.stopPropagation();
 
                     const newArticleTitle = decodeURIComponent(resolvedUrl.pathname.split("/wiki/")[1]);
-                    renderNewArticleCard(newArticleTitle, internalTitle, articleCard);
+                    renderNewArticleCard(newArticleTitle, internalTitle, articleCard, lang);
                     return;
                 }
             } catch (error) {
-                console.error("Failed to resolve Wikipedia link:", error);
+                console.error("Failed Wikipedia link:", error);
             }
         }
 
@@ -105,15 +138,28 @@ async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = nul
     }
 }
 
+let isAppending = false;
+
+async function appendNextCard() {
+    if (isAppending) return;
+    isAppending = true;
+    await renderNewArticleCard(null, null, null, language);
+    isAppending = false;
+}
+
+fillPrefetchQueue();
+
 (async function startFeed() {
-    await renderNewArticleCard();
-    await renderNewArticleCard();
-    await renderNewArticleCard();
+    await Promise.all([
+        renderNewArticleCard(null, null, null, language),
+        renderNewArticleCard(null, null, null, language),
+        renderNewArticleCard(null, null, null, language)
+    ]);
 })();
 
 window.addEventListener("scroll", () => {
-    let hasReachedBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500;
+    let hasReachedBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - SCROLL_THRESHOLD;
     if (hasReachedBottom) {
-        renderNewArticleCard();
+        appendNextCard();
     }
 });
