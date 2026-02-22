@@ -7,9 +7,35 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 20px;
+    padding-top: 70px;
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+#top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    background-color: white;
+    z-index: 1000;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.settings-icon {
+    color: #666;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.settings-icon:hover {
+    color: #333;
 }
 
 #div1 {

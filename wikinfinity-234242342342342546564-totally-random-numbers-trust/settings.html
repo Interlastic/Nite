@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wikinfinity - Settings</title>
+</head>
+
+<body>
+    <a href="index.html" style="display: inline-block; padding: 20px; color: #666; transition: color 0.2s ease;"
+        onmouseover="this.style.color='#333'" onmouseout="this.style.color='#666'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+    </a>
+
+    <div style="padding: 0 20px; font-family: sans-serif;">
+        <h2>Settings</h2>
+        <div style="margin-top: 20px;">
+            <label for="language-select" style="display: block; margin-bottom: 8px;">Language</label>
+            <select id="language-select"
+                style="padding: 8px; font-size: 16px; border-radius: 4px; border: 1px solid #ccc; width: 100%; max-width: 300px;">
+                <option value="">Loading languages...</option>
+            </select>
+        </div>
+    </div>
+
+    <script>
+        const langSelect = document.getElementById('language-select');
+        const savedLang = localStorage.getItem('language') || 'en';
+
+        fetch('https://en.wikipedia.org/w/api.php?action=sitematrix&format=json&origin=*&smlangprop=code')
+            .then(res => res.json())
+            .then(data => {
+                const validCodes = new Set();
+                const matrix = data.sitematrix;
+                Object.values(matrix).forEach(entry => {
+                    if (entry.code) validCodes.add(entry.code);
+                });
+                return validCodes;
+            })
+            .then(validCodes => {
+                return fetch('https://en.wikipedia.org/w/api.php?action=query&meta=siteinfo&siprop=languages&format=json&origin=*')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.query && data.query.languages) {
+                            langSelect.innerHTML = '';
+                            const languages = data.query.languages;
+                            languages
+                                .filter(lang => lang.code && lang["*"] && validCodes.has(lang.code))
+                                .sort((a, b) => a["*"].localeCompare(b["*"]))
+                                .forEach(lang => {
+                                    const option = document.createElement('option');
+                                    option.value = lang.code;
+                                    option.textContent = `${lang["*"]} (${lang.code})`;
+                                    langSelect.appendChild(option);
+                                });
+                            langSelect.value = savedLang;
+                        }
+                    });
+            })
+            .catch(err => {
+                console.error('Failed to load languages:', err);
+                langSelect.innerHTML = `<option value="${savedLang}">Failed to load (${savedLang})</option>`;
+            });
+
+        langSelect.addEventListener('change', (e) => {
+            localStorage.setItem('language', e.target.value);
+        });
+    </script>
+</body>
+
+</html>
