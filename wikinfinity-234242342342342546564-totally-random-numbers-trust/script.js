@@ -26,15 +26,45 @@ async function fetchWikipediaArticle(searchTitle = null, language = "en") {
     };
 }
 
-const PREFETCH_QUEUE_SIZE = 3;
-const SCROLL_THRESHOLD = 1500;
+const BASE_PREFETCH_QUEUE_SIZE = 3;
+const BASE_SCROLL_THRESHOLD = 1500;
+
+const SPEED_SAMPLE_INTERVAL = 100;
+const SPEED_DECAY = 0.85;
+const MAX_MULTIPLIER = 5;
 
 language = localStorage.getItem("language") || "en";
 
 const prefetchQueue = [];
 
+let lastScrollY = window.scrollY;
+let lastScrollTime = performance.now();
+let smoothedSpeed = 0;
+
+function getScrollMultiplier() {
+    return Math.min(1 + smoothedSpeed / 800, MAX_MULTIPLIER);
+}
+
+function updateScrollSpeed() {
+    const now = performance.now();
+    const elapsed = now - lastScrollTime;
+    if (elapsed >= SPEED_SAMPLE_INTERVAL) {
+        const delta = Math.abs(window.scrollY - lastScrollY);
+        const instantSpeed = delta / elapsed * 1000;
+        smoothedSpeed = smoothedSpeed * SPEED_DECAY + instantSpeed * (1 - SPEED_DECAY);
+        lastScrollY = window.scrollY;
+        lastScrollTime = now;
+        fillPrefetchQueue();
+    }
+}
+
+function getTargetQueueSize() {
+    return Math.ceil(BASE_PREFETCH_QUEUE_SIZE * getScrollMultiplier());
+}
+
 function fillPrefetchQueue() {
-    while (prefetchQueue.length < PREFETCH_QUEUE_SIZE) {
+    const target = getTargetQueueSize();
+    while (prefetchQueue.length < target) {
         prefetchQueue.push(fetchWikipediaArticle(null, language));
     }
 }
@@ -109,7 +139,7 @@ async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = nul
                     return;
                 }
             } catch (error) {
-                console.error("Failed Wikipedia link:", error);
+                console.error("Failed to resolve Wikipedia link:", error);
             }
         }
 
@@ -138,13 +168,17 @@ async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = nul
     }
 }
 
-let isAppending = false;
+let appendingCount = 0;
 
-async function appendNextCard() {
-    if (isAppending) return;
-    isAppending = true;
-    await renderNewArticleCard(null, null, null, language);
-    isAppending = false;
+async function appendCards(count) {
+    const slots = Math.max(0, count - appendingCount);
+    if (slots === 0) return;
+    appendingCount += slots;
+    await Promise.all(
+        Array.from({ length: slots }, () =>
+            renderNewArticleCard(null, null, null, language).finally(() => { appendingCount--; })
+        )
+    );
 }
 
 fillPrefetchQueue();
@@ -158,8 +192,13 @@ fillPrefetchQueue();
 })();
 
 window.addEventListener("scroll", () => {
-    let hasReachedBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - SCROLL_THRESHOLD;
+    updateScrollSpeed();
+
+    const multiplier = getScrollMultiplier();
+    const dynamicThreshold = BASE_SCROLL_THRESHOLD * multiplier;
+    const hasReachedBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - dynamicThreshold;
+
     if (hasReachedBottom) {
-        appendNextCard();
+        appendCards(Math.ceil(multiplier));
     }
 });
