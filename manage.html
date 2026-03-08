@@ -1,77 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Server Manager</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="emoji_picker.css">
 </head>
-
 <body>
-
-    <div id="loginbtn" class="accountbtn">
-        <div id="user-view" class="btn-content-normal" onclick="handleAuthClick()">
-            <img src="Discord_Logo.png" alt="Discord Logo" width="20" height="20"
-                style="vertical-align:middle; margin-right:8px;">
-            <span id="lbl-btn-username">User</span>
-        </div>
-        <div id="logout-view" class="btn-content-logout">
-            <p class="logouttext">Log out?</p>
-            <div class="logout-actions">
-                <button class="btn-logout" onclick="logout()">Yes</button>
-                <button class="btn-cancel" onclick="closeLogout()">No</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="view-settings" class="box settings-container">
-
-        <div class="sidebar">
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <button class="btn-back-icon" onclick="goBack()" title="Back to Dashboard">←</button>
-                <div>
-                    <h3 style="margin:0 0 0 10px;">Settings</h3>
-                    <span id="lbl-server-id"
-                        style="font-size: 0.75rem; color:#aaa; margin-left: 10px;">Loading...</span>
+                <div class="sidebar-brand">
+                    <img id="server-icon" class="server-avatar" style="width: 24px; height: 24px; margin: 0; border-radius: 50%;" src="" alt="">
+                    <span id="server-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Settings</span>
                 </div>
             </div>
-
-            <div class="nav-menu">
-                <div id="nav-glider" class="glider"></div>
-
+            <nav class="nav-scroll" id="nav-menu"></nav>
+            <div class="sidebar-footer">
+                <button class="btn btn-ghost" style="width: 100%;" onclick="location.href='index.html'">← Back</button>
             </div>
+        </aside>
 
-            <div style="margin-top:auto; padding:10px;">
-                <button id="btn-save-changes" class="btn-login" style="background:#3ba55c;" onclick="saveChanges()">Save
-                    Changes</button>
-                <p id="save-status" style="font-size:0.8rem; color:#aaa; text-align:center; margin-top:5px;"></p>
+        <div class="mobile-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <main class="main-wrap">
+            <header class="top-nav">
+                <button class="menu-trigger" onclick="toggleSidebar()">☰</button>
+                <span id="mobile-title" style="font-weight: 700;">Settings</span>
+                <div style="width: 24px;"></div>
+            </header>
+
+            <div class="main-content" id="content-viewport">
+                <div id="loading-view" class="flex flex-col items-center justify-center" style="height: 100%;">
+                    <p style="color:var(--text-muted);">Loading Configuration...</p>
+                </div>
             </div>
-        </div>
-
-        <div class="content-viewport">
-
-            <p id="loading-text" style="text-align:center; margin-top:50px; color:#aaa;">Loading Configuration...</p>
-
-        </div>
-
-    </div>
-    <div id="logOutContainer" class="logOutContainer" onclick="closeLogout()"></div>
-
-    <div id="unsaved-popup" class="save-popup">
-        <span class="popup-text">Careful! You have unsaved changes!</span>
-        <div class="popup-actions">
-            <button class="popup-cancel-btn" onclick="cancelChanges()">Cancel</button>
-            <button id="btn-popup-save" class="popup-save-btn" onclick="saveChanges()">Save Changes</button>
-        </div>
+        </main>
     </div>
 
-    <div id="transition-overlay" class="page-transition-overlay active"></div>
+    <div id="save-bar" class="save-bar">
+        <span style="font-weight: 600; color:white;">Careful! You have unsaved changes!</span>
+        <div class="flex gap-4">
+            <button class="btn btn-ghost" style="background:transparent; border:none;" onclick="cancelChanges()">Cancel</button>
+            <button class="btn btn-success" id="btn-save" onclick="saveChanges()">Save Changes</button>
+        </div>
+    </div>
 
-    <script src="script.js?v=2"></script>
-    <script src="settings.js?v=2"></script>
-    <script src="emoji_picker.js?v=2"></script>
+    <script src="script.js"></script>
+    <script src="settings.js"></script>
 </body>
-
 </html>

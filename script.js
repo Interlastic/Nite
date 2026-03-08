@@ -1,25 +1,22 @@
-const CONFIG = {
-    API_URL: "https://api.niteapiworker.workers.dev",
-    DISCORD_CLIENT_ID: "1371513819104415804",
+const API_BASE = "https://api.niteapiworker.workers.dev";
+const INVITE_URL = "https://discord.com/oauth2/authorize?client_id=1371513819104415804&permissions=2815042428980240&integration_type=0&scope=bot+applications.commands";
 
-    INVITE_URL: "https://discord.com/oauth2/authorize?client_id=1371513819104415804&permissions=2815042428980240&integration_type=0&scope=bot+applications.commands"
-};
-
-function setCookie(name, value, days = 7) {
-    const d = new Date();
-    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-
-    document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()};Secure;SameSite=Lax`;
+function setCookie(n, v, d = 7) {
+    const dt = new Date();
+    dt.setTime(dt.getTime() + (d * 24 * 60 * 60 * 1000));
+    let c = n + "=" + v + ";expires=" + dt.toUTCString() + ";path=/";
+    if (location.protocol === 'https:') c += ";Secure;SameSite=Lax";
+    document.cookie = c;
 }
 
-function getCookie(name) {
-    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-    return match ? match[2] : null;
+function getCookie(n) {
+    const m = document.cookie.match(new RegExp('(^| )' + n + '=([^;]+)'));
+    return m ? m[2] : null;
 }
 
 function escapeHtml(text) {
     if (!text) return "";
-    return text
+    return String(text)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -27,238 +24,112 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
-function handleAuthClick() {
-    if (!getCookie("auth_token")) {
-        openLogin();
-    } else {
-        toggleLogoutMenu();
-    }
-}
-
-function openLogin() {
-
-    window.open(CONFIG.API_URL + "/auth", "Login", "width=500,height=800");
-}
-
 function logout() {
     document.cookie = "auth_token=;path=/;max-age=0";
     document.cookie = "auth_user=;path=/;max-age=0";
-    location.reload();
+    location.href = "index.html";
 }
 
-function toggleLogoutMenu() {
-    const btn = document.getElementById('loginbtn');
-    const container = document.getElementById('logOutContainer');
-
-    if (container.classList.contains('active')) {
-        btn.classList.remove('expanded');
-        container.classList.remove('active');
-    } else {
-        btn.classList.add('expanded');
-        container.classList.add('active');
-    }
+function openLogin() {
+    const w = 500;
+    const h = 800;
+    const l = (window.screen.width - w) / 2;
+    const t = (window.screen.height - h) / 2;
+    window.open(API_BASE + "/auth", "Login", `width=${w},height=${h},left=${l},top=${t}`);
 }
-
-window.closeLogout = function () {
-    const btn = document.getElementById('loginbtn');
-    const container = document.getElementById('logOutContainer');
-    if (btn) btn.classList.remove('expanded');
-    if (container) container.classList.remove('active');
-};
 
 window.addEventListener("message", (e) => {
-
-    if (e.origin !== CONFIG.API_URL) return;
-
+    if (e.origin !== API_BASE) return;
     if (e.data.type === "LOGIN_SUCCESS") {
         setCookie("auth_token", e.data.token);
         setCookie("auth_user", e.data.username);
-
-        updateDashUI(e.data.username);
-        fetchServers();
+        location.reload();
     }
 });
 
-function updateDashUI(username) {
-    const userLabel = document.getElementById('lbl-btn-username');
-    const dashLabel = document.getElementById('lbl-user');
-    const loginView = document.getElementById('view-login');
-    const dashView = document.getElementById('view-dash');
-
-    if (userLabel) userLabel.innerText = username || "User";
-    if (dashLabel) dashLabel.innerText = username || "User";
-
-    if (loginView) loginView.classList.add('hide');
-    if (dashView) dashView.classList.remove('hide');
-}
-
 async function fetchServers() {
-    const btn = document.getElementById('btn-get');
-    const status = document.getElementById('status');
-    const token = getCookie("auth_token");
+    const t = getCookie("auth_token");
+    const st = document.getElementById("status");
+    const grid = document.getElementById("server-list");
+    if (!t || !grid) return;
 
-    if (!token) return;
-    if (!btn) return;
-
-    btn.disabled = true;
-    btn.innerText = "Collecting Servers...";
-    document.getElementById('server-list').innerHTML = "";
-
+    st.innerText = "Collecting Servers...";
     try {
-
-        await fetch(CONFIG.API_URL + "/trigger", {
-            headers: { "Authorization": token }
-        });
-
-        btn.innerText = "Please wait...";
-
+        await fetch(API_BASE + "/trigger", { headers: { "Authorization": t } });
         let attempts = 0;
         while (attempts < 30) {
             attempts++;
-            status.innerText = `Syncing... (${attempts}/30)`;
-
-            const checkRes = await fetch(`${CONFIG.API_URL}/check?t=${Date.now()}`, {
-                headers: { "Authorization": token },
-                cache: "no-store"
-            });
-
-            if (checkRes.status === 200) {
-                const data = await checkRes.json();
+            st.innerText = `Syncing... (${attempts}/30)`;
+            const res = await fetch(`${API_BASE}/check?t=${Date.now()}`, { headers: { "Authorization": t } });
+            if (res.status === 200) {
+                const data = await res.json();
                 renderServers(data.servers);
-
-                btn.innerText = "Refresh List";
-                btn.disabled = false;
-                status.innerText = "Select a server";
+                st.innerText = "Select a server";
                 return;
             }
-
             await new Promise(r => setTimeout(r, 1000));
         }
-
-        throw new Error("Timed Out");
-
-    } catch (e) {
-        console.error(e);
-        status.innerText = "Failed to sync servers.";
-        btn.disabled = false;
-        btn.innerText = "Try Again";
+        st.innerText = "Timed Out";
+    } catch (err) {
+        st.innerText = "Failed to sync servers.";
     }
 }
 
 function renderServers(list) {
-    const container = document.getElementById('server-list');
-    const defaultIcon = "https://cdn.discordapp.com/embed/avatars/0.png";
+    const grid = document.getElementById("server-list");
+    if (!grid) return;
 
-    const addCardHtml = `
-        <div class="server-card" onclick="window.location.href='${CONFIG.INVITE_URL}'">
-            <img src="plus.svg" class="server-avatar" alt="Add" style="background-color: #202225;">
-            <span>Add to server</span>
-        </div>`;
-
-    if (!list || list.length === 0) {
-        container.innerHTML = addCardHtml;
-        return;
-    }
-
-    const cardsHtml = list.map((s, i) => {
-        const safeName = escapeHtml(s.name);
-        const iconUrl = s.picture_url || defaultIcon;
-        const safeIcon = escapeHtml(iconUrl);
-
-        const delay = i * 0.05;
-
-        return `
+    let h = (list || []).map(s => `
         <div class="server-card" 
-             data-id="${s.id}" 
-             data-name="${safeName}" 
-             data-icon="${safeIcon}"
-             onclick="handleServerTransition(this)" 
-             style="animation-delay: ${delay}s;">
-            <img src="${iconUrl}" 
-                 class="server-avatar" 
-                 alt="${safeName}" 
-                 loading="lazy">
-            <span>${safeName}</span>
-        </div>`;
-    }).join('');
+             data-id="${escapeHtml(s.id)}" 
+             data-name="${escapeHtml(s.name)}" 
+             data-icon="${escapeHtml(s.picture_url || '')}" 
+             onclick="manageServer(this)">
+            <img class="server-avatar" src="${s.picture_url || 'https://cdn.discordapp.com/embed/avatars/0.png'}" alt="${escapeHtml(s.name)}">
+            <span class="server-name">${escapeHtml(s.name)}</span>
+        </div>
+    `).join("");
 
-    container.innerHTML = cardsHtml + addCardHtml;
+    h += `
+        <div class="server-card" onclick="window.open('${INVITE_URL}')">
+            <div class="server-avatar flex items-center justify-center" style="background: var(--bg-tertiary);"><img src="plus.svg" style="width:30px; height:30px;"></div>
+            <span class="server-name">Add to server</span>
+        </div>
+    `;
+    grid.innerHTML = h;
 }
 
-function handleServerTransition(element) {
-    const { id, name, icon } = element.dataset;
-    const rect = element.getBoundingClientRect();
+function manageServer(el) {
+    const id = el.dataset.id;
+    const name = encodeURIComponent(el.dataset.name);
+    const icon = encodeURIComponent(el.dataset.icon);
+    location.href = `manage.html?id=${id}&name=${name}&icon=${icon}`;
+}
 
-    const overlay = document.createElement('div');
-    overlay.className = 'page-transition-overlay';
-    document.body.appendChild(overlay);
-
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            overlay.classList.add('active');
-        });
-    });
-
-    const flyer = element.cloneNode(true);
-
-    flyer.style.setProperty('--start-top', `${rect.top}px`);
-    flyer.style.setProperty('--start-left', `${rect.left}px`);
-    flyer.style.setProperty('--start-width', `${rect.width}px`);
-    flyer.style.setProperty('--start-height', `${rect.height}px`);
-
-    let endTop = '20px';
-    if (window.innerWidth <= 768) {
-        const scaledHeight = rect.height * 0.6;
-        endTop = `${window.innerHeight - 20 - scaledHeight}px`;
-    }
-    flyer.style.setProperty('--end-top', endTop);
-
-    Object.assign(flyer.style, {
-        position: 'fixed',
-        left: `${rect.left}px`,
-        top: `${rect.top}px`,
-        width: `${rect.width}px`,
-        height: `${rect.height}px`,
-        margin: '0',
-        zIndex: '3001',
-        pointerEvents: 'none'
-    });
-
-    flyer.style.zIndex = '6000';
-
-    const innerImg = flyer.querySelector('img');
-    if (innerImg) innerImg.style.filter = 'none';
-
-    card = document.body.appendChild(flyer);
-    card.style.setProperty('z-index', '6000', 'important');
-    element.style.visibility = 'hidden';
-
-    requestAnimationFrame(() => {
-        flyer.classList.add('flying-card');
-    });
-
-    setTimeout(() => {
-        const params = new URLSearchParams({
-            id: id,
-            name: name,
-            icon: icon,
-            width: rect.width,
-            height: rect.height
-        });
-        window.location.href = `manage.html?${params.toString()}`;
-    }, 600);
+function toggleSidebar() {
+    const s = document.getElementById("sidebar");
+    if (s) s.classList.toggle("open");
 }
 
 function init() {
-    const savedUser = getCookie("auth_user");
-    const savedToken = getCookie("auth_token");
+    const u = getCookie("auth_user");
+    const t = getCookie("auth_token");
+    const vLogin = document.getElementById("view-login");
+    const vDash = document.getElementById("view-dash");
 
-    if (savedToken && savedUser) {
-
-        updateDashUI(savedUser);
-
-        fetchServers();
+    if (t && u) {
+        if (vLogin) vLogin.classList.add("hide");
+        if (vDash) {
+            vDash.classList.remove("hide");
+            document.getElementById("lbl-user").innerText = u;
+            fetchServers();
+        }
+    } else {
+        if (vLogin) vLogin.classList.remove("hide");
+        if (vDash) vDash.classList.add("hide");
     }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+if (document.getElementById("view-login") || document.getElementById("view-dash")) {
+    document.addEventListener("DOMContentLoaded", init);
+}
