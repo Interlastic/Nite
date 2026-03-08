@@ -1,1620 +1,504 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Embed Maker</title>
-    <link rel="stylesheet" href="emoji_picker.css">
+    <title>Beta Embed Maker</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
-            font-family: 'gg sans', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background: #36393f;
-            color: #dcddde;
-            padding: 16px;
-            min-height: 100vh;
-        }
-
-        .container {
+            background: var(--bg-primary);
+            padding: 1rem;
+            height: 100vh;
             display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
+            gap: 1.5rem;
+            overflow: hidden;
         }
 
-        .editor,
-        .preview {
+        .editor-panel {
             flex: 1;
-            min-width: 300px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
-        h2 {
-            margin-bottom: 16px;
-            color: #fff;
-            font-size: 18px;
+        .preview-panel {
+            flex: 1;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
         }
 
-        h3 {
-            margin: 16px 0 12px;
-            color: #b9bbbe;
-            font-size: 14px;
+        .editor-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-tertiary);
+        }
+
+        .editor-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
         }
 
         .form-group {
-            margin-bottom: 12px;
-            position: relative;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            margin-bottom: 1.5rem;
         }
 
         label {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 4px;
-            font-size: 12px;
-            color: #b9bbbe;
+            font-size: 0.85rem;
+            font-weight: 700;
             text-transform: uppercase;
-            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
         }
 
         .char-count {
-            font-size: 11px;
-            color: #72767d;
-            text-transform: none;
             font-weight: 400;
+            color: var(--text-muted);
+            text-transform: none;
         }
 
-        .char-count.warning {
-            color: #faa61a;
-        }
-
-        .char-count.error {
-            color: #ed4245;
-        }
-
-        input,
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            background: #40444b;
-            color: #dcddde;
-            font-size: 14px;
-            outline: none;
-        }
-
-        input:focus,
-        textarea:focus {
-            box-shadow: 0 0 0 2px #5865f2;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        input[type="color"] {
-            height: 40px;
-            padding: 4px;
-            cursor: pointer;
-        }
-
-        input[type="checkbox"] {
-            width: auto;
-            margin-right: 8px;
-        }
-
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .placeholder-help {
-            margin-top: 8px;
-            font-size: 12px;
-        }
-
-        .placeholder-help summary {
-            color: #72767d;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .placeholder-help summary:hover {
-            color: #b9bbbe;
-        }
-
-        .placeholder-list {
-            margin-top: 8px;
-            padding: 8px;
-            background: #2f3136;
-            border-radius: 4px;
-        }
-
-        .placeholder-list code {
-            background: #40444b;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 11px;
-            margin: 2px;
-            display: inline-block;
-        }
-
-        .embed-tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-        }
-
-        .embed-tab {
-            background: #40444b;
-            color: #b9bbbe;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .embed-tab:hover {
-            background: #4f545c;
-        }
-
-        .embed-tab.active {
-            background: #5865f2;
-            color: #fff;
-        }
-
-        .embed-tab.has-content {
-            border-bottom: 2px solid #3ba55c;
-        }
-
-        .add-embed-btn {
-            background: #3ba55c;
-            color: #fff;
-            padding: 8px 12px;
-            font-size: 13px;
-        }
-
-        .add-embed-btn:hover {
-            background: #2d8049;
-        }
-
-        .remove-embed-btn {
-            background: #ed4245;
-            color: #fff;
-            padding: 8px 12px;
-            font-size: 12px;
-            margin-left: auto;
-        }
-
-        .embed-controls {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .fields-container {
-            border: 1px solid #40444b;
-            border-radius: 4px;
-            padding: 12px;
-            margin-bottom: 12px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .field-item {
-            background: #2f3136;
-            padding: 12px;
-            border-radius: 4px;
-            margin-bottom: 8px;
-        }
-
-        .field-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .field-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .field-header span {
-            font-weight: 600;
-            font-size: 12px;
-            color: #b9bbbe;
-        }
-
-        .remove-field {
-            background: #ed4245;
-            color: #fff;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .field-inputs {
-            display: grid;
-            gap: 8px;
-        }
-
-        .field-inputs input,
-        .field-inputs textarea {
-            font-size: 13px;
-            padding: 8px;
-        }
-
-        .field-inputs textarea {
-            min-height: 50px;
-        }
-
-        .field-count {
-            font-size: 12px;
-            color: #72767d;
-            margin-bottom: 8px;
-        }
-
-        .field-count.warning {
-            color: #faa61a;
-        }
-
-        .field-count.error {
-            color: #ed4245;
-        }
+        .char-count.warning { color: #faa61a; }
+        .char-count.error { color: var(--danger); }
 
         .discord-message {
+            background: #313338;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 8px;
+            padding: 1rem;
             display: flex;
-            padding: 4px 0;
+            gap: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        .app-avatar {
+        .bot-avatar {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            margin-right: 16px;
+            background: var(--accent);
             flex-shrink: 0;
-            background: #5865f2;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #fff;
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        .app-avatar img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .message-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .message-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 4px;
-        }
-
-        .app-name {
-            font-weight: 600;
-            font-size: 16px;
-            color: #ffffff;
-            margin-right: 6px;
-        }
-
-        .app-badge {
-            background: #5865f2;
-            color: #ffffff;
-            font-size: 10px;
-            font-weight: 600;
-            padding: 1px 4px;
-            border-radius: 3px;
-            text-transform: uppercase;
-            margin-right: 8px;
-        }
-
-        .message-timestamp {
-            color: #72767d;
-            font-size: 12px;
-        }
-
-        .message-text {
-            color: #dcddde;
-            font-size: 16px;
-            line-height: 1.375;
-            margin-bottom: 4px;
-            white-space: pre-line;
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-
-        .discord-mention {
-            background: rgba(88, 101, 242, 0.3);
-            color: #dee0fc;
-            padding: 0 2px;
-            border-radius: 3px;
-            font-weight: 500;
-            cursor: pointer;
-        }
-
-        .discord-mention:hover {
-            background: #5865f2;
-            color: #ffffff;
-        }
-
-        .md-codeblock {
-            background: #2b2d31;
-            border-radius: 4px;
-            padding: 8px;
-            margin: 4px 0;
-            overflow-x: auto;
-            font-family: Consolas, Monaco, 'Courier New', monospace;
-            font-size: 13px;
-            white-space: pre-wrap;
-        }
-
-        .md-inline-code {
-            background: #2b2d31;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-family: Consolas, Monaco, 'Courier New', monospace;
-            font-size: 85%;
-        }
-
-        .md-blockquote {
-            border-left: 4px solid #4e5058;
-            padding-left: 12px;
-            margin: 4px 0;
-            color: #b5bac1;
-        }
-
-        .md-header {
-            margin: 8px 0 4px;
             font-weight: 700;
-            color: #ffffff;
+            color: white;
+            overflow: hidden;
         }
 
-        .md-h1 {
-            font-size: 24px;
-        }
+        .bot-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-        .md-h2 {
-            font-size: 20px;
-        }
+        .msg-body { flex: 1; min-width: 0; }
 
-        .md-h3 {
-            font-size: 16px;
-        }
-
-        .md-list-item {
-            margin-left: 16px;
-            list-style-position: inside;
-        }
-
-        .md-list-item.md-ol {
-            list-style-type: decimal;
-        }
-
-        .md-link {
-            color: #00aff4;
-            text-decoration: none;
-        }
-
-        .md-link:hover {
-            text-decoration: underline;
-        }
-
-        .md-spoiler {
-            background: #1e1f22;
-            color: transparent;
-            padding: 0 4px;
-            border-radius: 3px;
-            cursor: pointer;
-            transition: all 0.1s;
-        }
-
-        .md-spoiler.revealed {
-            background: #4e5058;
-            color: #dcddde;
-        }
-
-        .embeds-container {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            margin-top: 4px;
-        }
-
-        .embed-preview {
-            background: #2f3136;
-            border-radius: 4px;
-            padding: 12px 16px;
-            border-left: 4px solid #5865f2;
-            max-width: 520px;
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-
-        .embed-author {
+        .msg-header {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #ffffff;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
         }
 
-        .embed-author img {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-        }
+        .bot-name { font-weight: 600; color: white; }
+        .bot-tag { background: var(--accent); color: white; font-size: 0.65rem; padding: 2px 4px; border-radius: 4px; font-weight: 700; }
+        .msg-time { font-size: 0.75rem; color: var(--text-muted); }
 
-        .embed-author a {
-            color: #ffffff;
-            text-decoration: none;
-        }
+        .msg-content { color: #dbdee1; font-size: 0.95rem; line-height: 1.4; margin-bottom: 0.5rem; white-space: pre-wrap; word-break: break-word; }
 
-        .embed-author a:hover {
-            text-decoration: underline;
-        }
-
-        .embed-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 8px;
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-
-        .embed-title a {
-            color: #00aff4;
-            text-decoration: none;
-        }
-
-        .embed-title a:hover {
-            text-decoration: underline;
-        }
-
-        .embed-description {
-            font-size: 14px;
-            line-height: 1.375;
-            color: #dcddde;
-            white-space: pre-line;
-            margin-bottom: 8px;
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-
-        .embed-fields {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .embed-field {
-            min-width: 0;
-        }
-
-        .embed-field.inline {
-            grid-column: span 1;
-        }
-
-        .embed-field.full {
-            grid-column: span 3;
-        }
-
-        .embed-field-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 2px;
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-
-        .embed-field-value {
-            font-size: 14px;
-            color: #b9bbbe;
-            white-space: pre-line;
-            line-height: 1.375;
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-
-        .embed-footer {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 12px;
-            font-size: 12px;
-            color: #b9bbbe;
-        }
-
-        .embed-footer img {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-        }
-
-        .embed-footer-text {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .embed-footer-separator {
-            color: #72767d;
-        }
-
-        .embed-thumbnail {
-            float: right;
-            margin-left: 16px;
-            margin-bottom: 8px;
-            max-width: 80px;
-            max-height: 80px;
+        .embed-card {
+            background: #2b2d31;
             border-radius: 4px;
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            margin-top: 0.5rem;
         }
 
-        .embed-image {
-            max-width: 100%;
-            border-radius: 4px;
-            margin-top: 12px;
-        }
+        .embed-author { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .embed-author img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+        .embed-author span { font-weight: 600; font-size: 0.85rem; color: white; }
 
-        .output-section {
-            margin-top: 20px;
-        }
+        .embed-title { font-weight: 700; color: white; margin-bottom: 0.5rem; font-size: 1rem; word-break: break-word; }
+        .embed-desc { color: #dbdee1; font-size: 0.9rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; margin-bottom: 1rem; }
 
-        button {
-            background: #5865f2;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
+        .embed-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+        .field-full { grid-column: span 3; }
+        .field-name { font-weight: 700; color: white; font-size: 0.85rem; margin-bottom: 0.2rem; word-break: break-word; }
+        .field-value { color: #dbdee1; font-size: 0.85rem; white-space: pre-wrap; word-break: break-word; }
 
-        button:hover {
-            background: #4752c4;
-        }
+        .embed-image { width: 100%; border-radius: 4px; margin-top: 1rem; }
+        .embed-thumb { float: right; margin-left: 1rem; width: 80px; height: 80px; border-radius: 4px; object-fit: cover; }
 
-        button:disabled {
-            background: #4f545c;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
+        .embed-footer { display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted); }
+        .embed-footer img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
 
-        .add-field {
-            background: #3ba55c;
-            margin-bottom: 8px;
-        }
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; overflow-x: auto; }
+        .tab { background: transparent; border: none; color: var(--text-secondary); padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; font-weight: 600; white-space: nowrap; }
+        .tab:hover { background: var(--bg-tertiary); color: white; }
+        .tab.active { background: var(--accent); color: white; }
 
-        .add-field:hover:not(:disabled) {
-            background: #2d8049;
-        }
+        .field-editor { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; margin-bottom: 1rem; position: relative; }
+        .btn-remove-field { position: absolute; top: 1rem; right: 1rem; background: var(--danger); color: white; border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        .json-output {
-            background: #2f3136;
-            padding: 12px;
-            border-radius: 4px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            margin-top: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .btn-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .copy-btn {
-            background: #4f545c;
-        }
-
-        .copy-btn:hover {
-            background: #5d6269;
-        }
-
-        .empty-state {
-            color: #72767d;
-            font-size: 13px;
-            font-style: italic;
-        }
-
-        .embed-section {
-            border: 1px solid #40444b;
-            border-radius: 4px;
-            padding: 12px;
-            margin-bottom: 12px;
-        }
+        details summary { font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; user-select: none; font-weight: 600; }
+        details summary:hover { color: white; }
+        .placeholder-list { background: var(--bg-dark); padding: 1rem; border-radius: 6px; margin-top: 0.5rem; font-size: 0.8rem; display: flex; flex-wrap: wrap; gap: 0.5rem; border: 1px solid var(--border); }
+        .placeholder-list code { background: var(--bg-tertiary); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--accent); font-family: monospace; }
+        
+        .discord-mention { background: rgba(88, 101, 242, 0.3); color: #dee0fc; padding: 0 2px; border-radius: 3px; font-weight: 500; }
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <div class="editor">
-            <h2>Embed Editor</h2>
+    <div class="editor-panel">
+        <div class="editor-header flex justify-between items-center">
+            <h2 style="font-size: 1.2rem; margin:0;">Embed Maker</h2>
+            <div class="flex gap-2">
+                <span class="char-count" id="total-limit">0 / 6000 chars</span>
+            </div>
+        </div>
+        
+        <div class="editor-content" id="scroll-container">
+            <div class="tabs" id="embed-tabs"></div>
 
-            <h3>App Settings</h3>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>App Name <span class="char-count" id="app-name-count">8 / 32</span></label>
-                    <input type="text" id="app-name" placeholder="My Bot" value="Welcomer" maxlength="32">
-                </div>
-                <div class="form-group">
-                    <label>App Icon URL</label>
-                    <input type="text" id="app-icon" placeholder="https://example.com/icon.png" value="">
-                </div>
+            <div class="form-group" id="msg-content-group">
+                <label>Message Content (Outside Embed) <span class="char-count" id="c-msg">0 / 2000</span></label>
+                <textarea class="textarea" id="in-content" rows="3" placeholder="Hey {mention}, welcome to {server}!"></textarea>
+                
+                <details style="margin-top:0.5rem;">
+                    <summary>View Available Variables</summary>
+                    <div class="placeholder-list">
+                        <code>{mention}</code> <code>{username}</code> <code>{server}</code> <code>{membercount}</code> <code>{channellink}</code>
+                        <code>{date}</code> <code>{time}</code> <code>{join_method}</code> <code>{invite_link}</code> <code>{time_to_return}</code>
+                    </div>
+                </details>
+            </div>
 
+            <hr style="border:none; border-top:1px solid var(--border); margin: 2rem 0;">
+
+            <div class="flex justify-between items-center" style="margin-bottom: 1rem;">
+                <h3 style="margin:0; font-size: 1rem;">Embed Configuration</h3>
+                <input type="color" id="in-color" value="#5865f2" style="width: 40px; height: 30px; border: none; background: none; cursor: pointer;">
             </div>
 
             <div class="form-group">
-                <label>
-                    Message Content
-                    <span class="char-count" id="message-count">0 / 2000</span>
-                </label>
-                <div style="display: flex; gap: 8px; align-items: flex-start;">
-                    <textarea id="embed-message" placeholder="Message content (outside embed)"
-                        maxlength="2000"></textarea>
-                    <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji"
-                        style="margin-top: 5px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
-                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
-                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
-                        </svg>
-                    </button>
+                <label>Author</label>
+                <div class="flex gap-2" style="margin-bottom:0.5rem;">
+                    <input type="text" class="input" id="in-author-name" placeholder="Name" style="flex:1;">
+                    <input type="text" class="input" id="in-author-icon" placeholder="Icon URL" style="flex:1;">
                 </div>
-                <details class="placeholder-help">
-                    <summary>Available Placeholders</summary>
-                    <div class="placeholder-list">
-                        <code>{mention}</code> <code>{username}</code> <code>{displayname}</code> <code>{userid}</code>
-                        <code>{server}</code> <code>{serverid}</code> <code>{membercount}</code>
-                        <code>{channel}</code> <code>{channellink}</code>
-                        <code>{date}</code> <code>{time}</code>
-                        <code>{profileurl}</code> <code>{profileopenurl}</code>
-                        <div style="margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
-                            <span style="color: #b9bbbe; font-size: 11px; font-weight: 600;">NEW:</span>
-                            <code>{join_method}</code> <code>{invite_link}</code> <code>{time_to_return}</code>
-                        </div>
-                        <span style="color: #72767d; font-size: 11px; display: block; margin-top: 4px;">Escape with \{
-                            and \}</span>
-                    </div>
-                </details>
-                <details class="placeholder-help">
-                    <summary>Markdown Formatting</summary>
-                    <div class="placeholder-list">
-                        <code>*italic*</code> <code>**bold**</code> <code>***bold italic***</code>
-                        <code>__underline__</code> <code>~~strikethrough~~</code> <code>||spoiler||</code>
-                        <code>`code`</code> <code>```code block```</code>
-                        <code>[link](url)</code> <code>&lt;url&gt;</code>
-                        <code># Header</code> <code>&gt; Quote</code> <code>- List</code>
-                    </div>
-                </details>
             </div>
 
-            <h3>Embeds</h3>
-            <div class="embed-tabs" id="embed-tabs"></div>
-            <div class="embed-controls">
-                <button class="add-embed-btn" id="add-embed-btn" onclick="addEmbed()">+ Add Embed</button>
-                <button class="remove-embed-btn" id="remove-embed-btn" onclick="removeCurrentEmbed()">Remove This
-                    Embed</button>
-                <span class="field-count" id="embed-count">1 / 10 embeds</span>
-                <span class="field-count" id="total-char-count" style="margin-left:auto;">0 / 6000 chars</span>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" class="input" id="in-title" placeholder="Embed Title">
             </div>
 
-            <div id="embed-editor">
-
+            <div class="form-group">
+                <label>Description</label>
+                <textarea class="textarea" id="in-desc" rows="4" placeholder="Embed Description"></textarea>
             </div>
 
-            <div class="output-section">
-                <div class="btn-row">
-                    <button onclick="generateJSON()">Generate JSON</button>
-                    <button class="copy-btn" onclick="copyJSON()">Copy</button>
+            <div class="form-group">
+                <label>Images</label>
+                <div class="flex gap-2">
+                    <input type="text" class="input" id="in-thumb" placeholder="Thumbnail URL" style="flex:1;">
+                    <input type="text" class="input" id="in-image" placeholder="Main Image URL" style="flex:1;">
                 </div>
-                <div class="json-output" id="json-output"></div>
             </div>
+
+            <div class="form-group">
+                <label>Footer</label>
+                <div class="flex gap-2">
+                    <input type="text" class="input" id="in-footer-text" placeholder="Footer Text" style="flex:1;">
+                    <input type="text" class="input" id="in-footer-icon" placeholder="Icon URL" style="flex:1;">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="flex justify-between items-center" style="margin-bottom:1rem;">
+                    <label style="margin:0;">Fields (<span id="field-count">0</span>/25)</label>
+                    <button class="btn btn-primary" style="padding: 5px 10px;" onclick="addField()">+ Add Field</button>
+                </div>
+                <div id="fields-list"></div>
+            </div>
+
         </div>
+    </div>
 
-        <div class="preview">
-            <h2>Preview</h2>
-            <div class="discord-message">
-                <div class="app-avatar" id="preview-app-avatar">N</div>
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="app-name" id="preview-app-name">Welcomer</span>
-                        <span class="app-badge">APP</span>
-                        <span class="message-timestamp" id="preview-msg-timestamp">Today at --:--</span>
-                    </div>
-                    <div class="message-text" id="preview-message"></div>
-                    <div class="embeds-container" id="embeds-container"></div>
+    <div class="preview-panel">
+        <div class="discord-message">
+            <div class="bot-avatar" id="pv-bot-icon">N</div>
+            <div class="msg-body">
+                <div class="msg-header">
+                    <span class="bot-name" id="pv-bot-name">Welcomer</span>
+                    <span class="bot-tag">APP</span>
+                    <span class="msg-time">Today at 12:00 PM</span>
                 </div>
+                <div class="msg-content" id="pv-content"></div>
+                <div id="pv-embeds-container"></div>
             </div>
         </div>
     </div>
 
     <script>
-
-        const LIMITS = {
-            message: 2000,
-            title: 256,
-            description: 4096,
-            fieldName: 256,
-            fieldValue: 1024,
-            footer: 2048,
-            authorName: 256,
-            total: 6000
-        };
+        const LIMITS = { msg: 2000, title: 256, desc: 4096, fieldName: 256, fieldValue: 1024, footer: 2048, author: 256, total: 6000 };
         const MAX_FIELDS = 25;
         const MAX_EMBEDS = 10;
 
-        let embeds = [createEmptyEmbed()];
-        let currentEmbedIndex = 0;
+        let globalData = { username: "", avatar_url: "", content: "", embeds: [{}] };
+        let activeIdx = 0;
 
-        function createEmptyEmbed() {
-            return {
-                authorName: '',
-                authorIcon: '',
-                authorUrl: '',
-                title: '',
-                titleUrl: '',
-                description: '',
-                color: '#5865f2',
-                thumbnail: '',
-                image: '',
-                fields: [],
-                footerText: '',
-                footerIcon: '',
-                timestamp: ''
-            };
+        function escapeHtml(t) {
+            if (!t) return "";
+            return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
-        const PLACEHOLDERS = {
-            '{mention}': '@username',
-            '{channellink}': '#general',
+        const MOCK = {
+            '{mention}': '<span class="discord-mention">@username</span>',
             '{username}': 'username',
-            '{displayname}': 'User 1',
-            '{profileurl}': 'https://discord.com/users/123456789',
-            '{profileopenurl}': 'https://discord.com/users/123456789',
-
             '{server}': 'My Server',
-            '{servername}': 'My Server',
             '{membercount}': '1,234',
-            '{channel}': 'general',
-            '{date}': new Date().toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }),
-            '{time}': new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            '{userid}': '123456789012345678',
-            '{serverid}': '987654321098765432',
+            '{channellink}': '<span class="discord-mention">#general</span>',
+            '{date}': new Date().toLocaleDateString(),
+            '{time}': new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
             '{join_method}': 'Invite Link',
-            '{invite_link}': 'https://discord.gg/invite',
-
-            '{time_to_return}': '15 days'
+            '{invite_link}': 'https://discord.gg/abc',
+            '{time_to_return}': '5 days'
         };
 
-        function replacePlaceholders(text, forHtml = false) {
-            if (!text) return text;
-            let result = text;
-            for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
-                if (placeholder === '{mention}' && forHtml) {
-                    result = result.split(placeholder).join('<span class="discord-mention">@username</span>');
-                } else {
-                    result = result.split(placeholder).join(value);
-                }
+        function parseText(t) {
+            if (!t) return "";
+            let r = escapeHtml(t);
+            for (const [k, v] of Object.entries(MOCK)) {
+                r = r.split(k).join(v);
             }
-            return result;
+            r = r.replace(/\\n/g, '\n');
+            r = r.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            r = r.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            r = r.replace(/__(.*?)__/g, '<u>$1</u>');
+            r = r.replace(/~~(.*?)~~/g, '<del>$1</del>');
+            r = r.replace(/`(.*?)`/g, '<code style="background:#1e1f22; padding:2px 4px; border-radius:3px;">$1</code>');
+            return r;
         }
 
-        function escapeAndReplacePlaceholdersNoMention(text) {
-            if (!text) return '';
-            let escaped = escapeHtml(text);
-
-            const ESCAPE_OPEN = '___ESCAPED_OPEN_BRACE___';
-            const ESCAPE_CLOSE = '___ESCAPED_CLOSE_BRACE___';
-            escaped = escaped.split('\\{').join(ESCAPE_OPEN);
-            escaped = escaped.split('\\}').join(ESCAPE_CLOSE);
-
-            for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
-                if (placeholder !== '{mention}' && placeholder !== '{channellink}') {
-                    escaped = escaped.split(placeholder).join(escapeHtml(value));
-                }
-            }
-
-            escaped = escaped.split(ESCAPE_OPEN).join('{');
-            escaped = escaped.split(ESCAPE_CLOSE).join('}');
-            return escaped;
+        function createEmptyEmbed() {
+            return { title: "", description: "", color: 5793266, author: {}, thumbnail: {}, image: {}, footer: {}, fields: [] };
         }
 
-        function escapeAndReplacePlaceholders(text) {
-            if (!text) return '';
-
-            let escaped = escapeHtml(text);
-
-            const ESCAPE_OPEN = '___ESCAPED_OPEN_BRACE___';
-            const ESCAPE_CLOSE = '___ESCAPED_CLOSE_BRACE___';
-            escaped = escaped.split('\\{').join(ESCAPE_OPEN);
-            escaped = escaped.split('\\}').join(ESCAPE_CLOSE);
-
-            escaped = escaped.split('{mention}').join('<span class="discord-mention">@username</span>');
-            escaped = escaped.split('{channellink}').join('<span class="discord-mention">#general</span>');
-
-            for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
-                if (placeholder !== '{mention}' && placeholder !== '{channellink}') {
-                    escaped = escaped.split(placeholder).join(escapeHtml(value));
-                }
-            }
-
-            escaped = escaped.split(ESCAPE_OPEN).join('{');
-            escaped = escaped.split(ESCAPE_CLOSE).join('}');
-
-            escaped = escaped.replace(/&lt;(a?):(\w+):(\d+)&gt;/g, (match, animated, name, id) => {
-                const ext = animated ? 'gif' : 'png';
-                return `<img src="https://cdn.discordapp.com/emojis/${id}.${ext}" alt=":${name}:" class="discord-emoji">`;
-
+        function init() {
+            if (!globalData.embeds || !globalData.embeds.length) globalData.embeds = [createEmptyEmbed()];
+            
+            document.querySelectorAll('input, textarea').forEach(el => {
+                el.addEventListener('input', () => { saveCurrent(); updateUI(); });
             });
-
-            escaped = parseDiscordMarkdown(escaped);
-            return escaped;
-        }
-
-        function parseDiscordMarkdown(text) {
-            if (!text) return '';
-            let result = text;
-
-            result = result.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
-                return `<pre class="md-codeblock${lang ? ' lang-' + lang : ''}"><code>${code.trim()}</code></pre>`;
-            });
-
-            const inlineCodePlaceholders = [];
-            result = result.replace(/`([^`]+)`/g, (match, code) => {
-                const placeholder = `ICODE${inlineCodePlaceholders.length}EDOCI`;
-                inlineCodePlaceholders.push(`<code class="md-inline-code">${code}</code>`);
-                return placeholder;
-            });
-
-            result = result.replace(/^&gt;&gt;&gt;\s?([\s\S]+)$/gm, '<blockquote class="md-blockquote md-blockquote-multi">$1</blockquote>');
-
-            result = result.replace(/^&gt;\s?(.+)$/gm, '<div class="md-blockquote">$1</div>');
-
-            result = result.replace(/^###\s+(.+)$/gm, '<h3 class="md-header md-h3">$1</h3>');
-            result = result.replace(/^##\s+(.+)$/gm, '<h2 class="md-header md-h2">$1</h2>');
-            result = result.replace(/^#\s+(.+)$/gm, '<h1 class="md-header md-h1">$1</h1>');
-
-            result = result.replace(/^[\-\*]\s+(.+)$/gm, '<li class="md-list-item">$1</li>');
-            result = result.replace(/^\d+\.\s+(.+)$/gm, '<li class="md-list-item md-ol">$1</li>');
-
-            result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="md-link" target="_blank">$1</a>');
-
-            result = result.replace(/&lt;(https?:\/\/[^&]+)&gt;/g, '<a href="$1" class="md-link" target="_blank">$1</a>');
-
-            result = result.replace(/\|\|([^|]+)\|\|/g, '<span class="md-spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
-
-            result = result.replace(/\*\*\*__(.+?)__\*\*\*/g, '<strong><em><u>$1</u></em></strong>');
-
-            result = result.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-
-            result = result.replace(/\*\*__(.+?)__\*\*/g, '<strong><u>$1</u></strong>');
-
-            result = result.replace(/~~\*\*(.+?)\*\*~~/g, '<del><strong>$1</strong></del>');
-
-            result = result.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-
-            result = result.replace(/__(.+?)__/g, '<u>$1</u>');
-
-            result = result.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-            result = result.replace(/(?<!_)_([^_]+)_(?!_)/g, '<em>$1</em>');
-
-            result = result.replace(/~~(.+?)~~/g, '<del>$1</del>');
-
-            inlineCodePlaceholders.forEach((code, i) => {
-                result = result.replace(`ICODE${i}EDOCI`, code);
-            });
-
-            return result;
+            
+            loadCurrent();
+            updateUI();
         }
 
         function renderTabs() {
-            const tabsContainer = document.getElementById('embed-tabs');
-            tabsContainer.innerHTML = '';
-            embeds.forEach((embed, i) => {
-                const tab = document.createElement('button');
-                tab.className = 'embed-tab' + (i === currentEmbedIndex ? ' active' : '');
-                if (embedHasContent(embed)) tab.classList.add('has-content');
-                tab.textContent = `Embed ${i + 1}`;
-                tab.onclick = () => switchEmbed(i);
-                tabsContainer.appendChild(tab);
-            });
-            document.getElementById('embed-count').textContent = `${embeds.length} / ${MAX_EMBEDS} embeds`;
-            document.getElementById('add-embed-btn').disabled = embeds.length >= MAX_EMBEDS;
-            document.getElementById('remove-embed-btn').style.display = embeds.length > 1 ? 'block' : 'none';
+            const c = document.getElementById('embed-tabs');
+            c.innerHTML = globalData.embeds.map((e, i) => `
+                <button class="tab ${i === activeIdx ? 'active' : ''}" onclick="switchTab(${i})">Embed ${i+1}</button>
+            `).join("");
+            
+            if (globalData.embeds.length < MAX_EMBEDS) {
+                c.innerHTML += `<button class="tab" onclick="addEmbed()" style="background:var(--success); color:white;">+</button>`;
+            }
+            if (globalData.embeds.length > 1) {
+                c.innerHTML += `<button class="tab" onclick="removeEmbed()" style="background:var(--danger); color:white; margin-left:auto;">🗑</button>`;
+            }
         }
 
-        function embedHasContent(embed) {
-            return embed.title || embed.description || embed.fields.length > 0 || embed.authorName || embed.footerText || embed.image || embed.thumbnail;
-        }
+        function switchTab(i) { saveCurrent(); activeIdx = i; loadCurrent(); updateUI(); }
+        function addEmbed() { saveCurrent(); globalData.embeds.push(createEmptyEmbed()); activeIdx = globalData.embeds.length - 1; loadCurrent(); updateUI(); }
+        function removeEmbed() { globalData.embeds.splice(activeIdx, 1); activeIdx = Math.max(0, activeIdx - 1); loadCurrent(); updateUI(); }
 
-        function switchEmbed(index) {
-            saveCurrentEmbed();
-            currentEmbedIndex = index;
-            loadEmbed(embeds[index]);
-            renderTabs();
-        }
+        function saveCurrent() {
+            globalData.content = document.getElementById("in-content").value;
+            const e = globalData.embeds[activeIdx];
+            e.title = document.getElementById("in-title").value;
+            e.description = document.getElementById("in-desc").value;
+            e.color = parseInt(document.getElementById("in-color").value.replace("#", ""), 16);
+            
+            e.author = { name: document.getElementById("in-author-name").value, icon_url: document.getElementById("in-author-icon").value };
+            e.thumbnail = { url: document.getElementById("in-thumb").value };
+            e.image = { url: document.getElementById("in-image").value };
+            e.footer = { text: document.getElementById("in-footer-text").value, icon_url: document.getElementById("in-footer-icon").value };
 
-        function addEmbed() {
-            if (embeds.length >= MAX_EMBEDS) return;
-            saveCurrentEmbed();
-            embeds.push(createEmptyEmbed());
-            currentEmbedIndex = embeds.length - 1;
-            loadEmbed(embeds[currentEmbedIndex]);
-            renderTabs();
-            updatePreview();
-        }
-
-        function removeCurrentEmbed() {
-            if (embeds.length <= 1) return;
-            embeds.splice(currentEmbedIndex, 1);
-            currentEmbedIndex = Math.min(currentEmbedIndex, embeds.length - 1);
-            loadEmbed(embeds[currentEmbedIndex]);
-            renderTabs();
-            updatePreview();
-        }
-
-        function saveCurrentEmbed() {
-            const embed = embeds[currentEmbedIndex];
-            embed.authorName = document.getElementById('embed-author-name')?.value || '';
-            embed.authorIcon = document.getElementById('embed-author-icon')?.value || '';
-            embed.authorUrl = document.getElementById('embed-author-url')?.value || '';
-            embed.title = document.getElementById('embed-title')?.value || '';
-            embed.titleUrl = document.getElementById('embed-title-url')?.value || '';
-            embed.description = document.getElementById('embed-description')?.value || '';
-            embed.color = document.getElementById('embed-color')?.value || '#5865f2';
-            embed.thumbnail = document.getElementById('embed-thumbnail')?.value || '';
-            embed.image = document.getElementById('embed-image')?.value || '';
-            embed.footerText = document.getElementById('embed-footer')?.value || '';
-            embed.footerIcon = document.getElementById('embed-footer-icon')?.value || '';
-            embed.timestamp = document.getElementById('embed-timestamp')?.value || '';
-
-            embed.fields = [];
-            document.querySelectorAll('#fields-container .field-item').forEach(item => {
-                const name = item.querySelector('.field-name')?.value || '';
-                const value = item.querySelector('.field-value')?.value || '';
-                const inline = item.querySelector('.field-inline')?.checked || false;
-                if (name || value) {
-                    embed.fields.push({ name: name || '\u200b', value: value || '\u200b', inline });
-                }
+            e.fields = [];
+            document.querySelectorAll(".field-editor").forEach(el => {
+                e.fields.push({
+                    name: el.querySelector(".f-name").value,
+                    value: el.querySelector(".f-val").value,
+                    inline: el.querySelector(".f-inline").checked
+                });
             });
         }
 
-        function loadEmbed(embed) {
-            renderEmbedEditor();
-            document.getElementById('embed-author-name').value = embed.authorName;
-            document.getElementById('embed-author-icon').value = embed.authorIcon;
-            document.getElementById('embed-author-url').value = embed.authorUrl;
-            document.getElementById('embed-title').value = embed.title;
-            document.getElementById('embed-title-url').value = embed.titleUrl;
-            document.getElementById('embed-description').value = embed.description;
-            document.getElementById('embed-color').value = embed.color;
-            document.getElementById('embed-thumbnail').value = embed.thumbnail;
-            document.getElementById('embed-image').value = embed.image;
-            document.getElementById('embed-footer').value = embed.footerText;
-            document.getElementById('embed-footer-icon').value = embed.footerIcon;
-            document.getElementById('embed-timestamp').value = embed.timestamp;
+        function loadCurrent() {
+            document.getElementById("in-content").value = globalData.content || "";
+            document.getElementById("msg-content-group").style.display = activeIdx === 0 ? "block" : "none";
 
-            const fieldsContainer = document.getElementById('fields-container');
-            fieldsContainer.innerHTML = embed.fields.length === 0 ? '<span class="empty-state">No fields added</span>' : '';
-            embed.fields.forEach((field, i) => {
-                addFieldWithData(field.name, field.value, field.inline, i);
+            const e = globalData.embeds[activeIdx];
+            document.getElementById("in-title").value = e.title || "";
+            document.getElementById("in-desc").value = e.description || "";
+            document.getElementById("in-color").value = e.color ? "#" + e.color.toString(16).padStart(6, "0") : "#5865f2";
+            
+            document.getElementById("in-author-name").value = e.author?.name || "";
+            document.getElementById("in-author-icon").value = e.author?.icon_url || "";
+            document.getElementById("in-thumb").value = e.thumbnail?.url || "";
+            document.getElementById("in-image").value = e.image?.url || "";
+            document.getElementById("in-footer-text").value = e.footer?.text || "";
+            document.getElementById("in-footer-icon").value = e.footer?.icon_url || "";
+
+            const fc = document.getElementById("fields-list");
+            fc.innerHTML = (e.fields || []).map((f, i) => createFieldHTML(f.name, f.value, f.inline, i)).join("");
+            
+            // Re-attach listeners for dynamically created fields
+            fc.querySelectorAll('input, textarea').forEach(el => {
+                el.addEventListener('input', () => { saveCurrent(); updateUI(); });
             });
-            updateFieldCount();
         }
 
-        function renderEmbedEditor() {
-            document.getElementById('embed-editor').innerHTML = `
-                <div class="embed-section">
-                    <h3 style="margin-top:0">Author</h3>
-                    <div class="form-group">
-                        <label>Author Name <span class="char-count" id="author-name-count">0 / 256</span></label>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <input type="text" id="embed-author-name" placeholder="Author name" maxlength="256" oninput="updatePreview()">
-                            <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="width: 32px; height: 32px; min-width: 32px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-
-                            </button>
+        function createFieldHTML(n, v, i, idx) {
+            return `
+                <div class="field-editor" data-idx="${idx}">
+                    <button class="btn-remove-field" onclick="this.parentElement.remove(); saveCurrent(); updateUI();">×</button>
+                    <div class="flex gap-2 mb-2">
+                        <div style="flex:1;">
+                            <input type="text" class="input f-name" placeholder="Field Name" value="${escapeHtml(n)}">
                         </div>
+                        <label class="flex items-center gap-2" style="margin:0; text-transform:none;">
+                            <input type="checkbox" class="f-inline" ${i ? 'checked' : ''}> Inline
+                        </label>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Author Icon URL</label>
-                            <input type="text" id="embed-author-icon" placeholder="https://example.com/icon.png">
-                        </div>
-
-                        <div class="form-group">
-                            <label>Author URL</label>
-                            <input type="text" id="embed-author-url" placeholder="https://example.com">
-                        </div>
-
-                    </div>
-                </div>
-
-                <div class="embed-section">
-                    <h3 style="margin-top:0">Content</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Title <span class="char-count" id="title-count">0 / 256</span></label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="text" id="embed-title" placeholder="Embed title" maxlength="256" oninput="updatePreview()">
-                                <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="width: 32px; height: 32px; min-width: 32px;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-
-                                </button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Title URL</label>
-                            <input type="text" id="embed-title-url" placeholder="https://example.com">
-
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Description <span class="char-count" id="description-count">0 / 4096</span></label>
-                        <div style="display: flex; gap: 8px; align-items: flex-start;">
-                            <textarea id="embed-description" placeholder="Embed description" maxlength="4096" oninput="updatePreview()"></textarea>
-                            <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="margin-top: 5px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-
-                            </button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Color</label>
-                        <input type="color" id="embed-color" value="#5865f2" oninput="updatePreview()">
-                    </div>
-                </div>
-
-                <div class="embed-section">
-                    <h3 style="margin-top:0">Images</h3>
-                    <div class="form-group">
-                        <label>Thumbnail URL</label>
-                        <input type="text" id="embed-thumbnail" placeholder="https://example.com/image.png">
-
-                    </div>
-                    <div class="form-group">
-                        <label>Image URL</label>
-                        <input type="text" id="embed-image" placeholder="https://example.com/image.png">
-
-                    </div>
-                </div>
-
-                <div class="embed-section">
-                    <h3 style="margin-top:0">Fields</h3>
-                    <button class="add-field" id="add-field-btn" onclick="addField()">+ Add Field</button>
-                    <div class="field-count" id="field-count">0 / 25 fields</div>
-                    <div class="fields-container" id="fields-container">
-                        <span class="empty-state">No fields added</span>
-                    </div>
-                </div>
-
-                <div class="embed-section">
-                    <h3 style="margin-top:0">Footer</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Footer Text <span class="char-count" id="footer-count">0 / 2048</span></label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="text" id="embed-footer" placeholder="Footer text" maxlength="2048" oninput="updatePreview()">
-                                <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="width: 32px; height: 32px; min-width: 32px;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-
-                                </button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Footer Icon URL</label>
-                            <input type="text" id="embed-footer-icon" placeholder="https://example.com/icon.png">
-
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Timestamp</label>
-                        <input type="datetime-local" id="embed-timestamp" oninput="updatePreview()">
-                    </div>
+                    <textarea class="textarea f-val" rows="2" placeholder="Field Value">${escapeHtml(v)}</textarea>
                 </div>
             `;
-        }
-
-        function updateFieldCount() {
-            const count = document.querySelectorAll('#fields-container .field-item').length;
-            document.getElementById('field-count').textContent = `${count} / ${MAX_FIELDS} fields`;
-            document.getElementById('add-field-btn').disabled = count >= MAX_FIELDS;
         }
 
         function addField() {
-            addFieldWithData('', '', false);
+            saveCurrent();
+            if (!globalData.embeds[activeIdx].fields) globalData.embeds[activeIdx].fields = [];
+            if (globalData.embeds[activeIdx].fields.length >= MAX_FIELDS) return;
+            globalData.embeds[activeIdx].fields.push({ name: "", value: "", inline: false });
+            loadCurrent();
+            updateUI();
+            
+            // Scroll to bottom of fields
+            const scroll = document.getElementById('scroll-container');
+            scroll.scrollTop = scroll.scrollHeight;
         }
 
-        function addFieldWithData(name, value, inline, existingIndex) {
-            const fieldsContainer = document.getElementById('fields-container');
-            const currentCount = fieldsContainer.querySelectorAll('.field-item').length;
-            if (currentCount >= MAX_FIELDS) return;
-
-            const emptyState = fieldsContainer.querySelector('.empty-state');
-            if (emptyState) emptyState.remove();
-
-            const fieldId = Date.now() + Math.random();
-            const fieldItem = document.createElement('div');
-            fieldItem.className = 'field-item';
-            fieldItem.dataset.id = fieldId;
-            fieldItem.innerHTML = `
-                <div class="field-header">
-                    <span>Field ${currentCount + 1}</span>
-                    <button class="remove-field" onclick="removeField('${fieldId}')">Remove</button>
-                </div>
-                <div class="field-inputs">
-                    <label style="font-size: 11px;">Name <span class="char-count">0 / 256</span></label>
-                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
-                        <input type="text" placeholder="Field name" class="field-name" maxlength="256" value="${escapeHtml(name === '\u200b' ? '' : name)}" oninput="updatePreview()">
-                        <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="width: 32px; height: 32px; min-width: 32px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-
-                        </button>
-                    </div>
-                    <label style="font-size: 11px; margin-top: 4px;">Value <span class="char-count">0 / 1024</span></label>
-                    <div style="display: flex; gap: 8px; align-items: flex-start;">
-                        <textarea placeholder="Field value" class="field-value" maxlength="1024" oninput="updatePreview()">${escapeHtml(value === '\u200b' ? '' : value)}</textarea>
-                        <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" title="Add emoji" style="margin-top: 5px; width: 32px; height: 32px; min-width: 32px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-
-                        </button>
-                    </div>
-                    <label class="checkbox-label">
-                        <input type="checkbox" class="field-inline" ${inline ? 'checked' : ''} onchange="updatePreview()">
-                        Inline
-                    </label>
-                </div>
-            `;
-            fieldsContainer.appendChild(fieldItem);
-            updateFieldCount();
-            updatePreview();
-        }
-
-        function removeField(id) {
-            const field = document.querySelector(`[data-id="${id}"]`);
-            if (field) {
-                field.remove();
-                const fieldsContainer = document.getElementById('fields-container');
-                if (fieldsContainer.querySelectorAll('.field-item').length === 0) {
-                    fieldsContainer.innerHTML = '<span class="empty-state">No fields added</span>';
-                }
-
-                fieldsContainer.querySelectorAll('.field-item').forEach((item, i) => {
-                    item.querySelector('.field-header span').textContent = `Field ${i + 1}`;
-                });
-                updateFieldCount();
-                updatePreview();
-            }
-        }
-
-        function formatTimestamp(isoString) {
-            if (!isoString) return '';
-            const date = new Date(isoString);
-            const now = new Date();
-            const isToday = date.toDateString() === now.toDateString();
-            const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            if (isToday) return `Today at ${time}`;
-            return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + time;
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function updatePreview() {
-            saveCurrentEmbed();
-
-            const rawAppName = document.getElementById('app-name').value || 'Bot';
-
-            let appName = rawAppName;
-            for (const [placeholder, value] of Object.entries(PLACEHOLDERS)) {
-                if (placeholder !== '{mention}') {
-                    appName = appName.split(placeholder).join(value);
-                }
-            }
-            const appIcon = document.getElementById('app-icon').value;
-            document.getElementById('preview-app-name').textContent = appName;
-
-            const avatarEl = document.getElementById('preview-app-avatar');
-            if (appIcon) {
-                avatarEl.innerHTML = `<img src="${appIcon}" onerror="this.style.display='none'; this.parentElement.textContent='${appName.charAt(0).toUpperCase()}'">`;
-            } else {
-                avatarEl.textContent = appName.charAt(0).toUpperCase();
-            }
-
-            const now = new Date();
-            document.getElementById('preview-msg-timestamp').textContent = `Today at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-
-            document.getElementById('preview-message').innerHTML = escapeAndReplacePlaceholders(document.getElementById('embed-message').value);
-
-            const container = document.getElementById('embeds-container');
-            container.innerHTML = '';
-            embeds.forEach((embed, i) => {
-                if (!embedHasContent(embed) && embed.color === '#5865f2') return;
-                container.appendChild(renderEmbedPreview(embed));
-            });
-
-            updateCharCounts();
+        function updateUI() {
             renderTabs();
-        }
+            document.getElementById("field-count").innerText = (globalData.embeds[activeIdx].fields || []).length;
+            
+            const pvName = document.getElementById("pv-bot-name");
+            const pvIcon = document.getElementById("pv-bot-icon");
+            pvName.innerText = globalData.username || "Welcomer";
+            if (globalData.avatar_url) pvIcon.innerHTML = `<img src="${globalData.avatar_url}" onerror="this.style.display='none'; this.parentElement.innerText='W';">`;
+            else pvIcon.innerText = pvName.innerText.charAt(0).toUpperCase();
 
-        function renderEmbedPreview(embed) {
-            const div = document.createElement('div');
-            div.className = 'embed-preview';
-            div.style.borderLeftColor = embed.color;
+            document.getElementById("pv-content").innerHTML = parseText(globalData.content);
+            document.getElementById("pv-content").style.display = globalData.content ? "block" : "none";
 
-            let html = '';
+            const ec = document.getElementById("pv-embeds-container");
+            ec.innerHTML = globalData.embeds.map(e => {
+                const hasContent = e.title || e.description || e.author?.name || e.footer?.text || e.image?.url || e.thumbnail?.url || (e.fields && e.fields.length > 0);
+                if (!hasContent) return "";
 
-            if (embed.thumbnail) {
-                html += `<img class="embed-thumbnail" src="${escapeHtml(replacePlaceholders(embed.thumbnail))}" onerror="this.style.display='none'">`;
-            }
-
-            if (embed.authorName) {
-                html += '<div class="embed-author">';
-                if (embed.authorIcon) {
-                    html += `<img src="${escapeHtml(replacePlaceholders(embed.authorIcon))}" onerror="this.style.display='none'">`;
+                let h = `<div class="embed-card" style="border-left-color: #${e.color ? e.color.toString(16).padStart(6, "0") : "5865f2"};">`;
+                
+                if (e.author?.name) {
+                    h += `<div class="embed-author">`;
+                    if (e.author.icon_url) h += `<img src="${escapeHtml(e.author.icon_url)}" onerror="this.style.display='none'">`;
+                    h += `<span>${parseText(e.author.name)}</span></div>`;
                 }
-                if (embed.authorUrl) {
-                    html += `<a href="${escapeHtml(embed.authorUrl)}" target="_blank">${escapeAndReplacePlaceholdersNoMention(embed.authorName)}</a>`;
-                } else {
-                    html += `<span>${escapeAndReplacePlaceholdersNoMention(embed.authorName)}</span>`;
+
+                if (e.thumbnail?.url) {
+                    h += `<img class="embed-thumb" src="${escapeHtml(e.thumbnail.url)}" onerror="this.style.display='none'">`;
                 }
-                html += '</div>';
-            }
 
-            if (embed.title) {
-                html += '<div class="embed-title">';
-                if (embed.titleUrl) {
-                    html += `<a href="${escapeHtml(embed.titleUrl)}" target="_blank">${escapeAndReplacePlaceholders(embed.title)}</a>`;
-                } else {
-                    html += escapeAndReplacePlaceholders(embed.title);
-                }
-                html += '</div>';
-            }
+                if (e.title) h += `<div class="embed-title">${parseText(e.title)}</div>`;
+                if (e.description) h += `<div class="embed-desc">${parseText(e.description)}</div>`;
 
-            if (embed.description) {
-                html += `<div class="embed-description">${escapeAndReplacePlaceholders(embed.description)}</div>`;
-            }
-
-            if (embed.fields.length > 0) {
-                html += '<div class="embed-fields">';
-                embed.fields.forEach(field => {
-                    const fieldClass = field.inline ? 'inline' : 'full';
-                    html += `<div class="embed-field ${fieldClass}">
-                        <div class="embed-field-name">${escapeAndReplacePlaceholders(field.name)}</div>
-                        <div class="embed-field-value">${escapeAndReplacePlaceholders(field.value)}</div>
-                    </div>`;
-                });
-                html += '</div>';
-            }
-
-            if (embed.image) {
-                html += `<img class="embed-image" src="${escapeHtml(replacePlaceholders(embed.image))}" onerror="this.style.display='none'">`;
-            }
-
-            if (embed.footerText || embed.timestamp) {
-                html += '<div class="embed-footer">';
-                if (embed.footerIcon && embed.footerText) {
-                    html += `<img src="${escapeHtml(replacePlaceholders(embed.footerIcon))}" onerror="this.style.display='none'">`;
-                }
-                html += '<div class="embed-footer-text">';
-                html += `<span>${escapeAndReplacePlaceholders(embed.footerText)}</span>`;
-                if (embed.footerText && embed.timestamp) {
-                    html += '<span class="embed-footer-separator">•</span>';
-                }
-                html += `<span>${formatTimestamp(embed.timestamp)}</span>`;
-                html += '</div></div>';
-            }
-
-            div.innerHTML = html;
-            return div;
-        }
-
-        function updateCharCounts() {
-            const countEl = (id, len, max) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.textContent = `${len} / ${max}`;
-                el.classList.remove('warning', 'error');
-                if (len >= max) el.classList.add('error');
-                else if (len >= max * 0.9) el.classList.add('warning');
-            };
-            countEl('app-name-count', document.getElementById('app-name').value.length, 32);
-            countEl('message-count', document.getElementById('embed-message').value.length, LIMITS.message);
-            countEl('title-count', document.getElementById('embed-title')?.value.length || 0, LIMITS.title);
-            countEl('description-count', document.getElementById('embed-description')?.value.length || 0, LIMITS.description);
-            countEl('footer-count', document.getElementById('embed-footer')?.value.length || 0, LIMITS.footer);
-            countEl('author-name-count', document.getElementById('embed-author-name')?.value.length || 0, LIMITS.authorName);
-
-            const totalLen = calculateTotalLength();
-            countEl('total-char-count', totalLen, LIMITS.total);
-        }
-
-        function calculateTotalLength() {
-
-            let total = 0;
-
-            embeds.forEach(embed => {
-                total += (embed.title || '').length;
-                total += (embed.description || '').length;
-                total += (embed.authorName || '').length;
-                total += (embed.footerText || '').length;
-
-                if (embed.fields) {
-                    embed.fields.forEach(f => {
-
-                        const name = f.name === '\u200b' ? '' : (f.name || '');
-                        const value = f.value === '\u200b' ? '' : (f.value || '');
-                        total += name.length;
-                        total += value.length;
+                if (e.fields && e.fields.length > 0) {
+                    h += `<div class="embed-fields">`;
+                    e.fields.forEach(f => {
+                        if (!f.name && !f.value) return;
+                        h += `<div class="${f.inline ? '' : 'field-full'}">
+                            <div class="field-name">${parseText(f.name || " ")}</div>
+                            <div class="field-value">${parseText(f.value || " ")}</div>
+                        </div>`;
                     });
+                    h += `</div>`;
                 }
-            });
 
-            return total;
+                if (e.image?.url) {
+                    h += `<img class="embed-image" src="${escapeHtml(e.image.url)}" onerror="this.style.display='none'">`;
+                }
+
+                if (e.footer?.text) {
+                    h += `<div class="embed-footer">`;
+                    if (e.footer.icon_url) h += `<img src="${escapeHtml(e.footer.icon_url)}" onerror="this.style.display='none'">`;
+                    h += `<span>${parseText(e.footer.text)}</span></div>`;
+                }
+
+                h += `</div>`;
+                return h;
+            }).join("");
         }
 
-        function generateJSON() {
-            saveCurrentEmbed();
+        // Bridge functions for parent iframe
+        window.loadEmbedData = function(data) {
+            if (!data) return;
+            globalData = { username: data.username || "", avatar_url: data.avatar_url || "", content: data.content || "", embeds: data.embeds || [] };
+            init();
+        };
 
-            const embedsData = embeds.filter(embedHasContent).map(embed => {
-                const e = {
-                    author: embed.authorName ? {
-                        name: embed.authorName,
-                        icon_url: embed.authorIcon || undefined,
-                        url: embed.authorUrl || undefined
-                    } : undefined,
-                    title: embed.title || undefined,
-                    url: embed.titleUrl || undefined,
-                    description: embed.description || undefined,
-                    color: parseInt(embed.color.replace('#', ''), 16),
-                    thumbnail: embed.thumbnail ? { url: embed.thumbnail } : undefined,
-                    image: embed.image ? { url: embed.image } : undefined,
-                    fields: embed.fields.length > 0 ? embed.fields : undefined,
-                    footer: embed.footerText ? {
-                        text: embed.footerText,
-                        icon_url: embed.footerIcon || undefined
-                    } : undefined,
-                    timestamp: embed.timestamp ? new Date(embed.timestamp).toISOString() : undefined
-                };
-                cleanObject(e);
-                return e;
-            });
+        window.getEmbedData = function() {
+            saveCurrent();
+            
+            // Clean up empty embeds and empty fields
+            const cleanEmbeds = globalData.embeds.map(e => {
+                const ce = { ...e };
+                if (ce.fields) {
+                    ce.fields = ce.fields.filter(f => f.name || f.value);
+                    if (ce.fields.length === 0) delete ce.fields;
+                }
+                if (ce.author && !ce.author.name) delete ce.author;
+                if (ce.footer && !ce.footer.text) delete ce.footer;
+                if (ce.thumbnail && !ce.thumbnail.url) delete ce.thumbnail;
+                if (ce.image && !ce.image.url) delete ce.image;
+                return ce;
+            }).filter(e => e.title || e.description || e.author || e.footer || e.image || e.thumbnail || e.fields);
 
             const result = {
-                content: document.getElementById('embed-message').value || undefined,
-                embeds: embedsData.length > 0 ? embedsData : undefined
+                username: globalData.username || undefined,
+                avatar_url: globalData.avatar_url || undefined,
+                content: globalData.content || undefined,
+                embeds: cleanEmbeds.length > 0 ? cleanEmbeds : undefined
             };
-            cleanObject(result);
 
-            document.getElementById('json-output').textContent = JSON.stringify(result, null, 2);
+            // Remove undefined top level keys
+            Object.keys(result).forEach(k => result[k] === undefined && delete result[k]);
+            return result;
+        };
+
+        // If opened directly without parent
+        if (window === window.top) {
+            init();
         }
-
-        function cleanObject(obj) {
-            Object.keys(obj).forEach(key => {
-                if (obj[key] === undefined) {
-                    delete obj[key];
-                } else if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-                    cleanObject(obj[key]);
-                }
-            });
-        }
-
-        function copyJSON() {
-            const output = document.getElementById('json-output').textContent;
-            if (output) navigator.clipboard.writeText(output);
-        }
-
-        function getEmbedData() {
-            saveCurrentEmbed();
-            const content = document.getElementById('embed-message').value;
-            const appName = document.getElementById('app-name').value;
-            const appIcon = document.getElementById('app-icon').value;
-            const embedsData = embeds.filter(e => embedHasContent(e) || e.color !== '#5865f2').map(embed => {
-                const embedObj = {
-                    title: embed.title || undefined,
-                    description: embed.description || undefined,
-                    color: parseInt(embed.color.replace('#', ''), 16),
-                    author: embed.authorName ? {
-                        name: embed.authorName,
-                        icon_url: embed.authorIcon || undefined,
-                        url: embed.authorUrl || undefined
-                    } : undefined,
-                    thumbnail: embed.thumbnail ? { url: embed.thumbnail } : undefined,
-                    image: embed.image ? { url: embed.image } : undefined,
-                    fields: embed.fields.length > 0 ? embed.fields.map(f => ({
-                        name: f.name,
-                        value: f.value,
-                        inline: f.inline || false
-                    })) : undefined,
-                    footer: embed.footerText ? {
-                        text: embed.footerText,
-                        icon_url: embed.footerIcon || undefined
-                    } : undefined,
-                    timestamp: embed.timestamp ? new Date(embed.timestamp).toISOString() : undefined,
-                    url: embed.titleUrl || undefined
-                };
-                cleanObject(embedObj);
-                return embedObj;
-            });
-
-            return {
-                username: appName || undefined,
-                avatar_url: appIcon || undefined,
-                content: content || undefined,
-                embeds: embedsData.length > 0 ? embedsData : undefined
-            };
-        }
-
-        function loadEmbedData(data) {
-            if (!data) return;
-
-            if (data.username) {
-                document.getElementById('app-name').value = data.username;
-            }
-            if (data.avatar_url) {
-                document.getElementById('app-icon').value = data.avatar_url;
-            }
-
-            if (data.content) {
-                document.getElementById('embed-message').value = data.content;
-            }
-
-            if (data.embeds && Array.isArray(data.embeds)) {
-                embeds = data.embeds.map(e => ({
-                    authorName: e.author?.name || '',
-                    authorIcon: e.author?.icon_url || '',
-                    authorUrl: e.author?.url || '',
-                    title: e.title || '',
-                    titleUrl: e.url || '',
-                    description: e.description || '',
-                    color: e.color ? '#' + e.color.toString(16).padStart(6, '0') : '#5865f2',
-                    thumbnail: e.thumbnail?.url || '',
-                    image: e.image?.url || '',
-                    fields: (e.fields || []).map(f => ({
-                        name: f.name || '',
-                        value: f.value || '',
-                        inline: f.inline || false
-                    })),
-                    footerText: e.footer?.text || '',
-                    footerIcon: e.footer?.icon_url || '',
-                    timestamp: e.timestamp ? e.timestamp.slice(0, 16) : ''
-                }));
-
-                if (embeds.length === 0) {
-                    embeds = [createEmptyEmbed()];
-                }
-
-                currentEmbedIndex = 0;
-                loadEmbed(embeds[0]);
-                renderTabs();
-            }
-
-            updatePreview();
-        }
-
-        window.getEmbedData = getEmbedData;
-        window.loadEmbedData = loadEmbedData;
-
-        document.getElementById('embed-message').addEventListener('input', updatePreview);
-        document.getElementById('app-name').addEventListener('input', updatePreview);
-        document.getElementById('app-icon').addEventListener('input', updatePreview);
-
-        document.addEventListener('keydown', (e) => {
-            if (e.target.matches('input[type="text"], textarea')) {
-
-                if (e.target.id === 'embed-message') return;
-
-                const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End', 'Control', 'Meta', 'Alt', 'Shift'];
-                if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
-
-                const currentTotal = calculateTotalLength();
-                if (currentTotal >= LIMITS.total) {
-                    e.preventDefault();
-
-                    const totalEl = document.getElementById('total-char-count');
-                    if (totalEl) {
-                        totalEl.style.transform = "scale(1.1)";
-                        totalEl.style.color = "#ed4245";
-                        setTimeout(() => totalEl.style.transform = "scale(1)", 100);
-                    }
-                }
-            }
-        });
-
-        document.addEventListener('paste', (e) => {
-            if (e.target.matches('input[type="text"], textarea')) {
-                if (e.target.id === 'embed-message') return;
-
-                const currentTotal = calculateTotalLength();
-                const pasteData = (e.clipboardData || window.clipboardData).getData('text');
-                if (currentTotal + pasteData.length > LIMITS.total) {
-                    e.preventDefault();
-                    showCustomAlert("Cannot paste: Text would exceed the 6000 character embed limit.");
-                }
-            }
-        });
-
-        function showCustomAlert(msg) {
-
-            const modalId = 'custom-alert-modal';
-            let modal = document.getElementById(modalId);
-
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = modalId;
-                modal.className = 'modal';
-                modal.innerHTML = `
-                    <div class="modal-content" style="max-width: 400px; text-align: center;">
-                        <span class="close-btn" onclick="document.getElementById('${modalId}').classList.remove('show')">&times;</span>
-                        <h3 style="color: #ed4245; margin-bottom: 10px;">Limit Reached</h3>
-                        <p style="color: #dcddde; margin-bottom: 20px;">${msg}</p>
-                        <button onclick="document.getElementById('${modalId}').classList.remove('show')">OK</button>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) modal.classList.remove('show');
-                });
-            } else {
-                modal.querySelector('p').textContent = msg;
-            }
-
-            modal.classList.add('show');
-        }
-
-        renderTabs();
-        loadEmbed(embeds[0]);
-        updatePreview();
     </script>
-    <script src="emoji_picker.js"></script>
 </body>
-
 </html>
