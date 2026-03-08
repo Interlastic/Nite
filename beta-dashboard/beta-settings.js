@@ -165,44 +165,7 @@ function renderSupportChannelList(key) {
 
 function renderChatbotList(key) {
     const bots = { ...(GLOBAL_SETTINGS[key] || {}), ...PENDING_CHATBOTS };
-    const config = GLOBAL_SETTINGS.chatbot_config || { shared_memory: false, auto_reply_on_name: false, history_mode: 'ai_only' };
-    
-    let html = `
-        <div class="setting-card" style="background:var(--bg-tertiary); border:none; margin-bottom:1.5rem;">
-            <div class="setting-title" style="font-size:0.85rem; color:var(--text-secondary); text-transform:uppercase;">Chatbot Settings</div>
-            <div class="flex flex-col gap-4" style="margin-top:1rem;">
-                <div class="toggle-row">
-                    <div>
-                        <div style="font-weight:600;">Shared Memory</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">Chatbots can see each other's messages</div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="chatbot_shared_memory" ${config.shared_memory ? 'checked' : ''}>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="toggle-row">
-                    <div>
-                        <div style="font-weight:600;">Auto Reply on Name</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">Chatbots respond when mentioned by another chatbot</div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="chatbot_auto_reply_on_name" ${config.auto_reply_on_name ? 'checked' : ''}>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div>
-                    <div style="font-weight:600; margin-bottom:0.5rem;">History Mode</div>
-                    <select id="chatbot_history_mode" class="select">
-                        <option value="ai_only" ${config.history_mode === 'ai_only' ? 'selected' : ''}>AI Interactions Only</option>
-                        <option value="all" ${config.history_mode === 'all' ? 'selected' : ''}>All Messages</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-        <div id="chatbot-container">
-    `;
-
+    let html = `<div id="chatbot-container">`;
     html += Object.entries(bots).map(([id, b]) => `
         <div class="setting-card flex items-center gap-4" style="background:var(--bg-tertiary); border:none;">
             <img src="${b.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png'}" style="width:40px; height:40px; border-radius:50%;">
@@ -216,7 +179,6 @@ function renderChatbotList(key) {
             </div>
         </div>
     `).join("");
-    
     return html + `</div><button class="btn btn-ghost" style="width:100%; margin-top:1rem;" onclick="openChatbotEditor()">+ Create Chatbot</button>`;
 }
 
@@ -267,10 +229,11 @@ function saveChatbotData(id) {
     if (!name) return alert("Name is required.");
     
     const bot = { name, system_prompt: prompt, avatar_url: avatar, nsfw };
-    if (!id) id = "new_" + Date.now();
+    if (!id || id === "null") id = "new_" + Date.now();
     
     PENDING_CHATBOTS[id] = bot;
     document.getElementById("chatbot-modal").remove();
+    refreshChatbotList();
     markDirty();
 }
 
@@ -280,7 +243,28 @@ function deleteChatbot(id) {
     else if (GLOBAL_SETTINGS.chatbots && GLOBAL_SETTINGS.chatbots[id]) {
         delete GLOBAL_SETTINGS.chatbots[id];
     }
+    refreshChatbotList();
     markDirty();
+}
+
+function refreshChatbotList() {
+    const container = document.getElementById("chatbot-container");
+    if (!container) return;
+    
+    const bots = { ...(GLOBAL_SETTINGS.chatbots || {}), ...PENDING_CHATBOTS };
+    container.innerHTML = Object.entries(bots).map(([id, b]) => `
+        <div class="setting-card flex items-center gap-4" style="background:var(--bg-tertiary); border:none;">
+            <img src="${b.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png'}" style="width:40px; height:40px; border-radius:50%;">
+            <div style="flex:1; min-width:0;">
+                <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeForHtml(b.name)} ${b.nsfw ? '<span class="badge badge-nsfw">NSFW</span>' : ''}</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeForHtml(b.system_prompt || '')}</div>
+            </div>
+            <div class="flex gap-2">
+                <button class="btn btn-ghost" style="padding:5px 10px;" onclick="openChatbotEditor('${id}')">Edit</button>
+                <button class="btn btn-danger" style="padding:5px 10px;" onclick="deleteChatbot('${id}')">×</button>
+            </div>
+        </div>
+    `).join("");
 }
 
 function renderNamedContentList(s) {
