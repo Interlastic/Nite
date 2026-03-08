@@ -1,0 +1,323 @@
+[
+  {
+    "id": "tab-general",
+    "name": "General",
+    "icon": "settings",
+    "settings": [
+      {
+        "type": "header",
+        "text": "General Settings"
+      },
+      {
+        "type": "switch",
+        "key": "bot_enabled",
+        "label": "Enable Bot",
+        "sublabel": "Toggle the main bot functionality."
+      },
+      {
+        "type": "title",
+        "text": "Modes"
+      },
+      {
+        "type": "select",
+        "key": "regenerate_mode",
+        "label": "Regeneration Mode",
+        "options": [
+          {
+            "val": "0",
+            "txt": "Button Only (No Command)"
+          },
+          {
+            "val": "1",
+            "txt": "Command Only (Default)"
+          },
+          {
+            "val": "2",
+            "txt": "Reaction (Broken)"
+          },
+          {
+            "val": "3",
+            "txt": "All (Button + Cmd + React)"
+          },
+          {
+            "val": "4",
+            "txt": "Disabled"
+          }
+        ],
+        "default": "1"
+      },
+      {
+        "type": "select",
+        "key": "ping_state",
+        "label": "Mention Behavior",
+        "options": [
+          {
+            "val": "1",
+            "txt": "Nite (Default)"
+          },
+          {
+            "val": "4",
+            "txt": "Ask (Useful)"
+          },
+          {
+            "val": "3",
+            "txt": "Think"
+          },
+          {
+            "val": "2",
+            "txt": "Dream"
+          }
+        ],
+        "default": "1"
+      }
+    ]
+  },
+  {
+    "id": "tab-commands",
+    "name": "Commands",
+    "icon": "terminal",
+    "settings": [
+      {
+        "type": "header",
+        "text": "Command Permissions"
+      },
+      {
+        "type": "text",
+        "text": "Enable or disable specific slash commands for this server.",
+        "style": "color:#aaa; font-size:0.9rem; margin-bottom:20px;"
+      },
+      {
+        "type": "commandList"
+      }
+    ]
+  },
+  {
+    "id": "tab-welcome",
+    "name": "Welcome & Bye",
+    "icon": "door-open",
+    "settings": [
+      {
+        "type": "header",
+        "text": "Welcome & Goodbye"
+      },
+      {
+        "type": "title",
+        "text": "Welcome Messages"
+      },
+      {
+        "type": "switch",
+        "key": "welcome_enabled_bool",
+        "label": "Enable Welcome Messages",
+        "sublabel": ""
+      },
+      {
+        "type": "embedMaker",
+        "key": "welcome_message",
+        "label": "Welcome Message",
+        "buttonText": "Edit Welcome Message",
+        "help": "Use {mention}, {username}, {server}, {membercount}. NEW: {join_method}, {invite_link}, {time_to_return} (returns only)."
+      },
+      {
+        "type": "channelPick",
+        "key": "welcome_channel",
+        "label": "Welcome Channel"
+      },
+      {
+        "type": "switch",
+        "key": "welcome_show_join_number",
+        "label": "Show Join Number",
+        "sublabel": "e.g. 'Member #42'"
+      },
+      {
+        "type": "switch",
+        "key": "welcome_show_roles",
+        "label": "Show Roles",
+        "sublabel": "Display assigned roles"
+      },
+      {
+        "type": "title",
+        "text": "Goodbye Messages"
+      },
+      {
+        "type": "switch",
+        "key": "goodbye_enabled_bool",
+        "label": "Enable Goodbye Messages",
+        "sublabel": ""
+      },
+      {
+        "type": "embedMaker",
+        "key": "goodbye_message",
+        "label": "Goodbye Message",
+        "buttonText": "Edit Goodbye Message",
+        "help": "Use {mention}, {username}, {server}, {membercount}. NEW: {join_method}, {invite_link}."
+      },
+      {
+        "type": "channelPick",
+        "key": "goodbye_channel",
+        "label": "Goodbye Channel"
+      }
+    ]
+  },
+  {
+    "id": "tab-ai",
+    "name": "AI & Threads",
+    "icon": "sparkles",
+    "settings": [
+      {
+        "type": "header",
+        "text": "AI & Thread Support"
+      },
+      {
+        "type": "title",
+        "text": "Auto Flair"
+      },
+      {
+        "type": "switch",
+        "key": "auto_flair_enabled",
+        "label": "Enable Auto Flair",
+        "sublabel": "AI adds tags to new posts."
+      },
+      {
+        "type": "textarea",
+        "key": "auto_flair_options",
+        "label": "Flair Options",
+        "placeholder": "Separate with |",
+        "default": "Bug | Suggestion",
+        "join": " | "
+      },
+      {
+        "type": "title",
+        "text": "Auto Help"
+      },
+      {
+        "type": "switch",
+        "key": "auto_help_enabled",
+        "label": "Enable Auto Help",
+        "sublabel": "AI suggests answers from past threads."
+      },
+      {
+        "type": "title",
+        "text": "Support Channels"
+      },
+      {
+        "type": "text",
+        "text": "Select Forum Channels (IDs)",
+        "style": "font-size:0.8rem; color:#aaa;"
+      },
+      {
+        "type": "supportChannelList",
+        "key": "support_channels"
+      },
+      {
+        "type": "title",
+        "text": "AI Context"
+      },
+      {
+        "type": "textarea",
+        "key": "add_context",
+        "label": "Additional Context",
+        "placeholder": "Enter additional context...",
+        "maxLength": 1000
+      },
+      {
+        "type": "namedContentList",
+        "key": "custom_knowledge",
+        "label": "Custom Knowledge Base",
+        "help": "Define custom knowledge entries. Up to 5 items."
+      }
+    ]
+  },
+  {
+    "id": "tab-chatbots",
+    "name": "Chatbots",
+    "icon": "robot",
+    "settings": [
+      {
+        "type": "header",
+        "text": "Custom Chatbots"
+      },
+      {
+        "type": "text",
+        "text": "Create AI personas that respond when mentioned.",
+        "style": "color:#aaa; font-size:0.9rem; margin-bottom:20px;"
+      },
+      {
+        "type": "chatbotList",
+        "key": "chatbots"
+      },
+      {
+        "type": "title",
+        "text": "Chatbot Settings"
+      },
+      {
+        "type": "switch",
+        "key": "chatbot_shared_memory",
+        "label": "Shared Memory",
+        "sublabel": "Chatbots can see each other's messages"
+      },
+      {
+        "type": "switch",
+        "key": "chatbot_auto_reply_on_name",
+        "label": "Auto Reply on Name",
+        "sublabel": "Chatbots respond when their name is mentioned by another chatbot"
+      },
+      {
+        "type": "select",
+        "key": "chatbot_history_mode",
+        "label": "History Mode",
+        "options": [
+          {
+            "val": "ai_only",
+            "txt": "AI Interactions Only"
+          },
+          {
+            "val": "channel",
+            "txt": "Full Channel History"
+          },
+          {
+            "val": "none",
+            "txt": "No Memory"
+          }
+        ],
+        "default": "ai_only"
+      }
+    ]
+  },
+  {
+    "id": "tab-additional",
+    "name": "Additional",
+    "icon": "cog",
+    "settings": [
+      {
+        "type": "header",
+        "text": "Additional Stuff"
+      },
+      {
+        "type": "title",
+        "text": "Auto Reactions"
+      },
+      {
+        "type": "dict",
+        "key": "auto_reacts",
+        "label": "Auto Reactions",
+        "sublabel": "Auto react to messages with specific content.",
+        "keyPlaceholder": "Pattern to match",
+        "valuePlaceholder": "Emoji (custom supported)",
+        "help": "(?i)text = case-insensitive match\n\\p{Extended_Pictographic} = match any emoji\n\bword\b = match whole word only\n(a|b) = match \"a\" OR \"b\"\nFull guide: https://nite.mingalabs.com/pattern-matching"
+      },
+      {
+        "type": "title",
+        "text": "Auto Replies"
+      },
+      {
+        "type": "dict",
+        "key": "auto_replies",
+        "label": "Auto Replies",
+        "sublabel": "Automatically reply to messages with specific content.",
+        "keyPlaceholder": "Pattern to match",
+        "valuePlaceholder": "Message to reply with",
+        "help": "(?i)text = case-insensitive match\n\\p{Extended_Pictographic} = match any emoji\n\bword\b = match whole word only\n(a|b) = match \"a\" OR \"b\"\nFull guide: https://nite.mingalabs.com/pattern-matching"
+      }
+    ]
+  }
+]
