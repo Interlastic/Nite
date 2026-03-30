@@ -300,23 +300,107 @@ function addNclRow(key) {
     markDirty();
 }
 
+const VALID_PERMISSIONS = [
+    "administrator", "manage_guild", "manage_roles", "manage_channels",
+    "manage_messages", "manage_webhooks", "manage_nicknames",
+    "send_messages", "create_polls", "mention_everyone",
+    "view_audit_log", "kick_members", "ban_members"
+];
+
 function renderCommands() {
     return GLOBAL_COMMANDS.map(c => {
-        const key = `${c.name.trim().replace(/\s+/g, '.')}_enabled`;
+        const name = c.name.trim().replace(/\s+/g, '.');
+        const key = `${name}_enabled`;
         const checked = GLOBAL_SETTINGS[key] !== false;
         return `
             <div class="command-item">
                 <div class="command-header">
                     <span class="command-name">/${c.name}</span>
-                    <label class="switch">
-                        <input type="checkbox" id="${key}" ${checked ? 'checked' : ''}>
-                        <span class="slider"></span>
-                    </label>
+                    <div class="flex items-center gap-2">
+                        <button class="command-settings-btn" title="Settings" onclick="openCommandSettings('${escapeForHtml(c.name)}')">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                        </button>
+                        <label class="switch">
+                            <input type="checkbox" id="${key}" ${checked ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
                 <div class="command-desc">${escapeForHtml(c.description)}</div>
             </div>
         `;
     }).join("");
+}
+
+function openCommandSettings(cmdName) {
+    const permKey = `${cmdName.trim().replace(/\s+/g, '.')}_permissions`;
+    const settings = GLOBAL_SETTINGS[permKey] || { roles: [], permissions: [] };
+
+    const modal = document.createElement('div');
+    modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; display:flex; align-items:center; justify-content:center;";
+    modal.id = "command-settings-modal";
+
+    let rolesHtml = GLOBAL_ROLES.map(role => `
+        <label class="flex items-center gap-2" style="margin-bottom:8px; cursor:pointer;">
+            <input type="checkbox" class="role-chk" value="${role.id}" ${settings.roles.includes(role.id) ? 'checked' : ''}>
+            <span style="color:${role.color ? '#' + role.color.toString(16).padStart(6, '0') : 'var(--text-primary)'}">${escapeForHtml(role.name)}</span>
+        </label>
+    `).join("");
+
+    let permsHtml = VALID_PERMISSIONS.map(perm => `
+        <label class="flex items-center gap-2" style="margin-bottom:8px; cursor:pointer;">
+            <input type="checkbox" class="perm-chk" value="${perm}" ${settings.permissions.includes(perm) ? 'checked' : ''}>
+            <span>${perm.replace(/_/g, ' ')}</span>
+        </label>
+    `).join("");
+
+    modal.innerHTML = `
+        <div style="background:var(--bg-secondary); width:95%; max-width:700px; border-radius:8px; display:flex; flex-direction:column; max-height:90vh;">
+            <div style="padding:1rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0;">Settings for /${cmdName}</h3>
+                <button class="btn btn-ghost" onclick="document.getElementById('command-settings-modal').remove()">×</button>
+            </div>
+            <div style="flex:1; overflow-y:auto; padding:1.5rem; display:grid; grid-template-columns: 1fr 1fr; gap:2rem;">
+                <div>
+                    <div style="font-weight:700; margin-bottom:1rem; color:var(--text-secondary); text-transform:uppercase; font-size:0.8rem;">Required Roles</div>
+                    <div style="background:var(--bg-dark); padding:1rem; border-radius:4px; max-height:400px; overflow-y:auto;">
+                        ${rolesHtml || '<p style="color:var(--text-muted); font-size:0.85rem;">No roles found.</p>'}
+                    </div>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem;">User needs at least one of these roles.</p>
+                </div>
+                <div>
+                    <div style="font-weight:700; margin-bottom:1rem; color:var(--text-secondary); text-transform:uppercase; font-size:0.8rem;">Required Permissions</div>
+                    <div style="background:var(--bg-dark); padding:1rem; border-radius:4px; max-height:400px; overflow-y:auto;">
+                        ${permsHtml}
+                    </div>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem;">User needs all of these permissions.</p>
+                </div>
+            </div>
+            <div style="padding:1rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:0.5rem;">
+                <button class="btn btn-ghost" onclick="document.getElementById('command-settings-modal').remove()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveCommandSettings('${cmdName.replace(/'/g, "\\'")}')">Save Settings</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function saveCommandSettings(cmdName) {
+    const modal = document.getElementById("command-settings-modal");
+    const roleChks = modal.querySelectorAll(".role-chk:checked");
+    const permChks = modal.querySelectorAll(".perm-chk:checked");
+
+    const permKey = `${cmdName.trim().replace(/\s+/g, '.')}_permissions`;
+    GLOBAL_SETTINGS[permKey] = {
+        roles: Array.from(roleChks).map(c => c.value),
+        permissions: Array.from(permChks).map(c => c.value)
+    };
+
+    modal.remove();
+    markDirty();
 }
 
 function renderDict(s) {
@@ -517,6 +601,8 @@ async function saveChanges() {
     btn.disabled = true; btn.innerText = "Saving...";
 
     const payload = { ...GLOBAL_SETTINGS };
+    const permissionsPayload = {};
+
     SETTINGS_CONFIG.forEach(tab => {
         tab.settings.forEach(s => {
             if (["header", "title", "text"].includes(s.type)) return;
@@ -526,9 +612,18 @@ async function saveChanges() {
             else if (["select", "channelPick"].includes(s.type) && el) payload[s.key] = el.value || null;
             else if (s.type === "commandList") {
                 GLOBAL_COMMANDS.forEach(c => {
-                    const ck = `${c.name.trim().replace(/\s+/g, '.')}_enabled`;
+                    const name = c.name.trim().replace(/\s+/g, '.');
+                    const ck = `${name}_enabled`;
+                    const pk = `${name}_permissions`;
                     const cel = document.getElementById(ck);
-                    if (cel) payload[ck] = cel.checked;
+                    if (cel) {
+                        payload[ck] = cel.checked;
+                        const pData = GLOBAL_SETTINGS[pk] || { roles: [], permissions: [] };
+                        permissionsPayload[pk] = {
+                            ...pData,
+                            enabled: cel.checked
+                        };
+                    }
                 });
             } else if (s.type === "dict") {
                 const dict = {};
@@ -570,9 +665,14 @@ async function saveChanges() {
     try {
         const res = await fetch(`${API_BASE}/update-settings`, {
             method: "POST", headers: { "Content-Type": "application/json", "Authorization": token },
-            body: JSON.stringify({ serverid: serverId, settings: payload })
+            body: JSON.stringify({ serverid: serverId, settings: payload, permissions: permissionsPayload })
         });
-        if (res.ok) { GLOBAL_SETTINGS = payload; PENDING_CHATBOTS = {}; isDirty = false; document.getElementById("save-bar").classList.remove("visible"); }
+        if (res.ok) { 
+            GLOBAL_SETTINGS = { ...payload, ...permissionsPayload }; 
+            PENDING_CHATBOTS = {}; 
+            isDirty = false; 
+            document.getElementById("save-bar").classList.remove("visible"); 
+        }
         else alert("Save failed.");
     } catch (err) { alert("Error saving."); }
     finally { btn.disabled = false; btn.innerText = "Save Changes"; }
