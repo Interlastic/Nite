@@ -8,7 +8,7 @@
     font-family: inherit;
     color: #1a1a1a;
     line-height: 1.7;
-    max-height: 320px;
+    max-height: 440px;
     overflow: hidden;
     position: relative;
     cursor: pointer;
@@ -105,21 +105,23 @@ table {
 }
 
 :host(.expanded) {
-    max-height: 5000px;
+    max-height: 5120px;
     cursor: default;
     transform: none;
+    padding-bottom: 100px;
 }
 
 :host(.fully-expanded) {
     max-height: none !important;
     cursor: default;
     transform: none;
+    padding-bottom: 100px;
 }
 
 :host:not(.expanded)::after {
     content: "";
     position: absolute;
-    bottom: 0;
+    bottom: 120px;
     left: 0;
     width: 100%;
     height: 120px;
@@ -134,7 +136,7 @@ table {
 .expand-more-container {
     display: none;
     position: absolute;
-    bottom: 20px;
+    bottom: 140px;
     left: 0;
     width: 100%;
     justify-content: center;
@@ -169,7 +171,7 @@ table {
 
 .hint-text {
     position: absolute;
-    bottom: 20px;
+    bottom: 140px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
@@ -182,6 +184,67 @@ table {
     border: 1px solid #e5e7eb;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     transition: opacity 0.2s;
+}
+
+/* this extension thing will be under posts (not as content of post) to later idk add buttons like share, favourite and copy or something.
+should be "under" the post*/
+.extension {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+    /* the change with a non gradient is like way too much as if it was cut-off, so lets make transparent to full gradient */
+    background: linear-gradient(to bottom, transparent, #ffffff 40%);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 120px;
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    align-items: flex-end;
+    padding-bottom: 16px;
+    box-sizing: border-box;
+}
+
+.ext-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #8b5cf6;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+}
+
+.ext-button:hover {
+    background-color: #7c3aed;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.ext-button:active {
+    transform: translateY(0);
+}
+
+.ext-button svg {
+    width: 24px;
+    height: 24px;
+    fill: #ffffff;
+}
+
+.ext-button.copied {
+    background-color: #10b981;
+}
+
+.ext-button.favourited {
+    background-color: #ef4444;
 }
 
 :host(:hover) .hint-text {

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First Setup | nite</title>
+    <link rel="stylesheet" href="style.css">
+<style>
+    body {
+        background-color: var(--bg-primary);
+        margin: 0;
+        height: 100vh;
+        width: 100vw;
+        overflow-y: auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: var(--text-primary);
+        font-family: "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    .setup-wrapper {
+        width: 100%;
+        max-width: 800px;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        animation: fadeInScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes fadeInScale {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    .welcome-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+
+    .welcome-header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-header p {
+        font-size: 1rem;
+        color: var(--text-secondary);
+    }
+
+    .options-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        width: 100%;
+        margin-bottom: 2rem;
+    }
+
+    .option-card {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 1.25rem;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.1s, border-color 0.15s;
+        border: 2px solid transparent;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: left;
+        opacity: 0;
+        animation: slideInUp 0.5s ease forwards;
+    }
+
+    @keyframes slideInUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .option-card:hover {
+        background: var(--bg-tertiary);
+    }
+
+    .option-card.selected {
+        background: var(--bg-tertiary);
+        border-color: var(--accent);
+    }
+
+    .option-title {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--text-primary);
+    }
+
+    .option-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    .grid-separator {
+        grid-column: 1 / -1;
+        height: 1px;
+        background: var(--border);
+        opacity: 0.4;
+        margin: 0.5rem 0;
+        animation: fadeIn 1s ease forwards;
+        animation-delay: 0.18s;
+    }
+
+    .actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .btn-next {
+        width: 200px;
+        height: 44px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .skip-link {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: underline;
+        text-decoration-color: rgba(148, 155, 164, 0.3);
+        cursor: pointer;
+        transition: color 0.15s;
+    }
+
+    .skip-link:hover {
+        color: var(--text-secondary);
+    }
+
+    @media (max-width: 600px) {
+        .options-grid {
+            grid-template-columns: 1fr;
+        }
+        .welcome-header h1 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+</head>
+<body>
+    <div id="setup-root" style="width: 100vw; min-height: 100vh; display: flex; justify-content: center; align-items: center;">
+        <div class="setup-wrapper" id="setup-content">
+            <div class="welcome-header">
+                <h1>Welcome to nite!</h1>
+                <p>Let's get you setup by choosing where to start.</p>
+            </div>
+
+            <div class="options-grid" id="options-grid">
+                <div class="option-card" style="animation-delay: 0.1s" onclick="selectOption(this, 'intro')">
+                    <span class="option-title">I don't know nite</span>
+                    <span class="option-desc">I'm new here! Show me around and tell me about all the cool features.</span>
+                </div>
+                <div class="option-card" style="animation-delay: 0.15s" onclick="selectOption(this, 'commands')">
+                    <span class="option-title">Introduction to Fun Commands</span>
+                    <span class="option-desc">Show me what's already here! I'd love a quick guide to all the fun and games nite has ready to go.</span>
+                </div>
+                <div class="grid-separator"></div>
+                <div class="option-card" style="animation-delay: 0.2s" onclick="selectOption(this, 'ai_mgmt')">
+                    <span class="option-title">Managing my Server with AI</span>
+                    <span class="option-desc">I want AI to help me run things! Use AI to manage my channels and roles.</span>
+                </div>
+                <div class="option-card" style="animation-delay: 0.25s" onclick="selectOption(this, 'chatbots')">
+                    <span class="option-title">Chatbots</span>
+                    <span class="option-desc">I want to create my own chatbots! Make them fun and full of personality.</span>
+                </div>
+                <div class="option-card" style="animation-delay: 0.3s" onclick="selectOption(this, 'welcome')">
+                    <span class="option-title">Welcome/Goodbye messages</span>
+                    <span class="option-desc">I want to greet my members! Set up some cool welcome and goodbye interactions.</span>
+                </div>
+                <div class="option-card" style="animation-delay: 0.35s" onclick="selectOption(this, 'faking')">
+                    <span class="option-title">Faking messages / posts</span>
+                    <span class="option-desc">I want to make fake posts! Learn the secrets to faking Discord and X messages.</span>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button id="next-btn" class="btn btn-primary btn-next" disabled onclick="handleNext()">Next</button>
+                <a class="skip-link" onclick="goToDashboard()">Just take me to the Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "https://api.niteapiworker.workers.dev";
+        let GLOBAL_DATA = null;
+        let FINAL_SELECTIONS = [];
+        let selectedIds = new Set();
+        let currentStepIndex = 0;
+
+        function getCookie(n) {
+            const m = document.cookie.match(new RegExp('(^| )' + n + '=([^;]+)'));
+            return m ? m[2] : null;
+        }
+
+        async function prefetchSettings() {
+            const params = new URLSearchParams(location.search);
+            const id = params.get("id");
+            const token = getCookie("auth_token");
+            if (!id || !token) return;
+
+            try {
+                await fetch(`${API_BASE}/trigger-settings?serverid=${id}`, { headers: { "Authorization": token } });
+                
+                let attempts = 0;
+                while (attempts < 30) {
+                    attempts++;
+                    const res = await fetch(`${API_BASE}/check-settings?t=${Date.now()}`, { headers: { "Authorization": token } });
+                    if (res.status === 200) {
+                        const data = await res.json();
+                        GLOBAL_DATA = {
+                            settings: data.settings || {},
+                            channels: data.channels || [],
+                            roles: data.roles || [],
+                            commands: data.commands || [],
+                            permissions: data.permissions || {}
+                        };
+                        console.log("Settings prefetched successfully");
+                        return;
+                    }
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+            } catch (err) {
+                console.error("Failed to prefetch settings:", err);
+            }
+        }
+
+        prefetchSettings();
+
+        function selectOption(element, id) {
+            if (selectedIds.has(id)) {
+                selectedIds.delete(id);
+                element.classList.remove('selected');
+            } else {
+                selectedIds.add(id);
+                element.classList.add('selected');
+            }
+            
+            document.getElementById('next-btn').disabled = selectedIds.size === 0;
+        }
+
+        function handleNext() {
+            if (selectedIds.size === 0) return;
+            
+            const PRIORITY_ORDER = ['intro', 'commands', 'chatbots', 'ai_mgmt', 'welcome', 'faking'];
+            FINAL_SELECTIONS = Array.from(selectedIds).sort((a, b) => 
+                PRIORITY_ORDER.indexOf(a) - PRIORITY_ORDER.indexOf(b)
+            );
+            
+            console.log("Final Selections (Saved):", FINAL_SELECTIONS);
+            startIntroFlow();
+        }
+
+        function startIntroFlow() {
+            currentStepIndex = 0;
+            loadNextPage();
+        }
+
+        async function loadNextPage() {
+            const root = document.getElementById('setup-root');
+            let nextId;
+
+            if (currentStepIndex < FINAL_SELECTIONS.length) {
+                nextId = FINAL_SELECTIONS[currentStepIndex];
+                currentStepIndex++;
+            } else if (currentStepIndex === FINAL_SELECTIONS.length) {
+                nextId = 'end';
+                currentStepIndex++;
+            } else {
+                goToDashboard();
+                return;
+            }
+
+            try {
+                const response = await fetch(`intro_pages/${nextId}.html`);
+                const html = await response.text();
+                
+                // Inject content
+                root.innerHTML = `
+                    <div id="intro-content-container" style="width: 100%; min-height: 100vh; padding: 2rem; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;">
+                        <div style="width: 100%; max-width: 800px; padding-bottom: 100px;">
+                            ${html}
+                        </div>
+                    </div>
+                    <div style="position: fixed; bottom: 30px; right: 30px; z-index: 1000;">
+                        <button id="intro-next-btn" class="btn btn-primary btn-next" onclick="onIntroNextClick()">Next</button>
+                    </div>
+                `;
+
+                // Re-inject core functions for the dynamic content
+                window.editSettings = (key, value) => {
+                    if (GLOBAL_DATA && GLOBAL_DATA.settings) {
+                        GLOBAL_DATA.settings[key] = value;
+                        console.log(`Setting updated: ${key} = ${value}`);
+                    }
+                };
+
+                window.showNext = () => {
+                    const btn = document.getElementById('intro-next-btn');
+                    if (btn) btn.disabled = false;
+                };
+
+                window.hideNext = () => {
+                    const btn = document.getElementById('intro-next-btn');
+                    if (btn) btn.disabled = true;
+                };
+
+            } catch (err) {
+                console.error("Failed to load page:", err);
+                // On failure, fall back to dashboard
+                goToDashboard();
+            }
+        }
+
+        async function onIntroNextClick() {
+            // Save settings on every Next click
+            await saveCurrentSettings();
+            loadNextPage();
+        }
+
+        async function saveCurrentSettings() {
+            const params = new URLSearchParams(location.search);
+            const id = params.get("id");
+            const token = getCookie("auth_token");
+            if (!id || !token || !GLOBAL_DATA) return;
+
+            console.log("Saving settings...");
+            try {
+                await fetch(`${API_BASE}/save-settings?serverid=${id}`, {
+                    method: "POST",
+                    headers: { 
+                        "Authorization": token,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        settings: GLOBAL_DATA.settings,
+                        permissions: GLOBAL_DATA.permissions
+                    })
+                });
+                console.log("Settings saved successfully");
+            } catch (err) {
+                console.error("Failed to save settings:", err);
+            }
+        }
+
+        function goToDashboard() {
+            const currentParams = new URLSearchParams(window.location.search);
+            currentParams.delete('first_setup');
+            window.location.href = 'manage.html?' + currentParams.toString();
+        }
+    </script>
+</body>
+</html>

@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Server Manager</title>
     <link rel="stylesheet" href="style.css">
+    <script>
+        (function() {
+            if (window.location.search.includes("first_setup=true")) {
+                location.href = "manage_first.html" + location.search;
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="dashboard-layout">
