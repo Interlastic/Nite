@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wikinfinity - Favourites</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        #top-bar {
+            padding: 0 20px;
+            gap: 16px;
+        }
+
+        .search-container {
+            margin: 0;
+        }
+
+        #sort-select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .empty-state {
+            margin-top: 100px;
+            color: #666;
+            text-align: center;
+            font-size: 1.1em;
+            max-width: 400px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="top-bar">
+        <a href="../" style="line-height:0; color: #666;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </a>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search favourites">
+        </div>
+        <select id="sort-select">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="az">A-Z</option>
+            <option value="za">Z-A</option>
+        </select>
+    </div>
+
+    <div id="div1">
+        <!-- Favourites will be injected here -->
+    </div>
+
+    <script src="../script.js"></script>
+    <script src="favourites.js"></script>
+</body>
+
+</html>
