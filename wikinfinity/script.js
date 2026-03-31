@@ -113,37 +113,43 @@ async function fillPrefetchQueue() {
     }
 }
 
+function processWikipediaHTML(html, lang = language) {
+    const wpBase = `https://${lang}.wikipedia.org/`;
+    return html
+        .replaceAll('src="//', 'src="https://')
+        .replaceAll('srcset="//', 'srcset="https://')
+        .replaceAll('href="//', 'href="https://')
+        .replaceAll('src="/', `src="${wpBase}`)
+        .replaceAll('href="/', `href="${wpBase}`);
+}
+
 async function getNextArticle(searchTitle = null) {
+    let article;
     if (searchTitle) {
         const { html } = await fetchWikipediaArticle(searchTitle);
-        return { html, displayText: searchTitle, internalTitle: searchTitle };
-    }
-
-    // If queue is empty, wait for it to be filled
-    if (articleQueue.length === 0) {
-        await fillPrefetchQueue();
-        // If still empty (e.g., fetch was already in progress), wait until it's done
-        while (isFetchingBatch && articleQueue.length === 0) {
-            await new Promise(resolve => setTimeout(resolve, 100));
+        article = { html, displayText: searchTitle, internalTitle: searchTitle };
+    } else {
+        // If queue is empty, wait for it to be filled
+        if (articleQueue.length === 0) {
+            await fillPrefetchQueue();
+            // If still empty (e.g., fetch was already in progress), wait until it's done
+            while (isFetchingBatch && articleQueue.length === 0) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
         }
+        article = articleQueue.shift();
+        fillPrefetchQueue(); // Refill in background
     }
 
-    const next = articleQueue.shift();
-    fillPrefetchQueue(); // Refill in background
+    if (article) {
+        // Fetch HTML lazily if not already there (for queue items)
+        if (!article.html) {
+            const { html } = await fetchWikipediaArticle(article.internalTitle);
+            article.html = html;
+        }
 
-    if (next) {
-        // Fetch HTML lazily
-        let { html } = await fetchWikipediaArticle(next.internalTitle);
-
-        html = html.replaceAll('src="//', 'src="https://');
-        html = html.replaceAll('srcset="//', 'srcset="https://');
-        html = html.replaceAll('href="//', 'href="https://');
-
-        html = html.replaceAll('src="/', 'src="https://en.wikipedia.org/');
-        html = html.replaceAll('href="/', 'href="https://en.wikipedia.org/');
-
-        next.html = html;
-        return next;
+        article.html = processWikipediaHTML(article.html, language);
+        return article;
     }
 
     return null;
@@ -151,12 +157,15 @@ async function getNextArticle(searchTitle = null) {
 
 async function fetchCSSStyles() {
     if (fetchCSSStyles._cache) return fetchCSSStyles._cache;
-    const stylesResponse = await fetch("styles_inject.css");
+    // Determine the base path of the script to find styles_inject.css
+    const scriptSrc = document.currentScript ? document.currentScript.src : Array.from(document.scripts).find(s => s.src.includes('script.js')).src;
+    const base = scriptSrc.substring(0, scriptSrc.lastIndexOf('/') + 1);
+    const stylesResponse = await fetch(base + "styles_inject.css");
     fetchCSSStyles._cache = await stylesResponse.text();
     return fetchCSSStyles._cache;
 }
 
-async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = null, anchorElement = null, lang = language, isShared = false) {
+async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = null, anchorElement = null, lang = language, isShared = false, shouldScroll = true) {
     if (isRateLimited) {
         showRateLimitMessage();
         return;
@@ -207,8 +216,15 @@ async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = nul
     `;
 
         // Initialize button states
-        const favs = JSON.parse(localStorage.getItem("wikinfinity_favourites") || "[]");
-        if (favs.includes(internalTitle)) {
+        let favs = JSON.parse(localStorage.getItem("wikinfinity_favourites") || "[]");
+
+        // Migration: convert string array to object array
+        if (favs.length > 0 && typeof favs[0] === 'string') {
+            favs = favs.map(title => ({ title, date: Date.now() }));
+            localStorage.setItem("wikinfinity_favourites", JSON.stringify(favs));
+        }
+
+        if (favs.some(f => f.title === internalTitle)) {
             cardShadow.querySelector(".favourite-button").classList.add("favourited");
         }
 
@@ -245,11 +261,13 @@ async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = nul
             if (favBtn) {
                 event.stopPropagation();
                 let favs = JSON.parse(localStorage.getItem("wikinfinity_favourites") || "[]");
-                if (favs.includes(internalTitle)) {
-                    favs = favs.filter(f => f !== internalTitle);
+                const index = favs.findIndex(f => f.title === internalTitle);
+
+                if (index !== -1) {
+                    favs.splice(index, 1);
                     favBtn.classList.remove("favourited");
                 } else {
-                    favs.push(internalTitle);
+                    favs.push({ title: internalTitle, date: Date.now() });
                     favBtn.classList.add("favourited");
                 }
                 localStorage.setItem("wikinfinity_favourites", JSON.stringify(favs));
@@ -310,7 +328,7 @@ async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = nul
 
         if (anchorElement) {
             anchorElement.after(articleCard);
-            articleCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (shouldScroll) articleCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
             document.getElementById("div1").appendChild(articleCard);
         }
@@ -344,31 +362,104 @@ async function appendCards(count) {
     );
 }
 
-fillPrefetchQueue();
+if (document.body.id === "main-page") {
+    fillPrefetchQueue();
 
-(async function startFeed() {
-    const hash = window.location.hash.substring(1);
-    const sharedTitle = hash ? decodeURIComponent(hash) : null;
+    const searchInput = document.getElementById("search-input");
+    const searchClear = document.getElementById("search-clear");
+    const searchLimit = document.getElementById("search-limit");
+    let searchTimeout;
+    let isSearching = false;
 
-    if (sharedTitle) {
-        await renderNewArticleCard(sharedTitle, null, null, language, true);
+    async function executeSearch() {
+        const query = searchInput.value.trim();
+        if (!query) {
+            resetToRandomFeed();
+            return;
+        }
+
+        isSearching = true;
+        searchClear.style.display = "block";
+        const limit = parseInt(searchLimit.value) || 10;
+        const div1 = document.getElementById("div1");
+        div1.innerHTML = ""; // Clear current articles
+
+        try {
+            const searchUrl = `https://${language}.wikipedia.org/w/rest.php/v1/search/title?q=${encodeURIComponent(query)}&limit=${limit}`;
+            const response = await fetch(searchUrl);
+            const data = await response.json();
+
+            if (!data.pages || data.pages.length === 0) {
+                div1.innerHTML = '<div style="text-align: center; color: #888; padding: 40px;">No articles found for "' + query + '"</div>';
+                return;
+            }
+
+            // Batch-Streaming render as specified
+            const batchSize = (limit === 1) ? 1 : (limit <= 10 ? 5 : 10);
+            for (let i = 0; i < data.pages.length; i += batchSize) {
+                const batch = data.pages.slice(i, i + batchSize);
+                await Promise.all(batch.map(p => renderNewArticleCard(p.title, null, null, language, false, false)));
+                // Small delay to ensure the "streaming" feel
+                if (i + batchSize < data.pages.length) {
+                    await new Promise(r => setTimeout(r, 100));
+                }
+            }
+        } catch (error) {
+            console.error("Search failed:", error);
+            div1.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 40px;">Search failed. Please try again.</div>';
+        }
     }
 
-    await Promise.all([
-        renderNewArticleCard(null, null, null, language),
-        renderNewArticleCard(null, null, null, language),
-        renderNewArticleCard(null, null, null, language)
-    ]);
-})();
-
-window.addEventListener("scroll", () => {
-    updateScrollSpeed();
-
-    const multiplier = getScrollMultiplier();
-    const dynamicThreshold = BASE_SCROLL_THRESHOLD * multiplier;
-    const hasReachedBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - dynamicThreshold;
-
-    if (hasReachedBottom) {
-        appendCards(Math.ceil(multiplier));
+    function resetToRandomFeed() {
+        isSearching = false;
+        searchInput.value = "";
+        searchClear.style.display = "none";
+        document.getElementById("div1").innerHTML = "";
+        startFeed();
     }
-});
+
+    searchInput.addEventListener("input", () => {
+        clearTimeout(searchTimeout);
+        if (searchInput.value.trim().length > 0) {
+            searchClear.style.display = "block";
+        } else {
+            searchClear.style.display = "none";
+        }
+        searchTimeout = setTimeout(executeSearch, 300);
+    });
+
+    searchClear.addEventListener("click", resetToRandomFeed);
+    searchLimit.addEventListener("change", () => {
+        if (searchInput.value.trim()) executeSearch();
+    });
+
+    async function startFeed() {
+        const hash = window.location.hash.substring(1);
+        const sharedTitle = hash ? decodeURIComponent(hash) : null;
+
+        if (sharedTitle) {
+            await renderNewArticleCard(sharedTitle, null, null, language, true);
+        }
+
+        await Promise.all([
+            renderNewArticleCard(null, null, null, language),
+            renderNewArticleCard(null, null, null, language),
+            renderNewArticleCard(null, null, null, language)
+        ]);
+    }
+
+    startFeed();
+
+    window.addEventListener("scroll", () => {
+        if (isSearching) return;
+        updateScrollSpeed();
+
+        const multiplier = getScrollMultiplier();
+        const dynamicThreshold = BASE_SCROLL_THRESHOLD * multiplier;
+        const hasReachedBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight - dynamicThreshold;
+
+        if (hasReachedBottom) {
+            appendCards(Math.ceil(multiplier));
+        }
+    });
+}

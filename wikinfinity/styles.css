@@ -48,3 +48,46 @@ body {
     overflow: hidden;
     margin-bottom: 24px;
 }
+
+.search-container {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    margin: 0 16px;
+    position: relative;
+}
+
+#search-input {
+    width: 100%;
+    padding: 8px 36px 8px 20px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 14px;
+    outline: none;
+    background: white;
+}
+
+#search-clear {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #999;
+    cursor: pointer;
+    display: none;
+    padding: 0;
+    line-height: 1;
+}
+
+#search-limit {
+    padding: 6px 4px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    background: white;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    margin-right: 12px;
+    color: #666;
+}
