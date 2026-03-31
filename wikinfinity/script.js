@@ -223,8 +223,8 @@ async function renderNewArticleCard(searchTitle = null, sourceArticleTitle = nul
 
             if (shareBtn) {
                 event.stopPropagation();
-                const currentBase = window.location.href.split('#')[0].replace(/\/$/, "");
-                const shareUrl = currentBase + '#' + encodeURIComponent(internalTitle);
+                const currentBase = window.location.href.split('#')[0].replace(/\/$/, "").replace(/\/index\.html$/, "");
+                const shareUrl = currentBase + '/share#' + encodeURIComponent(internalTitle);
                 const shareData = {
                     title: displayText,
                     text: `Check out this article: ${displayText}`,
