@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404 - Not Found</title>
-    <!-- We use absolute paths (starting with /) so they work from any sub-url -->
     <link rel="stylesheet" href="/style.css">
     <style>
         :root {
-            --wiki-accent: #00aff4;
+            --wiki-accent: #333;
+            --wiki-bg: #f8f9fa;
             --me-accent: #eb459e;
         }
 
@@ -19,12 +19,14 @@
             justify-content: center;
             text-align: center;
             padding: 20px;
-            transition: background 0.3s ease;
+            transition: background 0.3s ease, color 0.3s ease;
+            margin: 0;
         }
 
         .error-container {
             max-width: 500px;
             animation: fadeIn 0.5s ease;
+            z-index: 10;
         }
 
         h1 { font-size: 5rem; margin: 0; color: var(--accent); line-height: 1; }
@@ -44,9 +46,13 @@
         .btn-home:hover { filter: brightness(1.2); }
 
         /* WIKINFINITY VARIANT */
-        body.theme-wiki { background: #0f1012; }
-        body.theme-wiki h1 { color: var(--wiki-accent); font-family: serif; font-style: italic; }
-        body.theme-wiki .btn-home { background: var(--wiki-accent); border-radius: 0; border: 1px solid white; }
+        body.theme-wiki { background: var(--wiki-bg); color: #333; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body.theme-wiki h1 { color: #333; font-weight: 300; }
+        body.theme-wiki h2 { color: #555; }
+        body.theme-wiki p { color: #777; }
+        body.theme-wiki .btn-home { background: white; color: #333; border: 1px solid #ddd; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        body.theme-wiki .wiki-top-bar { position: fixed; top: 0; left: 0; width: 100%; height: 50px; background: white; border-bottom: 1px solid #eee; display: flex; align-items: center; padding: 0 20px; box-sizing: border-box; }
+        body.theme-wiki .wiki-logo { font-weight: 700; color: #333; letter-spacing: -0.5px; }
 
         /* ME VARIANT */
         body.theme-me { background: #110914; }
@@ -60,6 +66,7 @@
     </style>
 </head>
 <body>
+    <div id="wiki-header"></div>
     <div class="error-container">
         <h1 id="err-code">404</h1>
         <h2 id="err-title">Lost in the void?</h2>
@@ -70,28 +77,28 @@
     <script>
         const path = window.location.pathname;
         const body = document.body;
+        const code = document.getElementById('err-code');
         const title = document.getElementById('err-title');
         const desc = document.getElementById('err-desc');
         const btn = document.getElementById('err-btn');
+        const header = document.getElementById('wiki-header');
 
         if (path.startsWith('/wikinfinity/')) {
-            // WIKINFINITY LOOK
             body.classList.add('theme-wiki');
-            title.innerText = "Fragment Not Found";
-            desc.innerText = "The requested information has not been cataloged in the Infinity Wiki yet.";
-            btn.innerText = "Return to Archives";
+            header.innerHTML = '<div class="wiki-top-bar"><span class="wiki-logo">WikiInfinity</span></div>';
+            code.innerText = "404";
+            title.innerText = "Not Found";
+            desc.innerText = "How did you get here? Did you doomscroll too much?";
+            btn.innerText = "Go Back";
             btn.href = "/wikinfinity/";
         } 
         else if (path.startsWith('/me/')) {
-            // ME/ LOOK
             body.classList.add('theme-me');
             title.innerText = "oops, wrong door";
             desc.innerText = "i haven't built this part of my space yet. come back later?";
             btn.innerText = "go home";
             btn.href = "/me/";
         }
-        // DEFAULT ROOT LOOK
-        // Uses standard style.css variables and Discord-vibe.
     </script>
 </body>
 </html>
