@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Beta Embed Maker</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="emoji_picker.css">
     <style>
         body {
             background: var(--bg-primary);
@@ -113,6 +114,9 @@
         .msg-time { font-size: 0.75rem; color: var(--text-muted); }
 
         .msg-content { color: #dbdee1; font-size: 0.95rem; line-height: 1.4; margin-bottom: 0.5rem; white-space: pre-wrap; word-break: break-word; }
+        .msg-content.jumboable { font-size: 40px; line-height: 1.2; }
+        .msg-content.jumboable img { width: 40px; height: 40px; }
+        .md-subtext { font-size: 11px; color: #949ba4; margin-top: 4px; }
 
         .embed-card {
             background: #2b2d31;
@@ -125,8 +129,13 @@
         .embed-author { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
         .embed-author img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
         .embed-author span { font-weight: 600; font-size: 0.85rem; color: white; }
+        .embed-author a { color: white; text-decoration: none; }
+        .embed-author a:hover { text-decoration: underline; }
 
         .embed-title { font-weight: 700; color: white; margin-bottom: 0.5rem; font-size: 1rem; word-break: break-word; }
+        .embed-title a { color: #00aff4; text-decoration: none; }
+        .embed-title a:hover { text-decoration: underline; }
+        
         .embed-desc { color: #dbdee1; font-size: 0.9rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; margin-bottom: 1rem; }
 
         .embed-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
@@ -154,6 +163,29 @@
         .placeholder-list code { background: var(--bg-tertiary); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--accent); font-family: monospace; }
         
         .discord-mention { background: rgba(88, 101, 242, 0.3); color: #dee0fc; padding: 0 2px; border-radius: 3px; font-weight: 500; }
+
+        /* New additions for functionality */
+        .emoji-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+        .emoji-btn:hover { color: white; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: var(--bg-secondary); padding: 2rem; border-radius: 8px; border: 1px solid var(--border); max-width: 400px; text-align: center; position: relative; }
+        .close-btn { position: absolute; top: 10px; right: 15px; cursor: pointer; color: var(--text-muted); font-size: 1.5rem; }
+        .close-btn:hover { color: white; }
+        
+        .json-output { background: var(--bg-dark); padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.8rem; white-space: pre-wrap; word-break: break-all; margin-top: 1rem; max-height: 200px; overflow-y: auto; color: #dbdee1; border: 1px solid var(--border); display: none; text-align: left; }
+        .btn-row { display: flex; gap: 0.5rem; margin-top: 1.5rem; }
+        
+        .md-blockquote { border-left: 4px solid #4e5058; padding-left: 12px; margin: 4px 0; color: #b5bac1; }
+        .md-header { margin: 8px 0 4px; font-weight: 700; color: #ffffff; }
+        .md-h1 { font-size: 24px; } .md-h2 { font-size: 20px; } .md-h3 { font-size: 16px; }
+        .md-list-item { margin-left: 16px; list-style-position: inside; display: list-item; }
+        .md-list-item.md-ol { list-style-type: decimal; }
+        .md-link { color: #00aff4; text-decoration: none; }
+        .md-link:hover { text-decoration: underline; }
+        .md-spoiler { background: #1e1f22; color: transparent; padding: 0 4px; border-radius: 3px; cursor: pointer; transition: all 0.1s; }
+        .md-spoiler.revealed { background: #4e5058; color: #dcddde; }
     </style>
 </head>
 <body>
@@ -166,17 +198,42 @@
         </div>
         
         <div class="editor-content" id="scroll-container">
+            <h3 style="margin-top:0; font-size: 1rem;">App Settings</h3>
+            <div class="form-group">
+                <div class="flex gap-2">
+                    <div style="flex:1;">
+                        <label>App Name <span class="char-count" id="c-app-name">0 / 32</span></label>
+                        <input type="text" class="input" id="in-webhook-name" placeholder="Welcomer" maxlength="32">
+                    </div>
+                    <div style="flex:1;">
+                        <label>App Icon URL</label>
+                        <input type="text" class="input" id="in-webhook-icon" placeholder="https://example.com/icon.png">
+                    </div>
+                </div>
+            </div>
+
+            <hr style="border:none; border-top:1px solid var(--border); margin: 1.5rem 0;">
+
             <div class="tabs" id="embed-tabs"></div>
 
             <div class="form-group" id="msg-content-group">
                 <label>Message Content (Outside Embed) <span class="char-count" id="c-msg">0 / 2000</span></label>
-                <textarea class="textarea" id="in-content" rows="3" placeholder="Hey {mention}, welcome to {server}!"></textarea>
+                <div class="flex gap-2">
+                    <textarea class="textarea" id="in-content" rows="3" placeholder="Hey {mention}, welcome to {server}!" style="flex:1;"></textarea>
+                    <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)" style="align-self: flex-start; margin-top: 5px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                    </button>
+                </div>
                 
                 <details style="margin-top:0.5rem;">
                     <summary>View Available Variables</summary>
                     <div class="placeholder-list">
-                        <code>{mention}</code> <code>{username}</code> <code>{server}</code> <code>{membercount}</code> <code>{channellink}</code>
-                        <code>{date}</code> <code>{time}</code> <code>{join_method}</code> <code>{invite_link}</code> <code>{time_to_return}</code>
+                        <code>{mention}</code> <code>{username}</code> <code>{displayname}</code> <code>{userid}</code>
+                        <code>{server}</code> <code>{servername}</code> <code>{serverid}</code> <code>{membercount}</code>
+                        <code>{channel}</code> <code>{channellink}</code>
+                        <code>{date}</code> <code>{time}</code>
+                        <code>{profileurl}</code> <code>{profileopenurl}</code>
+                        <code>{join_method}</code> <code>{invite_link}</code> <code>{time_to_return}</code>
                     </div>
                 </details>
             </div>
@@ -189,21 +246,40 @@
             </div>
 
             <div class="form-group">
-                <label>Author</label>
+                <label>Author <span class="char-count" id="c-author">0 / 256</span></label>
                 <div class="flex gap-2" style="margin-bottom:0.5rem;">
-                    <input type="text" class="input" id="in-author-name" placeholder="Name" style="flex:1;">
-                    <input type="text" class="input" id="in-author-icon" placeholder="Icon URL" style="flex:1;">
+                    <div style="flex:1; display:flex; gap:4px; align-items:center;">
+                        <input type="text" class="input" id="in-author-name" placeholder="Name" style="flex:1;" maxlength="256">
+                        <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                        </button>
+                    </div>
+                    <input type="text" class="input" id="in-author-url" placeholder="Author URL" style="flex:1;">
+                </div>
+                <input type="text" class="input" id="in-author-icon" placeholder="Icon URL" style="width:100%;">
+            </div>
+
+            <div class="form-group">
+                <label>Title <span class="char-count" id="c-title">0 / 256</span></label>
+                <div class="flex gap-2">
+                    <div style="flex:1; display:flex; gap:4px; align-items:center;">
+                        <input type="text" class="input" id="in-title" placeholder="Embed Title" style="flex:1;" maxlength="256">
+                        <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                        </button>
+                    </div>
+                    <input type="text" class="input" id="in-title-url" placeholder="Title URL" style="flex:1;">
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Title</label>
-                <input type="text" class="input" id="in-title" placeholder="Embed Title">
-            </div>
-
-            <div class="form-group">
-                <label>Description</label>
-                <textarea class="textarea" id="in-desc" rows="4" placeholder="Embed Description"></textarea>
+                <label>Description <span class="char-count" id="c-desc">0 / 4096</span></label>
+                <div class="flex gap-2">
+                    <textarea class="textarea" id="in-desc" rows="4" placeholder="Embed Description" maxlength="4096" style="flex:1;"></textarea>
+                    <button type="button" class="emoji-btn" style="align-self: flex-start; margin-top: 5px;" onclick="openEmojiPicker(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                    </button>
+                </div>
             </div>
 
             <div class="form-group">
@@ -215,10 +291,19 @@
             </div>
 
             <div class="form-group">
-                <label>Footer</label>
-                <div class="flex gap-2">
-                    <input type="text" class="input" id="in-footer-text" placeholder="Footer Text" style="flex:1;">
+                <label>Footer <span class="char-count" id="c-footer">0 / 2048</span></label>
+                <div class="flex gap-2" style="margin-bottom:0.5rem;">
+                    <div style="flex:1; display:flex; gap:4px; align-items:center;">
+                        <input type="text" class="input" id="in-footer-text" placeholder="Footer Text" style="flex:1;" maxlength="2048">
+                        <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                        </button>
+                    </div>
                     <input type="text" class="input" id="in-footer-icon" placeholder="Icon URL" style="flex:1;">
+                </div>
+                <div class="flex gap-2" style="align-items: center;">
+                    <label style="margin:0; flex:1;">Timestamp</label>
+                    <input type="datetime-local" class="input" id="in-timestamp" style="flex:2;">
                 </div>
             </div>
 
@@ -228,6 +313,14 @@
                     <button class="btn btn-primary" style="padding: 5px 10px;" onclick="addField()">+ Add Field</button>
                 </div>
                 <div id="fields-list"></div>
+            </div>
+
+            <div class="form-group" style="margin-top: 2rem;">
+                <div class="btn-row">
+                    <button class="btn btn-primary" onclick="generateJSON()">Generate JSON</button>
+                    <button class="btn" style="background:var(--bg-tertiary);" onclick="copyJSON()">Copy</button>
+                </div>
+                <div class="json-output" id="json-output"></div>
             </div>
 
         </div>
@@ -240,7 +333,7 @@
                 <div class="msg-header">
                     <span class="bot-name" id="pv-bot-name">Welcomer</span>
                     <span class="bot-tag">APP</span>
-                    <span class="msg-time">Today at 12:00 PM</span>
+                    <span class="msg-time" id="pv-msg-timestamp">Today at --:--</span>
                 </div>
                 <div class="msg-content" id="pv-content"></div>
                 <div id="pv-embeds-container"></div>
@@ -248,8 +341,20 @@
         </div>
     </div>
 
+    <div id="limit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="document.getElementById('limit-modal').classList.remove('show')">&times;</span>
+            <h3 style="color: var(--danger); margin-bottom: 10px;">Limit Reached</h3>
+            <p style="color: #dcddde; margin-bottom: 20px;"></p>
+            <button class="btn btn-primary" onclick="document.getElementById('limit-modal').classList.remove('show')">OK</button>
+        </div>
+    </div>
+
+    <script src="emojis.js"></script>
+    <script src="emoji_picker.js"></script>
+
     <script>
-        const LIMITS = { msg: 2000, title: 256, desc: 4096, fieldName: 256, fieldValue: 1024, footer: 2048, author: 256, total: 6000 };
+        const LIMITS = { appName: 32, msg: 2000, title: 256, desc: 4096, fieldName: 256, fieldValue: 1024, footer: 2048, author: 256, total: 6000 };
         const MAX_FIELDS = 25;
         const MAX_EMBEDS = 10;
 
@@ -264,14 +369,43 @@
         const MOCK = {
             '{mention}': '<span class="discord-mention">@username</span>',
             '{username}': 'username',
+            '{displayname}': 'User 1',
+            '{userid}': '123456789012345678',
             '{server}': 'My Server',
+            '{servername}': 'My Server',
+            '{serverid}': '987654321098765432',
             '{membercount}': '1,234',
+            '{channel}': 'general',
             '{channellink}': '<span class="discord-mention">#general</span>',
             '{date}': new Date().toLocaleDateString(),
             '{time}': new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            '{profileurl}': 'https://discord.com/users/123456789',
+            '{profileopenurl}': 'https://discord.com/users/123456789',
             '{join_method}': 'Invite Link',
             '{invite_link}': 'https://discord.gg/abc',
             '{time_to_return}': '5 days'
+        };
+
+        const REG = {
+            '&lt;#(\\d+)&gt;': (match, id) => {
+                let name = '<em>unknown</em>';
+                if (typeof parent !== 'undefined' && parent.window && parent.window.GLOBAL_CHANNELS) {
+                    const ch = parent.window.GLOBAL_CHANNELS.find(c => c.id === id);
+                    if (ch) name = escapeHtml(ch.name);
+                }
+                return `<span class="discord-mention">#${name}</span>`;
+            },
+            '&lt;@&amp;(\\d+)&gt;': (match, id) => {
+                let name = '<em>role</em>';
+                if (typeof parent !== 'undefined' && parent.window && parent.window.GLOBAL_ROLES) {
+                    const role = parent.window.GLOBAL_ROLES.find(r => r.id === id);
+                    if (role) name = escapeHtml(role.name);
+                }
+                return `<span class="discord-mention">@${name}</span>`;
+            },
+            '&lt;@!?(\\d+)&gt;': (match, id) => {
+                return `<span class="discord-mention">@username</span>`;
+            }
         };
 
         function parseText(t) {
@@ -280,17 +414,74 @@
             for (const [k, v] of Object.entries(MOCK)) {
                 r = r.split(k).join(v);
             }
+            
+            for (const [k, v] of Object.entries(REG)) {
+                let re = new RegExp(k, "g");
+                r = r.replace(re, v);
+            }
+
+            const inlineCodePlaceholders = [];
+            
+            r = r.replace(/&lt;(a?):(\w+):(\d+)&gt;/g, (match, animated, name, id) => {
+                const ext = animated ? 'gif' : 'png';
+                return `<img src="https://cdn.discordapp.com/emojis/${id}.${ext}" alt=":${name}:" style="width: 1.375em; height: 1.375em; vertical-align: bottom;">`;
+            });
+
+            r = r.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
+                const ph = `__CODEBLOCK${inlineCodePlaceholders.length}__`;
+                inlineCodePlaceholders.push(`<pre style="background:#2b2d31; padding:8px; border-radius:4px; overflow-x:auto; font-family:monospace; font-size:13px; margin:4px 0; white-space:pre-wrap;"><code>${code.trim()}</code></pre>`);
+                return ph;
+            });
+            r = r.replace(/`([^`]+)`/g, (match, code) => {
+                const ph = `__CODEBLOCK${inlineCodePlaceholders.length}__`;
+                inlineCodePlaceholders.push(`<code style="background:#2b2d31; padding:2px 4px; border-radius:3px; font-family:monospace; font-size:85%;">${code}</code>`);
+                return ph;
+            });
+
             r = r.replace(/\\n/g, '\n');
+            
+            r = r.replace(/^-#\s+(.+)$/gm, '<div class="md-subtext">$1</div>');
+
+            r = r.replace(/^&gt;&gt;&gt;\s?([\s\S]+)$/gm, '<blockquote class="md-blockquote">$1</blockquote>');
+            r = r.replace(/^&gt;\s?(.+)$/gm, '<div class="md-blockquote">$1</div>');
+            r = r.replace(/^###\s+(.+)$/gm, '<h3 class="md-header md-h3">$1</h3>');
+            r = r.replace(/^##\s+(.+)$/gm, '<h2 class="md-header md-h2">$1</h2>');
+            r = r.replace(/^#\s+(.+)$/gm, '<h1 class="md-header md-h1">$1</h1>');
+            r = r.replace(/^[\-\*]\s+(.+)$/gm, '<li class="md-list-item">$1</li>');
+            r = r.replace(/^\d+\.\s+(.+)$/gm, '<li class="md-list-item md-ol">$1</li>');
+            r = r.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="md-link" target="_blank">$1</a>');
+            r = r.replace(/\|\|([^|]+)\|\|/g, '<span class="md-spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+            
+            r = r.replace(/\*\*\*__(.+?)__\*\*\*/g, '<strong><em><u>$1</u></em></strong>');
+            r = r.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+            r = r.replace(/\*\*__(.+?)__\*\*/g, '<strong><u>$1</u></strong>');
+            r = r.replace(/~~\*\*(.+?)\*\*~~/g, '<del><strong>$1</strong></del>');
             r = r.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            r = r.replace(/\*(.*?)\*/g, '<em>$1</em>');
             r = r.replace(/__(.*?)__/g, '<u>$1</u>');
+            r = r.replace(/(?<!\*)\*(.*?)\*(?!\*)/g, '<em>$1</em>');
+            r = r.replace(/(?<!_)_(.*?)_(?!_)/g, '<em>$1</em>');
             r = r.replace(/~~(.*?)~~/g, '<del>$1</del>');
-            r = r.replace(/`(.*?)`/g, '<code style="background:#1e1f22; padding:2px 4px; border-radius:3px;">$1</code>');
+            
+            r = r.replace(/\n/g, '<br>');
+            
+            inlineCodePlaceholders.forEach((code, i) => {
+                r = r.replace(`__CODEBLOCK${i}__`, code);
+            });
             return r;
         }
 
         function createEmptyEmbed() {
-            return { title: "", description: "", color: 5793266, author: {}, thumbnail: {}, image: {}, footer: {}, fields: [] };
+            return { title: "", url: "", description: "", color: 5793266, author: { name:"", icon_url:"", url:"" }, thumbnail: {}, image: {}, footer: {}, fields: [], timestamp: "" };
+        }
+
+        function formatTimestamp(isoString) {
+            if (!isoString) return '';
+            const date = new Date(isoString);
+            const now = new Date();
+            const isToday = date.toDateString() === now.toDateString();
+            const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (isToday) return `Today at ${time}`;
+            return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + time;
         }
 
         function init() {
@@ -322,14 +513,26 @@
         function addEmbed() { saveCurrent(); globalData.embeds.push(createEmptyEmbed()); activeIdx = globalData.embeds.length - 1; loadCurrent(); updateUI(); }
         function removeEmbed() { globalData.embeds.splice(activeIdx, 1); activeIdx = Math.max(0, activeIdx - 1); loadCurrent(); updateUI(); }
 
+        function updateCounter(id, count, limit) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerText = `${count} / ${limit}`;
+            el.classList.toggle('warning', count > limit * 0.9);
+            el.classList.toggle('error', count > limit);
+        }
+
         function saveCurrent() {
+            globalData.username = document.getElementById("in-webhook-name").value;
+            globalData.avatar_url = document.getElementById("in-webhook-icon").value;
             globalData.content = document.getElementById("in-content").value;
             const e = globalData.embeds[activeIdx];
             e.title = document.getElementById("in-title").value;
+            e.url = document.getElementById("in-title-url").value;
             e.description = document.getElementById("in-desc").value;
             e.color = parseInt(document.getElementById("in-color").value.replace("#", ""), 16);
+            e.timestamp = document.getElementById("in-timestamp").value;
             
-            e.author = { name: document.getElementById("in-author-name").value, icon_url: document.getElementById("in-author-icon").value };
+            e.author = { name: document.getElementById("in-author-name").value, icon_url: document.getElementById("in-author-icon").value, url: document.getElementById("in-author-url").value };
             e.thumbnail = { url: document.getElementById("in-thumb").value };
             e.image = { url: document.getElementById("in-image").value };
             e.footer = { text: document.getElementById("in-footer-text").value, icon_url: document.getElementById("in-footer-icon").value };
@@ -345,16 +548,21 @@
         }
 
         function loadCurrent() {
+            document.getElementById("in-webhook-name").value = globalData.username || "";
+            document.getElementById("in-webhook-icon").value = globalData.avatar_url || "";
             document.getElementById("in-content").value = globalData.content || "";
             document.getElementById("msg-content-group").style.display = activeIdx === 0 ? "block" : "none";
 
             const e = globalData.embeds[activeIdx];
             document.getElementById("in-title").value = e.title || "";
+            document.getElementById("in-title-url").value = e.url || "";
             document.getElementById("in-desc").value = e.description || "";
             document.getElementById("in-color").value = e.color ? "#" + e.color.toString(16).padStart(6, "0") : "#5865f2";
+            document.getElementById("in-timestamp").value = e.timestamp || "";
             
             document.getElementById("in-author-name").value = e.author?.name || "";
             document.getElementById("in-author-icon").value = e.author?.icon_url || "";
+            document.getElementById("in-author-url").value = e.author?.url || "";
             document.getElementById("in-thumb").value = e.thumbnail?.url || "";
             document.getElementById("in-image").value = e.image?.url || "";
             document.getElementById("in-footer-text").value = e.footer?.text || "";
@@ -363,7 +571,6 @@
             const fc = document.getElementById("fields-list");
             fc.innerHTML = (e.fields || []).map((f, i) => createFieldHTML(f.name, f.value, f.inline, i)).join("");
             
-            // Re-attach listeners for dynamically created fields
             fc.querySelectorAll('input, textarea').forEach(el => {
                 el.addEventListener('input', () => { saveCurrent(); updateUI(); });
             });
@@ -375,13 +582,25 @@
                     <button class="btn-remove-field" onclick="this.parentElement.remove(); saveCurrent(); updateUI();">×</button>
                     <div class="flex gap-2 mb-2">
                         <div style="flex:1;">
-                            <input type="text" class="input f-name" placeholder="Field Name" value="${escapeHtml(n)}">
+                            <label>Field Name <span class="char-count f-count-name">0 / 256</span></label>
+                            <div class="flex gap-2">
+                                <input type="text" class="input f-name" placeholder="Field Name" value="${escapeHtml(n)}" maxlength="256" style="flex:1;">
+                                <button type="button" class="emoji-btn" onclick="openEmojiPicker(this)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                                </button>
+                            </div>
                         </div>
-                        <label class="flex items-center gap-2" style="margin:0; text-transform:none;">
+                        <label class="flex items-center gap-2" style="margin:0; text-transform:none; align-self: flex-end; padding-bottom: 10px;">
                             <input type="checkbox" class="f-inline" ${i ? 'checked' : ''}> Inline
                         </label>
                     </div>
-                    <textarea class="textarea f-val" rows="2" placeholder="Field Value">${escapeHtml(v)}</textarea>
+                    <label>Field Value <span class="char-count f-count-val">0 / 1024</span></label>
+                    <div class="flex gap-2">
+                        <textarea class="textarea f-val" rows="2" placeholder="Field Value" maxlength="1024" style="flex:1;">${escapeHtml(v)}</textarea>
+                        <button type="button" class="emoji-btn" style="align-self: flex-start; margin-top: 5px;" onclick="openEmojiPicker(this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                        </button>
+                    </div>
                 </div>
             `;
         }
@@ -394,13 +613,42 @@
             loadCurrent();
             updateUI();
             
-            // Scroll to bottom of fields
             const scroll = document.getElementById('scroll-container');
             scroll.scrollTop = scroll.scrollHeight;
         }
 
         function updateUI() {
             renderTabs();
+            
+            updateCounter("c-app-name", (globalData.username || "").length, LIMITS.appName);
+            updateCounter("c-msg", (globalData.content || "").length, LIMITS.msg);
+            
+            const e = globalData.embeds[activeIdx];
+            updateCounter("c-author", (e.author?.name || "").length, LIMITS.author);
+            updateCounter("c-title", (e.title || "").length, LIMITS.title);
+            updateCounter("c-desc", (e.description || "").length, LIMITS.desc);
+            updateCounter("c-footer", (e.footer?.text || "").length, LIMITS.footer);
+
+            document.querySelectorAll('.field-editor').forEach((el, i) => {
+                const nameLen = el.querySelector('.f-name').value.length;
+                const valLen = el.querySelector('.f-val').value.length;
+                el.querySelector('.f-count-name').innerText = `${nameLen} / ${LIMITS.fieldName}`;
+                el.querySelector('.f-count-val').innerText = `${valLen} / ${LIMITS.fieldValue}`;
+            });
+
+            let total = (globalData.content || "").length;
+            globalData.embeds.forEach(em => {
+                total += (em.title || "").length;
+                total += (em.description || "").length;
+                total += (em.footer?.text || "").length;
+                total += (em.author?.name || "").length;
+                (em.fields || []).forEach(f => {
+                    total += (f.name || "").length;
+                    total += (f.value || "").length;
+                });
+            });
+            updateCounter("total-limit", total, LIMITS.total);
+
             document.getElementById("field-count").innerText = (globalData.embeds[activeIdx].fields || []).length;
             
             const pvName = document.getElementById("pv-bot-name");
@@ -409,8 +657,24 @@
             if (globalData.avatar_url) pvIcon.innerHTML = `<img src="${globalData.avatar_url}" onerror="this.style.display='none'; this.parentElement.innerText='W';">`;
             else pvIcon.innerText = pvName.innerText.charAt(0).toUpperCase();
 
-            document.getElementById("pv-content").innerHTML = parseText(globalData.content);
-            document.getElementById("pv-content").style.display = globalData.content ? "block" : "none";
+            const now = new Date();
+            document.getElementById("pv-msg-timestamp").innerText = `Today at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+            const pvContent = document.getElementById("pv-content");
+            pvContent.innerHTML = parseText(globalData.content);
+            pvContent.style.display = globalData.content ? "block" : "none";
+
+            // Jumbo Emojis
+            if (globalData.content && globalData.content.trim()) {
+                const stripped = globalData.content.replace(/<(a?):[a-zA-Z0-9_]+:\d+>/g, '').replace(/[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\u{200D}\u{FE0F}]/gu, '').replace(/\s+/g, '');
+                if (stripped === "") {
+                    pvContent.classList.add('jumboable');
+                } else {
+                    pvContent.classList.remove('jumboable');
+                }
+            } else {
+                pvContent.classList.remove('jumboable');
+            }
 
             const ec = document.getElementById("pv-embeds-container");
             ec.innerHTML = globalData.embeds.map(e => {
@@ -422,14 +686,19 @@
                 if (e.author?.name) {
                     h += `<div class="embed-author">`;
                     if (e.author.icon_url) h += `<img src="${escapeHtml(e.author.icon_url)}" onerror="this.style.display='none'">`;
-                    h += `<span>${parseText(e.author.name)}</span></div>`;
+                    if (e.author.url) h += `<a href="${escapeHtml(e.author.url)}" target="_blank"><span>${parseText(e.author.name)}</span></a></div>`;
+                    else h += `<span>${parseText(e.author.name)}</span></div>`;
                 }
 
                 if (e.thumbnail?.url) {
                     h += `<img class="embed-thumb" src="${escapeHtml(e.thumbnail.url)}" onerror="this.style.display='none'">`;
                 }
 
-                if (e.title) h += `<div class="embed-title">${parseText(e.title)}</div>`;
+                if (e.title) {
+                    if (e.url) h += `<div class="embed-title"><a href="${escapeHtml(e.url)}" target="_blank">${parseText(e.title)}</a></div>`;
+                    else h += `<div class="embed-title">${parseText(e.title)}</div>`;
+                }
+                
                 if (e.description) h += `<div class="embed-desc">${parseText(e.description)}</div>`;
 
                 if (e.fields && e.fields.length > 0) {
@@ -448,10 +717,13 @@
                     h += `<img class="embed-image" src="${escapeHtml(e.image.url)}" onerror="this.style.display='none'">`;
                 }
 
-                if (e.footer?.text) {
+                if (e.footer?.text || e.timestamp) {
                     h += `<div class="embed-footer">`;
-                    if (e.footer.icon_url) h += `<img src="${escapeHtml(e.footer.icon_url)}" onerror="this.style.display='none'">`;
-                    h += `<span>${parseText(e.footer.text)}</span></div>`;
+                    if (e.footer?.icon_url) h += `<img src="${escapeHtml(e.footer.icon_url)}" onerror="this.style.display='none'">`;
+                    if (e.footer?.text) h += `<span>${parseText(e.footer.text)}</span>`;
+                    if (e.footer?.text && e.timestamp) h += `<span style="margin: 0 4px;">•</span>`;
+                    if (e.timestamp) h += `<span>${formatTimestamp(e.timestamp)}</span>`;
+                    h += `</div>`;
                 }
 
                 h += `</div>`;
@@ -459,7 +731,53 @@
             }).join("");
         }
 
-        // Bridge functions for parent iframe
+        document.addEventListener('keydown', (e) => {
+            if (e.target.matches('input[type="text"], textarea')) {
+                if (e.target.id === 'in-content' || e.target.id === 'in-webhook-name' || e.target.id === 'in-webhook-icon') return;
+                const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End', 'Control', 'Meta', 'Alt', 'Shift'];
+                if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey || e.altKey) return;
+                
+                let totalText = document.getElementById("total-limit").innerText;
+                let total = parseInt(totalText.split(' /')[0]);
+                if (total >= LIMITS.total) {
+                    e.preventDefault();
+                    const totalEl = document.getElementById('total-limit');
+                    if (totalEl) {
+                        totalEl.style.color = "var(--danger)";
+                        setTimeout(() => totalEl.style.color = "var(--text-muted)", 200);
+                    }
+                }
+            }
+        });
+
+        document.addEventListener('paste', (e) => {
+            if (e.target.matches('input[type="text"], textarea')) {
+                if (e.target.id === 'in-content' || e.target.id === 'in-webhook-name' || e.target.id === 'in-webhook-icon') return;
+                
+                let totalText = document.getElementById("total-limit").innerText;
+                let total = parseInt(totalText.split(' /')[0]);
+                const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+                if (total + pasteData.length > LIMITS.total) {
+                    e.preventDefault();
+                    let modal = document.getElementById('limit-modal');
+                    modal.querySelector('p').innerText = "Cannot paste: Text would exceed the 6000 character embed limit.";
+                    modal.classList.add('show');
+                }
+            }
+        });
+
+        function generateJSON() {
+            const data = window.getEmbedData();
+            const output = document.getElementById('json-output');
+            output.innerText = JSON.stringify(data, null, 2);
+            output.style.display = 'block';
+        }
+
+        function copyJSON() {
+            const output = document.getElementById('json-output').innerText;
+            if (output) navigator.clipboard.writeText(output);
+        }
+
         window.loadEmbedData = function(data) {
             if (!data) return;
             globalData = { username: data.username || "", avatar_url: data.avatar_url || "", content: data.content || "", embeds: data.embeds || [] };
@@ -469,17 +787,33 @@
         window.getEmbedData = function() {
             saveCurrent();
             
-            // Clean up empty embeds and empty fields
             const cleanEmbeds = globalData.embeds.map(e => {
                 const ce = { ...e };
                 if (ce.fields) {
                     ce.fields = ce.fields.filter(f => f.name || f.value);
                     if (ce.fields.length === 0) delete ce.fields;
                 }
+                
                 if (ce.author && !ce.author.name) delete ce.author;
+                else if (ce.author) {
+                    if (!ce.author.icon_url) delete ce.author.icon_url;
+                    if (!ce.author.url) delete ce.author.url;
+                }
+                
                 if (ce.footer && !ce.footer.text) delete ce.footer;
+                else if (ce.footer && !ce.footer.icon_url) delete ce.footer.icon_url;
+                
                 if (ce.thumbnail && !ce.thumbnail.url) delete ce.thumbnail;
                 if (ce.image && !ce.image.url) delete ce.image;
+                
+                if (ce.timestamp) {
+                    ce.timestamp = new Date(ce.timestamp).toISOString();
+                } else {
+                    delete ce.timestamp;
+                }
+                
+                if (!ce.url) delete ce.url;
+
                 return ce;
             }).filter(e => e.title || e.description || e.author || e.footer || e.image || e.thumbnail || e.fields);
 
@@ -490,12 +824,10 @@
                 embeds: cleanEmbeds.length > 0 ? cleanEmbeds : undefined
             };
 
-            // Remove undefined top level keys
             Object.keys(result).forEach(k => result[k] === undefined && delete result[k]);
             return result;
         };
 
-        // If opened directly without parent
         if (window === window.top) {
             init();
         }
