@@ -186,6 +186,28 @@
         .md-link:hover { text-decoration: underline; }
         .md-spoiler { background: #1e1f22; color: transparent; padding: 0 4px; border-radius: 3px; cursor: pointer; transition: all 0.1s; }
         .md-spoiler.revealed { background: #4e5058; color: #dcddde; }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                height: auto;
+                overflow-y: auto;
+                padding: 0.5rem;
+            }
+            .editor-panel, .preview-panel {
+                flex: none;
+                width: 100%;
+                max-height: none;
+            }
+            .preview-panel {
+                margin-top: 1.5rem;
+                padding: 1rem;
+                justify-content: center;
+            }
+            .editor-panel {
+                height: 600px; /* Give the editor some fixed height on mobile so it's usable */
+            }
+        }
     </style>
 </head>
 <body>
