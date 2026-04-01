@@ -2,6 +2,7 @@ let GLOBAL_SETTINGS = {};
 let GLOBAL_CHANNELS = [];
 let GLOBAL_ROLES = [];
 let GLOBAL_COMMANDS = [];
+let GLOBAL_EMOJIS = { custom: [], unicode: {} };
 let SETTINGS_CONFIG = [];
 let isDirty = false;
 let PENDING_CHATBOTS = {};
@@ -34,6 +35,9 @@ async function initSettings() {
                 GLOBAL_CHANNELS = data.channels || [];
                 GLOBAL_ROLES = data.roles || [];
                 GLOBAL_COMMANDS = data.commands || [];
+                if (data.emojis) GLOBAL_EMOJIS.custom = data.emojis.custom || [];
+                if (typeof window.UNICODE_EMOJIS !== 'undefined') GLOBAL_EMOJIS.unicode = window.UNICODE_EMOJIS;
+                window.GLOBAL_EMOJIS = GLOBAL_EMOJIS;
                 Object.assign(GLOBAL_SETTINGS, data.permissions || {});
                 renderUI();
                 return;

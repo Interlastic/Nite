@@ -66,14 +66,16 @@ function renderEmojiContent(filter = "") {
 
     let emojis = { custom: [], unicode: {} };
 
-    if (typeof window.GLOBAL_EMOJIS !== 'undefined') {
-        emojis = window.GLOBAL_EMOJIS;
-    } else if (typeof GLOBAL_EMOJIS !== 'undefined') {
-        emojis = GLOBAL_EMOJIS;
-    } else if (typeof parent !== 'undefined' && typeof parent.GLOBAL_EMOJIS !== 'undefined') {
-        emojis = parent.GLOBAL_EMOJIS;
-    } else if (typeof parent !== 'undefined' && typeof parent.window.GLOBAL_EMOJIS !== 'undefined') {
-        emojis = parent.window.GLOBAL_EMOJIS;
+    // Merge parent custom emojis if they exist (since iframe has its own empty array)
+    if (typeof parent !== 'undefined' && parent.window && parent.window.GLOBAL_EMOJIS && parent.window.GLOBAL_EMOJIS.custom) {
+        emojis.custom = parent.window.GLOBAL_EMOJIS.custom;
+    }
+    
+    // Get unicode emojis from local or parent
+    if (typeof window.GLOBAL_EMOJIS !== 'undefined' && window.GLOBAL_EMOJIS.unicode) {
+        emojis.unicode = window.GLOBAL_EMOJIS.unicode;
+    } else if (typeof parent !== 'undefined' && parent.window && parent.window.GLOBAL_EMOJIS) {
+        emojis.unicode = parent.window.GLOBAL_EMOJIS.unicode;
     }
 
     let html = "";
@@ -85,7 +87,7 @@ function renderEmojiContent(filter = "") {
             html += `<div class="emoji-grid">`;
             customFiltered.forEach(e => {
                 const format = e.animated ? `<a:${e.name}:${e.id}>` : `<:${e.name}:${e.id}>`;
-                const content = e.url ? `<img src="${e.url}" title="${e.name}" alt="${e.name}">` : `<span>${e.name}</span>`;
+                const content = e.url ? `<img src="${e.url}" title="${e.name}" alt="${e.name}" loading="lazy">` : `<span>${e.name}</span>`;
                 html += `<div class="emoji-item" onclick="insertEmoji('${format}')">${content}</div>`;
             });
             html += `</div>`;
@@ -112,7 +114,15 @@ function renderEmojiContent(filter = "") {
                 html += `<div class="emoji-category-title">${cat}</div>`;
                 html += `<div class="emoji-grid" style="font-size:1.5rem;">`;
                 filtered.forEach(e => {
-                    html += `<div class="emoji-item" onclick="insertEmoji('${e}')">${e}</div>`;
+                    let twemojiFunc = window.getTwemojiUrl;
+                    if (!twemojiFunc && typeof parent !== 'undefined' && parent.window.getTwemojiUrl) {
+                        twemojiFunc = parent.window.getTwemojiUrl;
+                    }
+                    if (twemojiFunc) {
+                        html += `<div class="emoji-item" onclick="insertEmoji('${e}')"><img src="${twemojiFunc(e)}" alt="${e}" loading="lazy" onerror="this.outerHTML='${e}'"></div>`;
+                    } else {
+                        html += `<div class="emoji-item" onclick="insertEmoji('${e}')">${e}</div>`;
+                    }
                 });
                 html += `</div>`;
             }
