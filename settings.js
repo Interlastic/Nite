@@ -68,6 +68,12 @@ function renderUI() {
         pane.className = `tab-pane ${i === 0 ? '' : 'hide'}`;
         pane.innerHTML = renderSettings(tab.settings);
         viewport.appendChild(pane);
+
+        if (i === 0) {
+            setTimeout(() => {
+                pane.querySelectorAll("textarea").forEach(autoResize);
+            }, 150);
+        }
     });
 
     viewport.addEventListener("input", markDirty);
@@ -407,12 +413,23 @@ function saveCommandSettings(cmdName) {
     markDirty();
 }
 
+function autoResize(el) {
+    if (!el || el.scrollHeight === 0) return;
+    el.style.height = 'auto';
+    el.style.height = (el.scrollHeight + 2) + 'px';
+}
+
 function renderDict(s) {
     const data = GLOBAL_SETTINGS[s.key] || {};
     let rows = Object.entries(data).map(([k, v]) => `
         <div class="dict-row">
-            <input type="text" class="input dict-k" value="${escapeForHtml(k)}" placeholder="Key">
-            <textarea class="textarea dict-v" rows="1" placeholder="Value">${escapeForHtml(v)}</textarea>
+            <textarea class="textarea dict-k" rows="1" placeholder="Key" oninput="autoResize(this); markDirty()">${escapeForHtml(k)}</textarea>
+            <div class="dict-value-wrapper">
+                <textarea class="textarea dict-v" rows="1" placeholder="Value" oninput="autoResize(this); markDirty()">${escapeForHtml(v)}</textarea>
+                <button class="emoji-btn" style="margin-top: 5px;" onclick="openEmojiPicker(this)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                </button>
+            </div>
             <button class="btn btn-danger" onclick="this.parentElement.remove(); markDirty();" style="width: auto; padding: 5px 10px;">×</button>
         </div>
     `).join("");
@@ -428,19 +445,31 @@ function addDictRow(key) {
     const div = document.createElement("div");
     div.className = "dict-row";
     div.innerHTML = `
-        <input type="text" class="input dict-k" placeholder="Key">
-        <textarea class="textarea dict-v" rows="1" placeholder="Value"></textarea>
+        <textarea class="textarea dict-k" rows="1" placeholder="Key" oninput="autoResize(this); markDirty()"></textarea>
+        <div class="dict-value-wrapper">
+            <textarea class="textarea dict-v" rows="1" placeholder="Value" oninput="autoResize(this); markDirty()"></textarea>
+            <button class="emoji-btn" style="margin-top: 5px;" onclick="openEmojiPicker(this)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            </button>
+        </div>
         <button class="btn btn-danger" onclick="this.parentElement.remove(); markDirty();" style="width: auto; padding: 5px 10px;">×</button>
     `;
     container.appendChild(div);
     markDirty();
+    div.querySelectorAll("textarea").forEach(autoResize);
 }
 
 function switchTab(id, nav) {
     document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
     nav.classList.add("active");
     document.querySelectorAll(".tab-pane").forEach(el => el.classList.add("hide"));
-    document.getElementById(`tab-${id}`).classList.remove("hide");
+    const pane = document.getElementById(`tab-${id}`);
+    pane.classList.remove("hide");
+    
+    requestAnimationFrame(() => {
+        pane.querySelectorAll("textarea").forEach(autoResize);
+    });
+
     if (window.innerWidth <= 900) toggleSidebar();
 }
 

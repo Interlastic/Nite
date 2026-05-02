@@ -80,7 +80,14 @@ p { color: var(--text-secondary); font-size: 0.95rem; }
     padding: 10px;
     border-radius: 4px;
     font-size: 1rem;
+    line-height: 1.5;
     transition: border 0.2s;
+    resize: none;
+}
+
+.textarea {
+    overflow: hidden;
+    min-height: 44px !important;
 }
 
 .input:focus, .select:focus, .textarea:focus {
@@ -395,6 +402,11 @@ input:checked + .slider:before { transform: translateX(16px); }
     gap: 0.5rem;
     margin-bottom: 0.5rem;
     align-items: flex-start;
+}
+
+.dict-k {
+    flex: 1;
+    min-width: 0;
 }
 
 @media (max-width: 900px) {

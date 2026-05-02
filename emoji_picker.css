@@ -3,10 +3,12 @@
     align-items: flex-start;
     gap: 8px;
     flex: 1;
+    min-width: 0;
 }
 
-.dict-value-wrapper .dict-value {
+.dict-value-wrapper .dict-v {
     flex: 1;
+    min-width: 0;
 }
 
 .emoji-btn {
