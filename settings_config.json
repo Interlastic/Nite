@@ -209,6 +209,10 @@
         "key": "support_channels"
       },
       {
+        "type": "separator",
+        "text": "General AI Memory"
+      },
+      {
         "type": "title",
         "text": "AI Context"
       },

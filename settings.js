@@ -84,6 +84,7 @@ function renderSettings(list) {
     return list.map(s => {
         if (s.type === "header") return `<h2 style="margin: 2rem 0 1rem;">${s.text}</h2>`;
         if (s.type === "title") return `<h3 style="margin: 1.5rem 0 0.5rem; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase;">${s.text}</h3>`;
+        if (s.type === "separator") return `<div style="display:flex; align-items:center; gap:0.75rem; margin:1.5rem 0; color:#fff; font-size:1rem; font-weight:600;"><span style="flex:1; height:1px; background:linear-gradient(to right, transparent, var(--border), var(--border));"></span>${s.text}<span style="flex:1; height:1px; background:linear-gradient(to left, transparent, var(--border), var(--border));"></span></div>`;
         if (s.type === "text") return `<p style="${s.style || ''}">${s.text}</p>`;
         
         let html = `<div class="setting-card">`;
