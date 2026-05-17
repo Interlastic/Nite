@@ -1,5 +1,6 @@
 let GLOBAL_SETTINGS = {};
 let GLOBAL_CHANNELS = [];
+let GLOBAL_CATEGORIES = [];
 let GLOBAL_ROLES = [];
 let GLOBAL_COMMANDS = [];
 let GLOBAL_EMOJIS = { custom: [], unicode: {} };
@@ -33,6 +34,7 @@ async function initSettings() {
                 const data = await res.json();
                 GLOBAL_SETTINGS = data.settings || {};
                 GLOBAL_CHANNELS = data.channels || [];
+                GLOBAL_CATEGORIES = data.categories || [];
                 GLOBAL_ROLES = data.roles || [];
                 GLOBAL_COMMANDS = data.commands || [];
                 if (data.emojis) GLOBAL_EMOJIS.custom = data.emojis.custom || [];
@@ -136,6 +138,8 @@ function renderSettings(list) {
             html += renderChatbotList(s.key);
         } else if (s.type === "namedContentList") {
             html += renderNamedContentList(s);
+        } else if (s.type === "serverStats") {
+            html += renderServerStats(s.key);
         }
         html += `</div>`;
         return html;
@@ -310,6 +314,258 @@ function addNclRow(key) {
     container.appendChild(div);
     markDirty();
 }
+
+function getCategories() {
+    return GLOBAL_CATEGORIES || [];
+}
+
+function validateNoSpaces(input, errorId) {
+    const errorEl = document.getElementById(errorId + '-error') || document.getElementById(errorId + '-error');
+    if (input.value.includes(' ')) {
+        if (errorEl) errorEl.style.display = 'block';
+        input.style.borderColor = 'var(--danger)';
+    } else {
+        if (errorEl) errorEl.style.display = 'none';
+        input.style.borderColor = '';
+    }
+    markDirty();
+}
+
+function renderServerStats(key) {
+    const data = GLOBAL_SETTINGS[key] || { enabled: false, stat_channels: {} };
+    const channels = data.stat_channels || {};
+    const categories = getCategories();
+    const allChannels = GLOBAL_CHANNELS.filter(c => ["voice", "stage", "text"].includes(String(c.type)));
+
+    let html = `
+        <div class="setting-card" style="background:var(--bg-tertiary); border:none; margin-bottom:1rem;">
+            <div class="toggle-row">
+                <label style="margin:0; font-weight:600;">Enable Server Stats</label>
+                <label class="switch">
+                    <input type="checkbox" id="ss-enabled" ${data.enabled ? 'checked' : ''} onchange="markDirty(); document.getElementById('ss-config').style.display = this.checked ? 'block' : 'none';">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.5rem;">Turn Discord channels into live counters (e.g., Members: 1,250)</p>
+        </div>
+
+        <div id="ss-config" style="${data.enabled ? '' : 'display:none;'}">
+            <div class="setting-card" style="background:var(--bg-tertiary); border:none; margin-bottom:1rem;">
+                <div class="setting-title">Server Name Template</div>
+                <div class="setting-desc">Optional: Rename the server using stats (e.g., "Nite | {members} members").</div>
+                <div class="flex items-center gap-2" style="margin-top:0.5rem;">
+                    <input type="text" class="input" id="ss-server-name-template" value="${escapeForHtml(data.server_name_template || '')}" placeholder="e.g. Nite | {members} members" style="flex:1;" oninput="markDirty()">
+                    <button type="button" class="emoji-btn" onclick="openEmojiPicker(this, true)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                    </button>
+                    ${data.server_name_template ? `<button type="button" class="btn btn-ghost" style="padding:6px 10px; flex-shrink:0;" onclick="clearServerNameTemplate()" title="Clear">✕</button>` : ''}
+                </div>
+                <div style="margin-top:0.5rem; font-size:0.8rem; color:var(--text-muted);">{members}, {boosts}, {channels}, {roles}, {online}</div>
+            </div>
+
+            <div class="setting-title" style="margin-top:1rem;">Stat Channels</div>
+            <div class="setting-desc" style="margin-bottom:1rem;">Add channels to display live stats. Existing channels use ID as key, new channels use "new_" prefix.</div>
+
+            <div id="ss-channels-list">
+                ${Object.entries(channels).map(([id, conf]) => renderStatChannelRow(id, conf, categories, allChannels)).join('')}
+            </div>
+
+            <button class="btn btn-ghost" style="width:100%; margin-top:1rem;" onclick="openStatChannelModal()">+ Add New Counter</button>
+
+            <div style="margin-top:1rem; padding:0.75rem; background:var(--bg-tertiary); border-radius:4px; font-size:0.85rem; color:var(--text-muted);">
+                <strong>Available placeholders:</strong> {members}, {boosts}, {channels}, {roles}, {online}, {text_channels}, {voice_channels}
+            </div>
+        </div>
+    `;
+
+    return html;
+}
+
+function renderStatChannelRow(id, conf, categories, allChannels) {
+    const isNew = String(id).startsWith("new_");
+    const template = isNew ? (conf.template || '') : conf;
+    const categoryId = isNew ? (conf.category_id || '') : '';
+    const channelType = isNew ? (conf.type || 'voice') : 'voice';
+
+    const existingCh = allChannels.find(c => c.id === id);
+    const chName = isNew ? `New Channel ${id.slice(-4)}` : (existingCh ? `# ${existingCh.name}` : `Channel ${id}`);
+
+    return `
+        <div class="setting-card stat-channel-row" style="background:var(--bg-tertiary); border:none; margin-bottom:0.5rem; padding:0.75rem;" data-id="${id}">
+            <div class="flex justify-between items-center" style="margin-bottom:0.5rem;">
+                <span style="font-weight:600;">${chName}</span>
+                <button class="btn btn-danger" style="padding:4px 8px;" onclick="removeStatChannel('${id}')">×</button>
+            </div>
+            <div class="flex items-center gap-2" style="margin-bottom:0.5rem;">
+                <input type="text" class="input stat-channel-input" data-id="${id}" value="${escapeForHtml(template)}" placeholder="e.g. Members:{members}" oninput="updateStatChannel('${id}', 'template', this.value)" style="flex:1;">
+                <button type="button" class="emoji-btn" onclick="openEmojiPicker(this, true)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                </button>
+            </div>
+            ${isNew ? `
+                <select class="select" onchange="updateStatChannel('${id}', 'category_id', this.value)" style="margin-bottom:0.5rem;">
+                    <option value="">Select Category</option>
+                    ${categories.length ? categories.map(c => `<option value="${c.id}" ${c.id === categoryId ? 'selected' : ''}>${escapeForHtml(c.name)}</option>`).join('') : '<option value="" disabled>No categories found</option>'}
+                </select>
+                <select class="select" onchange="updateStatChannel('${id}', 'type', this.value)">
+                    <option value="voice" ${channelType === 'voice' ? 'selected' : ''}>Voice Channel</option>
+                    <option value="stage" ${channelType === 'stage' ? 'selected' : ''}>Stage Channel</option>
+                    <option value="text" ${channelType === 'text' ? 'selected' : ''}>Text Channel</option>
+                </select>
+            ` : ''}
+        </div>
+    `;
+}
+
+function openStatChannelModal() {
+    const modal = document.createElement('div');
+    modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; display:flex; align-items:center; justify-content:center;";
+    modal.id = "ss-modal";
+
+    const categories = getCategories();
+
+    modal.innerHTML = `
+        <div style="background:var(--bg-secondary); width:95%; max-width:500px; border-radius:8px; padding:1.5rem;">
+            <h3 style="margin-top:0; margin-bottom:1.5rem;">Create Stat Channel</h3>
+            
+            <div class="form-group">
+                <label>Template</label>
+                <div class="flex items-center gap-2">
+                    <input type="text" class="input" id="ss-modal-template" placeholder="e.g. Members:{members}" style="flex:1;">
+                    <button type="button" class="emoji-btn" onclick="openEmojiPicker(this, true)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                    </button>
+                </div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">Available: {members}, {boosts}, {channels}, {roles}, {online}</div>
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select class="select" id="ss-modal-category">
+                    <option value="">Select a category</option>
+                    ${categories.length ? categories.map(c => `<option value="${c.id}">${escapeForHtml(c.name)}</option>`).join('') : '<option value="" disabled>No categories found</option>'}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Channel Type</label>
+                <select class="select" id="ss-modal-type">
+                    <option value="voice">Voice Channel</option>
+                    <option value="stage">Stage Channel</option>
+                    <option value="text">Text Channel</option>
+                </select>
+            </div>
+            
+            <div class="flex gap-2 justify-end">
+                <button class="btn btn-ghost" onclick="document.getElementById('ss-modal').remove()">Cancel</button>
+                <button class="btn btn-primary" onclick="addStatChannelFromModal()">Create</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function openStatChannelEmojiPicker() {
+    const input = document.getElementById("ss-modal-template");
+    openEmojiPickerForInput(input);
+}
+
+function addStatChannelFromModal() {
+    const templateInput = document.getElementById("ss-modal-template");
+    const template = templateInput.value.trim();
+    const categoryId = document.getElementById("ss-modal-category").value;
+    const channelType = document.getElementById("ss-modal-type").value;
+
+    if (!template) return alert("Template is required.");
+    if (channelType === "text" && template.includes(' ')) return alert("Spaces not allowed in text channel names.");
+    if (!categoryId) return alert("Please select a category.");
+
+    const data = GLOBAL_SETTINGS.server_stats || { enabled: false, stat_channels: {} };
+    data.stat_channels = data.stat_channels || {};
+    
+    const id = "new_" + Date.now();
+    data.stat_channels[id] = { template, category_id: categoryId, type: channelType };
+
+    GLOBAL_SETTINGS.server_stats = data;
+    document.getElementById("ss-modal").remove();
+    refreshStatChannelsList();
+    markDirty();
+}
+
+function clearServerNameTemplate() {
+    const data = GLOBAL_SETTINGS.server_stats || { enabled: false, stat_channels: {} };
+    delete data.server_name_template;
+    GLOBAL_SETTINGS.server_stats = data;
+    const input = document.getElementById("ss-server-name-template");
+    if (input) input.value = "";
+    refreshServerNameButtons();
+    markDirty();
+}
+
+function refreshServerNameButtons() {
+    const input = document.getElementById("ss-server-name-template");
+    const container = input?.parentElement;
+    if (container) {
+        const emojiBtn = container.querySelector('.emoji-btn');
+        const clearBtn = container.querySelector('button[onclick="clearServerNameTemplate()"]');
+        if (input.value) {
+            if (!clearBtn) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-ghost';
+                btn.style.cssText = 'padding:6px 10px; flex-shrink:0;';
+                btn.onclick = clearServerNameTemplate;
+                btn.title = 'Clear';
+                btn.innerText = '✕';
+                container.appendChild(btn);
+            }
+        } else {
+            if (clearBtn) clearBtn.remove();
+        }
+    }
+}
+
+function refreshStatChannelsList() {
+    const channels = (GLOBAL_SETTINGS.server_stats || {}).stat_channels || {};
+    const categories = getCategories();
+    const allChannels = GLOBAL_CHANNELS.filter(c => ["voice", "stage", "text"].includes(String(c.type)));
+    const listEl = document.getElementById("ss-channels-list");
+    if (listEl) {
+        listEl.innerHTML = Object.entries(channels).map(([id, conf]) => renderStatChannelRow(id, conf, categories, allChannels)).join('');
+    }
+}
+
+function updateStatChannel(id, field, value) {
+    const data = GLOBAL_SETTINGS.server_stats || { enabled: false, stat_channels: {} };
+    data.stat_channels = data.stat_channels || {};
+    if (!data.stat_channels[id]) return;
+
+    if (field === "template") {
+        if (String(id).startsWith("new_")) {
+            data.stat_channels[id].template = value;
+        } else {
+            data.stat_channels[id] = value;
+        }
+    } else if (String(id).startsWith("new_")) {
+        data.stat_channels[id][field] = value;
+    }
+    markDirty();
+}
+
+function removeStatChannel(id) {
+    const data = GLOBAL_SETTINGS.server_stats || { enabled: false, stat_channels: {} };
+    data.stat_channels = data.stat_channels || {};
+    delete data.stat_channels[id];
+    refreshStatChannelsList();
+    markDirty();
+}
+
+function renderServerStatsUI() {
+    const pane = document.getElementById("tab-server-stats");
+    if (pane) pane.innerHTML = renderSettings(SETTINGS_CONFIG.find(t => t.id === "tab-server-stats").settings);
+}
+
+document.getElementById("ss-enabled")?.addEventListener("change", function() {
+    document.getElementById("ss-config").style.display = this.checked ? "block" : "none";
+});
 
 const VALID_PERMISSIONS = [
     "administrator", "manage_guild", "manage_roles", "manage_channels",
@@ -679,6 +935,33 @@ async function saveChanges() {
                     if (name || desc || skill) items.push({ name, description: desc, skill });
                 });
                 payload[s.key] = items;
+            } else if (s.type === "serverStats") {
+                const enabledEl = document.getElementById("ss-enabled");
+                const serverNameEl = document.getElementById("ss-server-name-template");
+                const ssData = { enabled: enabledEl ? enabledEl.checked : false, stat_channels: {} };
+
+                const existingSs = GLOBAL_SETTINGS.server_stats || {};
+                const currentValue = serverNameEl ? serverNameEl.value : '';
+                
+                if (currentValue.trim()) {
+                    ssData.server_name_template = currentValue.trim();
+                } else if (existingSs.server_name_template) {
+                    ssData.server_name_template = null;
+                }
+
+                const ssChannels = existingSs.stat_channels || {};
+                Object.entries(ssChannels).forEach(([id, conf]) => {
+                    const isNew = String(id).startsWith("new_");
+                    if (isNew) {
+                        if (conf.template && conf.category_id) {
+                            ssData.stat_channels[id] = { template: conf.template, category_id: conf.category_id, type: conf.type || "voice" };
+                        }
+                    } else {
+                        if (conf) ssData.stat_channels[id] = conf;
+                    }
+                });
+
+                payload[s.key] = ssData;
             }
         });
     });

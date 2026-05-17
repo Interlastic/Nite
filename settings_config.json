@@ -160,58 +160,9 @@
   },
   {
     "id": "tab-ai",
-    "name": "AI & Threads",
+    "name": "AI Context",
     "icon": "sparkles",
     "settings": [
-      {
-        "type": "header",
-        "text": "AI & Thread Support"
-      },
-      {
-        "type": "title",
-        "text": "Auto Flair"
-      },
-      {
-        "type": "switch",
-        "key": "auto_flair_enabled",
-        "label": "Enable Auto Flair",
-        "sublabel": "AI adds tags to new posts."
-      },
-      {
-        "type": "textarea",
-        "key": "auto_flair_options",
-        "label": "Flair Options",
-        "placeholder": "Separate with |",
-        "default": "Bug | Suggestion",
-        "join": " | "
-      },
-      {
-        "type": "title",
-        "text": "Auto Help"
-      },
-      {
-        "type": "switch",
-        "key": "auto_help_enabled",
-        "label": "Enable Auto Help",
-        "sublabel": "AI suggests answers from past threads."
-      },
-      {
-        "type": "title",
-        "text": "Support Channels"
-      },
-      {
-        "type": "text",
-        "text": "Select Forum Channels (IDs)",
-        "style": "font-size:0.8rem; color:#aaa;"
-      },
-      {
-        "type": "supportChannelList",
-        "key": "support_channels"
-      },
-      {
-        "type": "separator",
-        "text": "General AI Memory"
-      },
       {
         "type": "title",
         "text": "AI Context"
@@ -222,6 +173,10 @@
         "label": "Additional Context",
         "placeholder": "Enter additional context...",
         "maxLength": 1000
+      },
+      {
+        "type": "title",
+        "text": "Skills"
       },
       {
         "type": "namedContentList",
@@ -260,12 +215,6 @@
         "sublabel": "Chatbots can see each other's messages"
       },
       {
-        "type": "switch",
-        "key": "chatbot_auto_reply_on_name",
-        "label": "Auto Reply on Name",
-        "sublabel": "Chatbots respond when their name is mentioned by another chatbot"
-      },
-      {
         "type": "select",
         "key": "chatbot_history_mode",
         "label": "History Mode",
@@ -287,7 +236,7 @@
       }
     ]
   },
-  {
+{
     "id": "tab-additional",
     "name": "Additional",
     "icon": "cog",
@@ -307,7 +256,7 @@
         "sublabel": "Auto react to messages with specific content.",
         "keyPlaceholder": "Pattern to match",
         "valuePlaceholder": "Emoji (custom supported)",
-        "help": "(?i)text = case-insensitive match\n\\p{Extended_Pictographic} = match any emoji\n\bword\b = match whole word only\n(a|b) = match \"a\" OR \"b\"\nFull guide: https://nite.mingalabs.com/pattern-matching"
+        "help": "(?i)text = case-insensitive match\n\\p{Extended_Pictographic} = match any emoji\n\\bword\\b = match whole word only\n(a|b) = match \"a\" OR \"b\"\nFull guide: https://nite.mingalabs.com/pattern-matching"
       },
       {
         "type": "title",
@@ -320,7 +269,18 @@
         "sublabel": "Automatically reply to messages with specific content.",
         "keyPlaceholder": "Pattern to match",
         "valuePlaceholder": "Message to reply with",
-        "help": "(?i)text = case-insensitive match\n\\p{Extended_Pictographic} = match any emoji\n\bword\b = match whole word only\n(a|b) = match \"a\" OR \"b\"\nFull guide: https://nite.mingalabs.com/pattern-matching"
+        "help": "(?i)text = case-insensitive match\n\\p{Extended_Pictographic} = match any emoji\n\\bword\\b = match whole word only\n(a|b) = match \"a\" OR \"b\"\nFull guide: https://nite.mingalabs.com/pattern-matching"
+      }
+    ]
+  },
+  {
+    "id": "tab-server-stats",
+    "name": "Server Stats",
+    "icon": "chart-bar",
+    "settings": [
+      {
+        "type": "serverStats",
+        "key": "server_stats"
       }
     ]
   }

@@ -1,11 +1,14 @@
 var currentEmojiTarget = null;
 var emojiModal = null;
+var emojiRealOnly = false;
 
-function openEmojiPicker(btn) {
+function openEmojiPicker(btn, realOnly = false) {
     if (!btn) {
         console.error("openEmojiPicker: No button passed");
         return;
     }
+
+    emojiRealOnly = realOnly;
 
     currentEmojiTarget = btn.previousElementSibling;
 
@@ -80,7 +83,7 @@ function renderEmojiContent(filter = "") {
 
     let html = "";
 
-    if (emojis.custom && emojis.custom.length > 0) {
+    if (!emojiRealOnly && emojis.custom && emojis.custom.length > 0) {
         const customFiltered = emojis.custom.filter(e => e.name.toLowerCase().includes(filter));
         if (customFiltered.length > 0) {
             html += `<div class="emoji-category-title">Server Emojis</div>`;
